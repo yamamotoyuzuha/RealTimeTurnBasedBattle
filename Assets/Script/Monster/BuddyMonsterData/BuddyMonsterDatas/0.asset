@@ -1,0 +1,29 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2208e37c53d451a418b13405ab845ea0, type: 3}
+  m_Name: 0
+  m_EditorClassIdentifier: 
+  characterName: 
+  characterIconSprite: {fileID: 21300000, guid: b94c008e5976ac3459f15da93ca56498,
+    type: 3}
+  hp: 300
+  mp: 0
+  attack: 0
+  defense: 0
+  speed: 10
+  magicBaseData: []
+  _attributesType: 0
+  actionType: 0
+  buddyMonMoveSpeed: 5
+  jumpingAbility: 5
+  rayDistance: 1
+  strongRank: 0

@@ -1,0 +1,223 @@
+﻿using System;
+using UnityEngine;
+using UnityEngine.InputSystem;
+
+public class Player : MonoBehaviour, Status, ICommand
+{
+    private PlayerInput playerInput;
+
+    [Header("プレイヤーデータ")]
+    [SerializeField] private PlayerData playerData;
+    public CharacterBaseData GetData()
+    {
+        return playerData;
+    }
+    public PlayerData PlayerData => playerData;
+    
+    [Header("PlayerRideCheck")]
+    [SerializeField] private PlayerRideCheck playerRideCheck;
+    [Header("現在のバディモン")]
+    [SerializeField] private GameObject currentBuddyMonster;
+    public GameObject CurrentBuddyMonster => currentBuddyMonster;
+    
+    [Header("現在のコマンド")]
+    [SerializeField] private CommandState currentCommandState;
+    public CommandState GetCommand()
+    {
+        return currentCommandState;
+    }
+    public void SetCommand(CommandState commandState)
+    {
+        currentCommandState = commandState;
+    }
+    
+    [Header("コマンドUI")]
+    [SerializeField] private CommandUI commandUI;
+    public void ShowCommandUI(bool flag)
+    {
+        commandUI.ToggleCommandUI(flag);
+    }
+    
+    /// <summary>
+    /// Characterのステータス
+    /// </summary>
+    private CharacterBaseStatus characterBaseStatus;
+    public CharacterBaseStatus GetCharacterStatus()
+    {
+        return characterBaseStatus;
+    }
+    public int GetMp()
+    {
+        return characterBaseStatus.Mp;
+    }
+    public int GetSpeed()
+    {
+        return characterBaseStatus.Speed;
+    }
+    public CharacterAttributesType GetAttributes()
+    {
+        return playerData.AttributesType;
+    }
+
+    public bool IsRide { get; private set; } //バディモンに乗っている
+
+    private MagicPanel magicPanel;
+    private BuddyMonster buddyMonster;
+
+    private GameObject mainCamera;
+    private Rigidbody rb;
+
+    private Vector2 moveInput; //移動入力を保持
+    private Vector3 moveOutPut; //カメラと移動入力を含めたベクトル
+    private Vector2 massMoveInput; //マス移動入力を保持
+
+    void Awake()
+    {
+        //ステータスを作成
+        characterBaseStatus = new CharacterBaseStatus
+            (playerData.Hp, playerData.Mp, playerData.Attack, playerData.Defense, playerData.Speed, this.gameObject);
+    }
+
+    void Start()
+    {
+        //InputSystemを使えるようにする
+        playerInput = new PlayerInput();
+        playerInput.Enable();
+
+        magicPanel = GetComponent<MagicPanel>();
+
+        mainCamera = GameObject.Find("Main Camera");
+        rb = GetComponent<Rigidbody>();
+    }
+
+    void Update()
+    {
+        //ライドボタンが押されてて、バディモンに乗れる距離にいるとき
+        if (playerInput.Player.MonsterRide.triggered && playerRideCheck.IsCanRide)
+        {
+            if (!IsRide) //乗る
+            {
+                IsRide = true;
+                Debug.Log("バディモンに乗る");
+
+                //バディモンを取得する
+                if(playerRideCheck.BuddyMonObj != null)
+                {
+                    buddyMonster = playerRideCheck.BuddyMonObj.GetComponent<BuddyMonster>();
+                }
+            }
+            else //降りる
+            {
+                IsRide = false;
+                Debug.Log("バディモンから降りる");
+
+
+
+                //降りるときは、バディモンの右か左に移動させる
+                //右か左に降りるかは、障害物がないほうに降りる
+                //両方とも障害物がないときは、右に降りる
+                //BuddyMonRide関数で処理を書く
+
+            }
+
+            BuddyMonRide(IsRide);
+        }
+
+        if (playerInput.Player.Jump.triggered && !IsRide) //ジャンプ
+        {
+            Jump();
+        }
+
+        if (playerInput.Player.MagicPanel.triggered) //マジックパネルを開く
+        {
+            magicPanel.MagicPanelToggle();
+        }
+
+        //マジックパネルを開いている状態でのマス移動
+        if (magicPanel.IsPanelOpen && massMoveInput.magnitude > 0)
+        {
+            magicPanel.PanelMassMovement(massMoveInput);
+
+            //入力を0にする
+            massMoveInput = Vector2.zero;
+        }
+    }
+
+    private void FixedUpdate()
+    {
+        if (IsRide || EncounterManager.instance.IsFieldSettingsComplete) return;
+
+        //カメラの向きを取得
+        var cameraForward = mainCamera.transform.forward;
+        var cameraRight = mainCamera.transform.right;
+
+        //カメラの向きに合わせたベクトルを作成
+        moveOutPut = (cameraForward * moveInput.y + cameraRight * moveInput.x).normalized;
+        rb.velocity = new Vector3(moveOutPut.x * playerData.MoveSpeed, rb.velocity.y, moveOutPut.z * playerData.MoveSpeed);
+    }
+
+    /// <summary>
+    /// 移動Action（PlayerInputから呼ばれる）
+    /// </summary>
+    public void OnMove(InputAction.CallbackContext context)
+    {
+        //マジックパネルを開いているときは、動けないようにする
+        if (magicPanel.IsPanelOpen) return;
+
+        moveInput = context.ReadValue<Vector2>();
+    }
+
+    /// <summary>
+    /// ジャンプ処理
+    /// </summary>
+    private void Jump()
+    {
+        //地面にいないときは、処理をしない
+        if (!IsGroudCheck() || magicPanel.IsPanelOpen) return;
+        rb.AddForce(Vector3.up * playerData.JumpAbility, ForceMode.Impulse);
+    }
+
+    /// <summary>
+    /// 地面にいるかの判定
+    /// </summary>
+    /// <returns>Rayが地面に当たれば、tureを返す</returns>
+    private bool IsGroudCheck()
+    {
+        return Physics.Raycast(transform.position, Vector3.down, playerData.RayDistance);
+    }
+
+    /// <summary>
+    /// マスの移動Action（PlayerInputから呼ばれる）
+    /// </summary>
+    public void OnMassMove(InputAction.CallbackContext context)
+    {
+        //マジックパネルを開いていないときは、処理をしない
+        if (!magicPanel.IsPanelOpen) return;
+
+
+
+        //なぜか、強く押すと入力がおかしくなる
+        //２、３マス飛んだりするから修正する
+        massMoveInput = context.ReadValue<Vector2>();
+    }
+
+    /// <summary>
+    /// バディモンに乗る
+    /// </summary>
+    private void BuddyMonRide(bool isRide)
+    {
+        if (isRide)
+        {
+            //バディモンの子オブジェクトになり、追従するようにする
+            rb.isKinematic = true;
+            transform.SetParent(playerRideCheck.BuddyMonObj.transform);
+            transform.position = buddyMonster.RidePosition.position;
+        }
+        else
+        {
+            //子オブジェクトを解除する
+            rb.isKinematic = false;
+            transform.SetParent(null);
+        }
+    }
+}
