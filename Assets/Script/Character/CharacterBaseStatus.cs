@@ -28,6 +28,21 @@ public class CharacterBaseStatus
     /// （MPが減ったキャラ、増減後のMP、増減前の）
     /// </summary>
     public Action<CharacterBaseStatus, int, int> onMpReduce;
+    /// <summary>
+    /// 死亡
+    /// </summary>
+    public Action<GameObject> onDeath;
+    /// <summary>
+    /// パリィが成功した時に呼ぶAction
+    /// （増えるMP量）
+    /// </summary>
+    public Action<int> onParrySuccess;
+    public Action onJustGuardSuccess;
+    /// <summary>
+    /// プレイヤー操作キャラクターのみ
+    /// ステータスUIの表示、非表示を行う
+    /// </summary>
+    public Action<CharacterBaseStatus, bool> onStatusDisplay;
 
     /// <summary>
     /// 現在の状態異常
@@ -116,6 +131,19 @@ public class CharacterBaseStatus
         
         //ダメージUIを表示
         CharacterDamageUI.Instance.DamageUIShowDisplay(charaObject.transform, damage);
+        
+        DeathDetermination();
+    }
+    
+    /// <summary>
+    /// 死亡判定
+    /// </summary>
+    private void DeathDetermination()
+    {
+        if (Hp <= 0)
+        {
+            onDeath?.Invoke(charaObject);
+        }
     }
 
     /// <summary>
@@ -230,6 +258,12 @@ public class CharacterBaseStatus
     #endregion
 
     #region パリィなどの防御アクション関連
+    //防御アクションの成否フラグ
+    public bool ParrySuccess { get;private set; }
+    public bool JustGuardSuccess { get; private set; }
+    public bool JumpSuccess { get; private set; }
+    public bool EvasionSuccess { get; private set; }
+    
     /// <summary>
     /// パリィの入力を検知する
     /// </summary>
@@ -247,6 +281,24 @@ public class CharacterBaseStatus
     {
         IsJustGuard = true;
         justGuardTimer = inputPeriod;
+    }
+    /// <summary>
+    /// ジャンプの入力を検知する
+    /// </summary>
+    /// <param name="inputPeriod">入力を受け付ける時間</param>
+    public void JumpInput(float inputPeriod)
+    {
+        IsJump = true;
+        jumpTimer = inputPeriod;
+    }
+    /// <summary>
+    /// 回避の入力を検知する
+    /// </summary>
+    /// <param name="inputPeriod">入力を受け付ける時間</param>
+    public void EvasionInput(float inputPeriod)
+    {
+        IsEvasion = true;
+        evasionTimer = inputPeriod;
     }
 
     /// <summary>
@@ -267,26 +319,83 @@ public class CharacterBaseStatus
             if(justGuardTimer <= 0) IsJustGuard = false;
         }
     }
+
+    /// <summary>
+    /// なんらかの防御アクションがすでに入力されているか判定を行う
+    /// </summary>
+    /// <returns>true：入力済み　false：入力未済</returns>
+    public bool IsInputDefenseAction()
+    {
+        return (IsParry || IsJustGuard || IsJump || IsEvasion);
+    }
     
     /// <summary>
     /// 防御アクション入力の判定
+    /// ・Enemyが攻撃をする際に呼ぶ
     /// </summary>
     public DefenseActionType DefenseActionJudgment()
     {
         if (IsParry)
         {
             Debug.Log("パリィ成功");
+            ParrySuccess = true;
             return DefenseActionType.Parry;
         }
 
         if (IsJustGuard)
         {
             Debug.Log("ジャストガード成功");
+            JustGuardSuccess = true;
             return DefenseActionType.JustGuard;
+        }
+
+        if (IsJump)
+        {
+            Debug.Log("ジャンプ成功");
+            JumpSuccess = true;
+            return DefenseActionType.Jump;
+        }
+
+        if (IsEvasion)
+        {
+            Debug.Log("回避成功");
+            EvasionSuccess = true;
+            return DefenseActionType.Evasion;
         }
 
         return DefenseActionType.None;
     }
+
+    /// <summary>
+    /// 防御アクションの成否判定をリセットする
+    /// </summary>
+    public void DefenseActionSuccessReset()
+    {
+        ParrySuccess = false;
+        JustGuardSuccess = false;
+        JumpSuccess = false;
+        EvasionSuccess = false;
+    }
+    #endregion
+
+    #region 防御アクション成功処理
+    /// <summary>
+    /// パリィ成功
+    /// </summary>
+    /// <param name="mp">増加するMP量</param>>
+    public void ParrySuccessProcessing(int mp)
+    {
+        AddMp(mp);
+        onParrySuccess?.Invoke(mp);
+    }
+    /// <summary>
+    /// ジャストガード成功
+    /// </summary>
+    public void JustGuardProcessing()
+    {
+        onJustGuardSuccess?.Invoke();
+    }
+
     #endregion
 }
 

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
@@ -47,14 +48,25 @@ public class CommandUI : MonoBehaviour
     private ImageColorController[] rightColorController;
     private ImageColorController[] notSelectedLeftColorController;
     private ImageColorController[] notSelectedRightColorController;
-    
-    void Start()
+
+    void Awake()
     {
         //親オブジェクトであるキャラクターのデータを取得する
         characterObj = transform.root.gameObject;
         characterStatus = characterObj.GetComponent<Status>();
         characterBaseData = characterStatus.GetData();
         Debug.Log(characterBaseData);
+    }
+
+    void Start()
+    {
+        /*
+        //親オブジェクトであるキャラクターのデータを取得する
+        characterObj = transform.root.gameObject;
+        characterStatus = characterObj.GetComponent<Status>();
+        characterBaseData = characterStatus.GetData();
+        Debug.Log(characterBaseData);
+        */
         
         ToggleCommandUI(false);
         EachMagicUIGenerate();
@@ -71,11 +83,19 @@ public class CommandUI : MonoBehaviour
         attackUIObj.SetActive(isFlag);
         itemUIObj.SetActive(isFlag);
         
+        /*
         //CommandInputManagerにCommandUIを渡す
         if(isFlag) commandInputManager.GetCommandUI(this);
         else
         {
             commandInputManager.GetCommandUI(null);
+            MagicUIHidden();
+        }
+        */
+        if(isFlag) CommandInputManager.Instance.GetCommandUI(this);
+        else
+        {
+            CommandInputManager.Instance.GetCommandUI(null);
             MagicUIHidden();
         }
     }

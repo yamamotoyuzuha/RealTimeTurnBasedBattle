@@ -86,6 +86,7 @@ public class BuddyMonster : MonoBehaviour, Status, ICommand
 
     void Update()
     {
+        /*
         if (buddyMonsterInput.Player.Jump.triggered && player.IsRide)
         {
             //プレイヤーが乗るとジャンプができなくなる
@@ -94,11 +95,12 @@ public class BuddyMonster : MonoBehaviour, Status, ICommand
             Jump();
             Debug.Log("バディモンがジャンプ");
         }
+        */
     }
 
     private void FixedUpdate()
     {
-        if (!player.IsRide) return;
+        //if (!player.IsRide) return;
 
         //カメラの向きを取得する
         var cameraForward = mainCamera.transform.forward;
@@ -115,7 +117,7 @@ public class BuddyMonster : MonoBehaviour, Status, ICommand
     public void OnMove(InputAction.CallbackContext context)
     {
         //プレイヤーがライドしてないときは、移動しないようにする
-        if (!player.IsRide) return;
+        //if (!player.IsRide) return;
 
         moveInput = context.ReadValue<Vector2>();
     }

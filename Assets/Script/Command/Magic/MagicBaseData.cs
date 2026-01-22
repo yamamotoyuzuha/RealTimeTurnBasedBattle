@@ -37,6 +37,10 @@ public class MagicBaseData : CharacterCommandActionData
     [SerializeField] private Sprite _statusEffect;
     public Sprite StatusEffect => _statusEffect;
     
+    [Header("可能な防御アクション")]
+    [SerializeField] private DefenseActionType[] _defenseActions;
+    public DefenseActionType[] DefenseActions => _defenseActions;
+    
     /// <summary>
     /// 継承先の各魔法でオーバーライドして個別処理
     /// </summary>

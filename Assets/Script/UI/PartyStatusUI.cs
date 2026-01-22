@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using TMPro;
+using Unity.VisualScripting.Antlr3.Runtime.Misc;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -18,18 +20,24 @@ public class PartyStatusUI : MonoBehaviour
     [SerializeField] private GameObject _mpPrefab;
     
     /// <summary>
+    /// パーティーステータスUIの表示切り替え
+    /// true：表示　false：非表示
+    /// </summary>
+    public Action<bool> onPartyStatusDisplay;
+    
+    /// <summary>
     /// 生成したステータスUIの管理
     /// </summary>
     private Dictionary<CharacterBaseStatus, PlayerStatusUI> playerStatusUIs = new Dictionary<CharacterBaseStatus, PlayerStatusUI>();
-    
-    //TODO：現在の状態だとデバッグしにくいため、仮で宣言している
-    //TODO：いずれ、タイトルからEnemyを選んで行うときに情報を受け渡すようにするといいかもしれない
-    //これはデバッグするためのもの
-    public GameObject[] charas;
+    /// <summary>
+    /// プレイヤー操作キャラクター
+    /// </summary>
+    private List<GameObject> partyCharas = new List<GameObject>();
 
     void Start()
     {
         StatusUIGenerate();
+        onPartyStatusDisplay += AllStatusUIDisplay;
     }
 
     /// <summary>
@@ -40,6 +48,7 @@ public class PartyStatusUI : MonoBehaviour
         for (int i = 0; i < 2; i++)
         {
             var obj = Instantiate(_statusUIPrefab, _statusParent);
+            //TODO：これはキャラクターのＭＰを参照したほうがよい
             //MPを生成して、仮配列に格納
             GameObject[] mps = new GameObject[7];
             for (int j = 0; j < 7; j++)
@@ -55,10 +64,8 @@ public class PartyStatusUI : MonoBehaviour
                 obj.transform.GetChild(5).GetChild(1).GetComponent<TextMeshProUGUI>(),
                 mps
             );
-
-            //TODO：仮の状態だから、いずれ処理を変更しなければならない
-            //ここら辺の処理も変えないといけないかも
-            var chara = charas[i].GetComponent<Status>();
+            
+            var chara = partyCharas[i].GetComponent<Status>();
             playerStatusUIs[chara.GetCharacterStatus()] = ui;
             //HPなどの情報を設定
             playerStatusUIs[chara.GetCharacterStatus()].maxHpText.text = chara.GetCharacterStatus().MaxHp.ToString();
@@ -67,7 +74,41 @@ public class PartyStatusUI : MonoBehaviour
             chara.GetCharacterStatus().onHpChanged += HpIncreaseOrDecrease;
             chara.GetCharacterStatus().onMpAdd += MpAddUI;
             chara.GetCharacterStatus().onMpReduce += MpReduceUI;
+            chara.GetCharacterStatus().onStatusDisplay += StatusUIDisplay;
+            
+            ui.uiObj.SetActive(false);
         }
+    }
+
+    /// <summary>
+    /// プレイヤー操作キャラクターを設定
+    /// </summary>
+    /// <param name="chara">プレイヤー操作キャラクター</param>
+    public void SetPartyCharacter(GameObject chara)
+    {
+        partyCharas.Add(chara);
+    }
+
+    /// <summary>
+    /// ステータスUIを一括表示切り替え
+    /// </summary>
+    /// <param name="isDisplay">true：表示　false：非表示</param>
+    private void AllStatusUIDisplay(bool isDisplay)
+    {
+        foreach (var ui in playerStatusUIs)
+        {
+            ui.Value.uiObj.SetActive(isDisplay);
+        }
+    }
+    /// <summary>
+    /// ステータスUIの表示切り替え
+    /// </summary>
+    /// <param name="data">切り替えをするキャラクター</param>
+    /// <param name="isDisplay">true：表示　false：非表示</param>
+    private void StatusUIDisplay(CharacterBaseStatus data, bool isDisplay)
+    { 
+        var uiObj = playerStatusUIs[data].uiObj;
+        uiObj.SetActive(isDisplay);
     }
     
     /// <summary>

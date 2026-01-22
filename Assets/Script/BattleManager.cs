@@ -11,9 +11,9 @@ public class BattleManager : MonoBehaviour
     [SerializeField] private TurnManager turnManager;
     [Header("CommandInputManager")]
     [SerializeField] private CommandInputManager commandInputManager;
-    [Header("PartyStatusUI")] //追加
+    [Header("PartyStatusUI")]
     [SerializeField] private PartyStatusUI _partyStatusUI;
-    [Header("EnemyStatusUI")] //追加
+    [Header("EnemyStatusUI")]
     [SerializeField] private EnemyStatusUI _enemyStatusUI;
     
    　/*TODO：プレイヤーキャラクターとEnemyのUIを追加したが、生成するタイミングをどこかで通知
@@ -21,16 +21,26 @@ public class BattleManager : MonoBehaviour
    　  　　　　エンカウントした際に呼ばれるところで、UIも生成してしまおうと考えているがなにかいい方法がないか思考中
    　  　　　　これは"Start()"で生成して、非表示にしておくのがいいかも
     */
-    
-    private void Start()
+
+    void Awake()
     {
         //コマンドの選択が完了したときのイベントを登録
         commandInputManager.onCommandInputComplete += CharacterStartAction;
-        
         //Enemyのターンが開始したときのイベントを登録
         turnManager.onEnemyTurnStart += CharacterStartAction;
+        SetCombatInformation();
+    }
+
+    private void Start()
+    {
+        //UIの表示
+        //TODO：これだと直ぐ表示してしまっているため、数秒待ってからバトルを開始するのと同時に表示を行う
+        _partyStatusUI.onPartyStatusDisplay?.Invoke(true);
+        _enemyStatusUI.onEnemyStatusDisplay?.Invoke(true);
+        if(_enemyStatusUI.onEnemyStatusDisplay == null) Debug.Log("null");
     }
     
+    //TODO：これはエンカウント用のため使わないから削除する
     /// <summary>
     /// キャラクターの行動順を計算する
     /// </summary>
@@ -52,6 +62,48 @@ public class BattleManager : MonoBehaviour
         var index = fieldCharacter.Count - 1;
         var lastTurnCharacter = fieldCharacter[index];
         turnManager.GetBattleManagerData(fieldCharacter, lastTurnCharacter);
+    }
+
+    /// <summary>
+    /// Titleの戦闘情報を元に必要な処理を行う
+    /// ・戦闘を行うキャラクターの生成
+    /// ・速度順にソート
+    /// </summary>
+    private void SetCombatInformation()
+    {
+        //戦闘を行うキャラクターを格納する
+        List<GameObject> fieldCharacter = new List<GameObject>();
+        fieldCharacter.AddRange(CombatInformationCharacterGenerate());
+        
+        //速度順にソート
+        fieldCharacter = fieldCharacter.OrderByDescending(i => i.GetComponent<Status>().GetSpeed()).ToList();
+        //TurnManagerにデータを渡す
+        var index = fieldCharacter.Count - 1;
+        var lastTurnCharacter = fieldCharacter[index];
+        turnManager.GetBattleManagerData(fieldCharacter, lastTurnCharacter);
+    }
+    /// <summary>
+    /// 戦闘情報にあるキャラクターを生成する
+    /// </summary>
+    /// <returns>戦闘を行うキャラクターのリストを返す</returns>
+    private List<GameObject> CombatInformationCharacterGenerate()
+    {
+        //情報の取得
+        var infoC = CombatInformationManager.Instance.CombatInfoPlayerCharacter;
+        var infoE = CombatInformationManager.Instance.CombatInfoEnemyCharacter;
+        
+        List<GameObject> infoObj =  new List<GameObject>();
+        foreach (var info in infoC)
+        {
+            var objC = Instantiate(info.CharacterPrefab);
+            infoObj.Add(objC);
+            
+            //パーティーステータスUIにパーティーキャラクターのオブジェクトを渡す
+            _partyStatusUI.SetPartyCharacter(objC);
+        }
+        var objE = Instantiate(infoE.CharacterPrefab);
+        infoObj.Add(objE);
+        return infoObj;
     }
 
     /// <summary>
@@ -111,11 +163,6 @@ public class BattleManager : MonoBehaviour
         else //敵の行動
         {
             Debug.Log("敵の行動です");
-            
-            //TODO：敵の行動になったとき、プレイヤー達がパリィなどが出来る状態にする
-            //TODO：UIの変更も行う（コマンド選択の操作方法UIではなく、パリィなどの操作方法UIに変更）
-            //TODO：↑はターンマネージャー側で行う
-            //TODO：ここでパリィなどが入力出来るようにする（CommandInputManagerから）
             
             var enemy = turnManager.CharacterInfos[turnManager.CurrentTurnCharacter].enemyBase;
             var enemyAttack = turnManager.CharacterInfos[turnManager.CurrentTurnCharacter].status;
@@ -237,6 +284,21 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     private void AttackDamageTarget(Status targetStatus, Status enemyStatus)
     {
+        //ターゲットが防御アクションを行っているのか判定
+        var dAction = targetStatus.GetCharacterStatus().DefenseActionJudgment();
+        switch (dAction)
+        {
+            case DefenseActionType.Parry:
+                Debug.Log("パリィではじかれた");
+                targetStatus.GetCharacterStatus().ParrySuccessProcessing(1);
+                return;
+            case DefenseActionType.JustGuard:
+                Debug.Log("ジャストガードで受け流された");
+                targetStatus.GetCharacterStatus().JustGuardProcessing();
+                return;
+        }
+        
+        
         //攻撃力を取得し、ターゲットにダメージを与える
         var enemyAttack = enemyStatus.GetCharacterStatus().Attack;
         targetStatus.GetCharacterStatus().Damage(enemyAttack);

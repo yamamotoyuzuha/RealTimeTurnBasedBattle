@@ -1,8 +1,11 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class CommandInputManager : MonoBehaviour
 {
+    public static CommandInputManager Instance;
     private CommandInput commandInput;
     
     [Header("TurnManager")]
@@ -48,11 +51,6 @@ public class CommandInputManager : MonoBehaviour
     /// </summary>
     private bool isConfirmCommand;
     private CommandUI currentCharacterCommandUI; //現在のターンのキャラのCommandUIを保持
-    /// <summary>
-    /// 防御アクションの入力が可能か
-    /// true：可能　false：不可能
-    /// </summary>
-    private bool isDefenseAction;
     
     //CommandInputManagerでやること
     //TODO：コマンドを選択し終わって、行動が終わったらＮｏｎｅにする
@@ -64,7 +62,14 @@ public class CommandInputManager : MonoBehaviour
     //TODO：それがtrueだったらパリィなどが成功で、ダメージを食らわないようにするとか？
     //TODO：パリィなどの入力についてだが、入力を受け付けてその間はtrue、終わったらfalse
     //TODO：ここのアップデートでバトルマネージャーからフラグの変更が行われ、その間はEnemy以外のCharacterBaseStatusの関数を実行
-    
+
+    void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+    }
     
     private void Start()
     {
@@ -75,6 +80,8 @@ public class CommandInputManager : MonoBehaviour
     
     private void Update()
     {
+        DefenseActionInput();
+        
         //コマンド選択が不可能の時は処理をしない
         if(!isCommandSelected) return;
         
@@ -277,6 +284,52 @@ public class CommandInputManager : MonoBehaviour
     /// </summary>
     private void DefenseActionInput()
     {
-        //TODO：ここで入力によって呼ぶ防御アクションを変更する
+        //防御アクションの状態ではない時は処理を行わない
+        foreach (var chara in turnManager.CharacterInfos)
+        {
+            if(chara.Value.characterName == "Enemy") continue;
+            var state = chara.Value.state.characterState;
+            if(state != CharacterStateType.BeforeAttack) return;
+        }
+        
+        //入力有効時間のタイマーを更新
+        foreach (var status in GetPlayerCharacterBaseStatus())
+        {
+            status.UpdateDefenseActionTimer(Time.deltaTime);
+        }
+        
+        //TODO：ここはいずれinputSystemでバインドしたもの使用する
+        //TODO：パリィ出来ていることが確認できたOK
+        //ここは仮の入力を指定している
+        if (Input.GetKeyDown(KeyCode.P))
+        {
+            foreach (var status in GetPlayerCharacterBaseStatus())
+            {
+                if(status.IsInputDefenseAction()) continue;
+                status.ParryInput(0.5f);
+                Debug.Log("パリィ開始");
+            }
+        }
+        if (Input.GetKeyDown(KeyCode.G))
+        {
+            foreach (var status in GetPlayerCharacterBaseStatus())
+            {
+                if(status.IsInputDefenseAction()) continue;
+                status.JustGuardInput(0.5f);
+            }
+        }
+    }
+
+    /// <summary>
+    /// プレイヤー操作キャラのCharacterBaseStatusを取得
+    /// ・IEnumerableで返すためforeachで使える
+    /// </summary>
+    /// <returns>プレイヤーのみのCharacterBaseStatus</returns>
+    private IEnumerable<CharacterBaseStatus> GetPlayerCharacterBaseStatus()
+    {
+        //Enemyを除いた
+        return turnManager.CharacterInfos
+            .Where(kv => kv.Value.characterName != "Enemy")
+            .Select(kv => kv.Value.status.GetCharacterStatus());
     }
 }

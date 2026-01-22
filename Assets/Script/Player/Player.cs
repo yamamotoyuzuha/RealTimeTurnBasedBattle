@@ -92,6 +92,7 @@ public class Player : MonoBehaviour, Status, ICommand
 
     void Update()
     {
+        /*
         //ライドボタンが押されてて、バディモンに乗れる距離にいるとき
         if (playerInput.Player.MonsterRide.triggered && playerRideCheck.IsCanRide)
         {
@@ -110,14 +111,6 @@ public class Player : MonoBehaviour, Status, ICommand
             {
                 IsRide = false;
                 Debug.Log("バディモンから降りる");
-
-
-
-                //降りるときは、バディモンの右か左に移動させる
-                //右か左に降りるかは、障害物がないほうに降りる
-                //両方とも障害物がないときは、右に降りる
-                //BuddyMonRide関数で処理を書く
-
             }
 
             BuddyMonRide(IsRide);
@@ -132,6 +125,7 @@ public class Player : MonoBehaviour, Status, ICommand
         {
             magicPanel.MagicPanelToggle();
         }
+        */
 
         //マジックパネルを開いている状態でのマス移動
         if (magicPanel.IsPanelOpen && massMoveInput.magnitude > 0)
@@ -193,11 +187,7 @@ public class Player : MonoBehaviour, Status, ICommand
     {
         //マジックパネルを開いていないときは、処理をしない
         if (!magicPanel.IsPanelOpen) return;
-
-
-
-        //なぜか、強く押すと入力がおかしくなる
-        //２、３マス飛んだりするから修正する
+        
         massMoveInput = context.ReadValue<Vector2>();
     }
 

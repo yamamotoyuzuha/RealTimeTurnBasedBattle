@@ -9,7 +9,7 @@ using Vector3 = UnityEngine.Vector3;
 public class MagicPanel : MonoBehaviour
 {
     [Header("すべてのマスデータ")]
-    [SerializeField] private MagicMassDatas magicMassDatas;
+    [SerializeField] private AllMagicMassDatas _allMagicMassData;
     [Header("縦のサイズ")]
     [SerializeField] private int verticalSize;
     [Header("横のサイズ")]
@@ -163,7 +163,7 @@ public class MagicPanel : MonoBehaviour
                 panel[i, j] = obj;
                 
                 //生成したマスのMassStatusを取得して、データを代入
-                var data = magicMassDatas.NormalMassData;
+                var data = _allMagicMassData.NormalMassData;
                 panelMassStatus[i, j] = panel[i, j].GetComponent<MassStatus>();
                 panelMassStatus[i, j].SetMassData(data);
                 panelMassStatus[i, j].SetMassColor(data.Color);
@@ -211,7 +211,7 @@ public class MagicPanel : MonoBehaviour
                 //非表示かどうか判定し、マスデータを設定する
                 if (!panelMassStatus[i, j].MassImage.enabled)
                 {
-                    var data = magicMassDatas.NoneMassData;
+                    var data = _allMagicMassData.NoneMassData;
                     panelMassStatus[i, j].SetMassData(data);
                 }
             }
@@ -258,7 +258,7 @@ public class MagicPanel : MonoBehaviour
         //位置をランダムで取得する
         var random = Random.Range(0, noEntry.Length);
         //通行禁止マスを設定する
-        var noEntryData = magicMassDatas.NoEntryMassData;
+        var noEntryData = _allMagicMassData.NoEntryMassData;
         noEntry[random].SetMassData(noEntryData);
         //色を変更する
         noEntry[random].SetMassColor(noEntryData.Color);
@@ -287,7 +287,7 @@ public class MagicPanel : MonoBehaviour
         //最初のマスに、現在選択されているマスを移動させる
         currentMassRect.anchoredPosition = rectTransforms[0, 2].anchoredPosition;
         //データを設定する
-        var data = magicMassDatas.StartMassData;
+        var data = _allMagicMassData.StartMassData;
         panelMassStatus[0, 2].SetMassData(data);
         panelMassStatus[0, 2].SetMassColor(data.Color);
 
@@ -322,7 +322,7 @@ public class MagicPanel : MonoBehaviour
             var random = Random.Range(0, medians.Length);
             
             //選ばれたリストの場所をゴールマスに設定する
-            var goalData = magicMassDatas.GoalMassData;
+            var goalData = _allMagicMassData.GoalMassData;
             medians[random].SetMassData(goalData);
             //色を変更する
             medians[random].SetMassColor(goalData.Color);
@@ -347,7 +347,7 @@ public class MagicPanel : MonoBehaviour
         {
             //中央にゴールマスを設置する
             var medianVertical = verticalSize / 2;
-            var goalData = magicMassDatas.GoalMassData;
+            var goalData = _allMagicMassData.GoalMassData;
             panelMassStatus[medianVertical, medianVertical].SetMassData(goalData);
             panelMassStatus[medianVertical, medianVertical].SetMassColor(goalData.Color);
             
@@ -379,7 +379,7 @@ public class MagicPanel : MonoBehaviour
             }
             
             //マスにデータを設定する
-            var dataE = magicMassDatas.EffectMassData;
+            var dataE = _allMagicMassData.EffectMassData;
             panelMassStatus[randomY, randomX].SetMassData(dataE);
             //効果を付与する場所の色を変更する
             panelMassStatus[randomY, randomX].SetMassColor(dataE.Color);
@@ -397,7 +397,7 @@ public class MagicPanel : MonoBehaviour
             {
                 //効果マスだったら、Normalに変更する
                 var data = panelMassStatus[i, j].MagicMassData.MassType;
-                var normalData = magicMassDatas.NormalMassData;
+                var normalData = _allMagicMassData.NormalMassData;
                 if (data == MassType.Effect)
                 {
                     panelMassStatus[i, j].SetMassData(normalData);
@@ -465,8 +465,8 @@ public class MagicPanel : MonoBehaviour
         //マスのデータを取得する
         var currentMassData = panelMassStatus[currentY, currentX].MagicMassData;
         var beforeMassData = panelMassStatus[beforeMassY, beforeMassX].MagicMassData;
-        var effectMassData = magicMassDatas.EffectMassData; //各マスのデータを取得する
-        var normalMassData = magicMassDatas.NormalMassData;
+        var effectMassData = _allMagicMassData.EffectMassData; //各マスデータを取得する
+        var normalMassData = _allMagicMassData.NormalMassData;
 
         //非表示マス、通行禁止マスに移動しようとしている場合
         if(currentMassData.MassType == MassType.None || currentMassData.MassType == MassType.NoEntry)

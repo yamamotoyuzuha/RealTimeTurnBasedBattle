@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e0bfcecf30fa1c4081f60a61d9452bf, type: 3}
+  m_Name: 1
+  m_EditorClassIdentifier: 
+  characterName: Enemy1
+  characterIconSprite: {fileID: 0}
+  _titleCharacterPrefab: {fileID: 183284303825784245, guid: f37db04b950a6db4abb1728c6836c4c4,
+    type: 3}
+  characterPrefab: {fileID: 8999886035641672583, guid: f787ea9b484c1774988dd5f383c1da5a,
+    type: 3}
+  hp: 0
+  mp: 0
+  attack: 0
+  defense: 0
+  speed: 0
+  magicBaseData: []
+  _attributesType: 0
+  _enemyType: 0
+  _enemyAttackBaseDataN: []
+  _enemyAttackBaseDataA: []
+  _enemyRace: 0
+  _weaknessType: 

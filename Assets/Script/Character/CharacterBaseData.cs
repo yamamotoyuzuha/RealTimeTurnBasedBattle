@@ -8,6 +8,12 @@ public class CharacterBaseData : ScriptableObject
     [Header("キャラクターのアイコン")]
     [SerializeField] private Sprite characterIconSprite;
     public Sprite CharacterIconSprite => characterIconSprite;
+    [Header("キャラクターPrefab（Title用）")]
+    [SerializeField] private GameObject _titleCharacterPrefab;
+    public GameObject TitleCharacterPrefab => _titleCharacterPrefab;
+    [Header("キャラクターPrefab（戦闘用）")]
+    [SerializeField] private GameObject characterPrefab;
+    public GameObject CharacterPrefab => characterPrefab;
     
     //戦闘
     [Header("HP")]

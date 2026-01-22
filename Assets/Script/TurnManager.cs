@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
 
 public class TurnManager : MonoBehaviour
 {
@@ -45,7 +44,7 @@ public class TurnManager : MonoBehaviour
     /// Enemyのターンになった時に呼ぶ
     /// </summary>
     public Action onEnemyTurnStart;
-
+    
     private void Start()
     {
         //イベントの登録
@@ -119,40 +118,7 @@ public class TurnManager : MonoBehaviour
                 enemyBase = enemyBase
             };
             CharacterInfos.Add(character, info);
-
-            /*
-            //各キャラクターをKeyにして、ステートを保持
-            var state = character.GetComponent<CharacterState>();
-            characterStates.Add(character, state);
-            //最初には待機状態にしておく
-            state.ChangeCharacterState(CharacterStateType.Idle);
-
-            //敵かプレイヤーの操作キャラクターかを判別
-            if (character.GetComponent<ICommand>() != null) //プレイヤー側
-            {
-                FriendOrFoe.Add(character, ("Player", character.GetComponent<ICommand>(), null));
-                Debug.Log("プレイヤー側");
-
-                //コマンドをNoneにしておく
-                FriendOrFoe[character].Item2.SetCommand(CommandState.None);
-            }
-            else //敵側
-            {
-                FriendOrFoe.Add(character, ("Enemy", null, character.GetComponent<EnemyBase>()));
-                Debug.Log("敵側");
-
-                //敵を設定　追加
-                Enemy = character.GetComponent<Enemy>();
-            }
-
-            //各キャラクターのステータスを取得する
-            var status = character.GetComponent<Status>();
-            characterStatus.Add(character, status);
-
-            //各キャラクターのバトル時に使用するステータスを取得する
-            var baseStatus = status.GetCharacterStatus();
-            characterBaseStatus.Add(character, baseStatus);
-            */
+            info.status.GetCharacterStatus().onDeath += DeceasedCharacterSetUp;
         }
         //現在のターンのキャラのステートを選択中にしておく
         var currentChara = CharacterInfos[CurrentTurnCharacter].state;
@@ -163,28 +129,6 @@ public class TurnManager : MonoBehaviour
             PlayerCharacterStateChanged(CharacterStateType.BeforeAttack);
             onEnemyTurnStart?.Invoke();
         }
-        
-        /*
-        //現在のターンのキャラのステートを選択中にしておく
-        var currentChara = characterStates[CurrentTurnCharacter];
-        currentChara.ChangeCharacterState(CharacterStateType.InAction);
-
-        //現在ターンかEnemyか判定を行う
-        if (FriendOrFoe[CurrentTurnCharacter].Item1 == "Enemy")
-        {
-            //プレイヤー側のステートをパリィなどが出来る状態に変更する
-            foreach (var character in speedCharacterTurnQueue)
-            {
-                //Enemyならステート変更を行わない
-                if(FriendOrFoe[character].Item1 == "Enemy") continue;
-
-                var state = characterStates[character];
-                state.ChangeCharacterState(CharacterStateType.BeforeAttack);
-            }
-
-            onEnemyTurnStart?.Invoke();
-        }
-        */
     }
     
     /// <summary>
@@ -304,29 +248,34 @@ public class TurnManager : MonoBehaviour
         {
             status.StatusEffectStart();
         }
-        /*
-        var currentCharacter = characterStates[CurrentTurnCharacter];
-        currentCharacter.ChangeCharacterState(CharacterStateType.InAction);
+    }
 
-        TurnCharacterCommandUI(CurrentTurnCharacter, true);
-
-        var status = characterBaseStatus[CurrentTurnCharacter];
-        //現在ターンかEnemyか判定を行う
-        if (FriendOrFoe[CurrentTurnCharacter].Item1 == "Enemy")
+    /// <summary>
+    /// 死亡したキャラクターの処理
+    /// ・キャラクターアイコンの削除
+    /// ・ターンを管理しているキューを再構築
+    /// </summary>
+    /// <param name="character">死亡したキャラクター</param>>
+    private void DeceasedCharacterSetUp(GameObject character)
+    {
+        CharacterInfos[character].state.ChangeCharacterState(CharacterStateType.Dead);
+        //死亡したキャラクターのアイコンを取得し、全て削除する
+        if(!characterIcons.TryGetValue(character, out List<GameObject> icons)) return;
+        foreach (var icon in icons)
         {
-            onEnemyTurnStart?.Invoke();
+            Destroy(icon);
         }
-        else //Enemyではない場合、MPを増やす
+        
+        speedCharacterTurnQueue.Clear();
+        List<GameObject> characters = new List<GameObject>();
+        //死亡していないキャラクターのみ追加
+        foreach (var chara in fieldCharacter)
         {
-            status.AddMp(1);
+            if(CharacterInfos[chara].state.characterState != CharacterStateType.Dead)
+                characters.Add(chara);
         }
-
-        //状態異常を受けているか判定し、状態異常だったら状態異常中の処理を行う
-        if (characterBaseStatus[CurrentTurnCharacter].IsUnderAbnormalStatus())
-        {
-            status.StatusEffectStart();
-        }
-        */
+        speedCharacterTurnQueue = new Queue<GameObject>(characters);
+        CurrentTurnCharacter = speedCharacterTurnQueue.Peek();
     }
 
     /// <summary>
@@ -337,11 +286,6 @@ public class TurnManager : MonoBehaviour
     /// <param name="flag">true：表示　false：非表示</param>
     public void TurnCharacterCommandUI(GameObject character, bool flag)
     {
-        /*
-        //キャラがプレイヤー側かどうか判定する
-        if(FriendOrFoe[character].Item1 != "Player") return;
-        FriendOrFoe[character].Item2.ShowCommandUI(flag);
-        */
         if (PlayableCharacterJudgment(character))
         {
             CharacterInfos[character].command.ShowCommandUI(flag);

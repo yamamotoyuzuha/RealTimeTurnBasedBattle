@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
+using UnityEngine.Serialization;
 
 public class Enemy : MonoBehaviour, Status, EnemyBase
 {
@@ -54,21 +55,27 @@ public class Enemy : MonoBehaviour, Status, EnemyBase
     //攻撃パターン
     private int currentAttackPatten;
 
+    //TODO：あくまでデバッグ用の表示　
+    //TODO：あとで消す
+    [Header("パリィなどのデバッグ用のUI")]
+    [SerializeField] private GameObject _enemyDebugUI;
+    private EnemyDebugUI debugUI;
+
     void Awake()
     {
+        //デバッグ用UIの生成 //TODO：あとで消す
+        var canvas = GameObject.Find("BattleCanvas");
+        var debugObj = Instantiate(_enemyDebugUI, canvas.transform);
+        debugUI = debugObj.GetComponent<EnemyDebugUI>();
+        
         //キャラクターの情報を取得
         characterState = GetComponent<CharacterState>().characterState;
         characterBaseStatus = new CharacterBaseStatus
             (enemyData.Hp, 0, enemyData.Attack, enemyData.Defense, enemyData.Speed, this.gameObject);
-    }
-
-    void Start()
-    {
         //Enemyの状態による行動変化（通常）
         behaviorChangeState = EnemyBehaviorChangeState.Normal;
         //攻撃パターンを設定
         currentAttackPatten = 0;
-        
         //Enemyのターン開始に行うイベントを登録
         OnEnemyTurnAction += EnemyStatusChangeAction;
     }
@@ -125,15 +132,16 @@ public class Enemy : MonoBehaviour, Status, EnemyBase
     {
         //アニメーションを再生し、アニメーション時間分待機する
         //TODO：アニメーションの再生
-        //var magicData = CurrentActionData.GetMagicBaseData();
         var magicData = characterBaseStatus.CharacterCommandActionData.GetMagicBaseData();
         var animTime = magicData.AnimationTime;
+        debugUI.SetDebugText(animTime); //TODO：デバッグ用の関数（後で削除する）
         await UniTask.Delay(TimeSpan.FromSeconds(animTime));
         
         //TODO：ここでは仮に待機を使ってデバッグを行う
         //TODO：ダメージを与えることが確認できたOK
         Debug.Log("１回目の攻撃を開始");
         EnemyAttack();
+        debugUI.SetDebugText(animTime); //TODO：デバッグ用の関数（後で削除する）
         await UniTask.Delay(TimeSpan.FromSeconds(animTime));
         Debug.Log("２回目の攻撃を開始");
         EnemyAttack();

@@ -1,6 +1,10 @@
 using Cinemachine;
 using UnityEngine;
 
+/// <summary>
+/// プレイヤーキャラクターのカメラアングル設定
+/// ・TurnManagerから参照して行う
+/// </summary>
 public class CharacterCameraSettings : MonoBehaviour
 {
     [Header("行動確定時のカメラ")] 

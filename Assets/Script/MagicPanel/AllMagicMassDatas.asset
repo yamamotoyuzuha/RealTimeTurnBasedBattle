@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f92c87c869fab3746bb679fbe1c9b34d, type: 3}
+  m_Name: AllMagicMassDatas
+  m_EditorClassIdentifier: 
+  _startMassData: {fileID: 11400000, guid: 3564d2dac0dc58043a5abb0b83391a73, type: 2}
+  _goalMassData: {fileID: 11400000, guid: 203ee00d5f7966d419d571ed8134a359, type: 2}
+  _noneMassData: {fileID: 11400000, guid: f14dc2835f3e64a46b629f70d13582b7, type: 2}
+  _normalMassData: {fileID: 11400000, guid: 6012af54e5690464db84699689d2fad1, type: 2}
+  _effectMassData: {fileID: 11400000, guid: 3198cc1d0697fa940955f2523d08d76a, type: 2}
+  _noEntryMassData: {fileID: 11400000, guid: aa4e56b293be5584e96f0c7889bf9e5c, type: 2}
