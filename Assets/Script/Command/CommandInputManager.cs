@@ -12,6 +12,8 @@ public class CommandInputManager : MonoBehaviour
     [SerializeField] private TurnManager turnManager;
     [Header("BattleUI")]
     [SerializeField] private BattleCommandUI _battleCommandUI;
+    [Header("BattleCameraAngleManager")]
+    [SerializeField] private BattleCameraAngleManager _battleCameraAngleManager;
     
     /// <summary>
     /// コマンドの入力が完了
@@ -56,12 +58,6 @@ public class CommandInputManager : MonoBehaviour
     //TODO：コマンドを選択し終わって、行動が終わったらＮｏｎｅにする
     //TODO：どこかのタイミングでコマンドのデータをリセットするようにする　ターン終了後とか
     //TODO：↑バトルマネージャー側でリセットコマンド関数を読んであげる
-    
-    //TODO：ここでパリィなどの入力を受け付ける
-    //TODO：攻撃をする側がターゲットのCharacterBaseStatusの中の何かを参照
-    //TODO：それがtrueだったらパリィなどが成功で、ダメージを食らわないようにするとか？
-    //TODO：パリィなどの入力についてだが、入力を受け付けてその間はtrue、終わったらfalse
-    //TODO：ここのアップデートでバトルマネージャーからフラグの変更が行われ、その間はEnemy以外のCharacterBaseStatusの関数を実行
 
     void Awake()
     {
@@ -94,6 +90,9 @@ public class CommandInputManager : MonoBehaviour
             //コマンドが確定している状態ならターンを開始する
             if (isConfirmCommand)
             {
+                var cameraSet = turnManager.CharacterInfos[turnManager.CurrentTurnCharacter].cameraSettings;
+                _battleCameraAngleManager.BattleCameraAngleChange(BattleCameraActiveType.MagicPanelStart,
+                    cameraSet.MagicPanelStartCamPosF, cameraSet.MagicPanelStartCamPosL);
                 _battleCommandUI.UndoMagicUIText();
                 turnManager.TurnCharacterCommandUI(turnManager.CurrentTurnCharacter, false);
                 ResetCommandFlag();
@@ -151,12 +150,16 @@ public class CommandInputManager : MonoBehaviour
     {
         //まだ、何も選択していない状態かの判定
         var isInput = (!isMagicUISelected && !isAttackUISelected && !isItemUISelected);
+        var battle = _battleCameraAngleManager;
+        var cameraSet = turnManager.CharacterInfos[turnManager.CurrentTurnCharacter].cameraSettings;
 
         if (commandInput.Player.Magic.triggered && isInput)
         {
             turnManager.CharacterCommandStateChanged(CommandState.Magic);
             currentCharacterCommandUI.ShowCommandUI(CommandState.Magic);
             isMagicUISelected = true;
+            battle.BattleCameraAngleChange(BattleCameraActiveType.ActionConfirmed, 
+                cameraSet.ActionConfirmedCamPosF, cameraSet.ActionConfirmedCamPosL);
             
             Debug.Log("魔法");
         }
@@ -164,12 +167,16 @@ public class CommandInputManager : MonoBehaviour
         {
             turnManager.CharacterCommandStateChanged(CommandState.Attack);
             isAttackUISelected = true;
+            battle.BattleCameraAngleChange(BattleCameraActiveType.ActionConfirmed, 
+                cameraSet.ActionConfirmedCamPosF, cameraSet.ActionConfirmedCamPosL);
             Debug.Log("攻撃");
         }
         else if (commandInput.Player.Item.triggered && isInput)
         {
             turnManager.CharacterCommandStateChanged(CommandState.Item);
             isItemUISelected = true;
+            battle.BattleCameraAngleChange(BattleCameraActiveType.ActionConfirmed, 
+                cameraSet.ActionConfirmedCamPosF, cameraSet.ActionConfirmedCamPosL);
             Debug.Log("アイテム");
         }
         
@@ -182,6 +189,8 @@ public class CommandInputManager : MonoBehaviour
                 _battleCommandUI.UndoMagicUIText();
                 isConfirmCommand = false;
                 CurrentMagic = null; //魔法コマンドを選択してない状態にする
+                battle.BattleCameraAngleChange(BattleCameraActiveType.ActionConfirmed, 
+                    cameraSet.ActionConfirmedCamPosF, cameraSet.ActionConfirmedCamPosL);
                 return;
             }
             
@@ -192,6 +201,9 @@ public class CommandInputManager : MonoBehaviour
             
             //コマンドをNoneに変更
             turnManager.CharacterCommandStateChanged(CommandState.None);
+            //カメラアングルを元に戻す
+            battle.BattleCameraAngleChange(BattleCameraActiveType.ActionConfirmed, 
+                cameraSet.DefaultCamPosF, cameraSet.DefaultCamPosL);
             
             Debug.Log("戻る");
         }
@@ -224,18 +236,26 @@ public class CommandInputManager : MonoBehaviour
         //魔法が選択されていない、確定コマンドUIが表示されている状態は処理をしない
         if (!isMagicUISelected || isConfirmCommand) return;
         
+        var battle =  _battleCameraAngleManager;
+        var cameraSet = turnManager.CharacterInfos[turnManager.CurrentTurnCharacter].cameraSettings;
         //魔法を選択
         if (commandInput.Player.MagicCommand0.triggered)
         {
             SetMagicBaseData(0);
+            battle.BattleCameraAngleChange(BattleCameraActiveType.CommandConfirmed,
+                cameraSet.CommandConfirmedCamPosF, cameraSet.CommandConfirmedCamPosL);
         }
         else if (commandInput.Player.MagicCommand1.triggered)
         {
             SetMagicBaseData(1);
+            battle.BattleCameraAngleChange(BattleCameraActiveType.CommandConfirmed,
+                cameraSet.CommandConfirmedCamPosF, cameraSet.CommandConfirmedCamPosL);
         }
         else if (commandInput.Player.MagicCommand2.triggered)
         {
             SetMagicBaseData(2);
+            battle.BattleCameraAngleChange(BattleCameraActiveType.CommandConfirmed,
+                cameraSet.CommandConfirmedCamPosF, cameraSet.CommandConfirmedCamPosL);
         }
         
         //魔法コマンドの左右を変更する

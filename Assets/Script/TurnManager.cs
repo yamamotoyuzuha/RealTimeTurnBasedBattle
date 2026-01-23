@@ -4,6 +4,8 @@ using UnityEngine;
 
 public class TurnManager : MonoBehaviour
 {
+    [Header("BattleCameraAngleManager")]
+    [SerializeField] private BattleCameraAngleManager _battleCameraAngleManager;
     [Header("キャラクターアイコン生成場所")]
     [SerializeField] private Transform iconParent;
     [Header("キャラクターアイコンPrefab")]
@@ -21,16 +23,6 @@ public class TurnManager : MonoBehaviour
     //キャラクターデータの保持
     private List<GameObject>  fieldCharacter = new List<GameObject>();
     private Queue<GameObject> speedCharacterTurnQueue = new Queue<GameObject>();
-    //キャラクターのステート管理
-    //private Dictionary<GameObject, CharacterState> characterStates = new Dictionary<GameObject, CharacterState>();
-    //キャラクターの敵味方の保持
-    //public Dictionary<GameObject, (string, ICommand, EnemyBase)> FriendOrFoe { get; } = new Dictionary<GameObject, (string, ICommand, EnemyBase)>();
-    //キャラクターのステータスを保持
-    //public Dictionary<GameObject, Status> characterStatus { get; private set; } = new Dictionary<GameObject, Status>();
-    //キャラクターがバトル時に使うステータスを保持しておく
-    //public Dictionary<GameObject, CharacterBaseStatus> characterBaseStatus { get; private set; } = new Dictionary<GameObject, CharacterBaseStatus>();
-
-    //上記のものをクラスに纏め、管理しやすくした
     /// <summary>
     /// キャラクターの情報をすべて保持
     /// </summary>
@@ -103,6 +95,7 @@ public class TurnManager : MonoBehaviour
             var status = character.GetComponent<Status>();
             var command = character.GetComponent<ICommand>(); //操作キャラ判定
             var enemyBase = character.GetComponent<EnemyBase>();
+            var charaCamera = character.GetComponent<CharacterCameraSettings>();
             var player = command != null ? "Player" : "Enemy";
             if (player != "Player") //TODO：これはあとで外部から指定し、それをバトルマネージャー側のPlayerの攻撃に参照する
             {
@@ -115,7 +108,8 @@ public class TurnManager : MonoBehaviour
                 status = status,
                 characterName = player,
                 command = command,
-                enemyBase = enemyBase
+                enemyBase = enemyBase,
+                cameraSettings = charaCamera
             };
             CharacterInfos.Add(character, info);
             info.status.GetCharacterStatus().onDeath += DeceasedCharacterSetUp;
@@ -123,11 +117,20 @@ public class TurnManager : MonoBehaviour
         //現在のターンのキャラのステートを選択中にしておく
         var currentChara = CharacterInfos[CurrentTurnCharacter].state;
         currentChara.ChangeCharacterState(CharacterStateType.InAction);
+        var battle = _battleCameraAngleManager;
         //現在のターンがEnemyか判定を行う
         if (!PlayableCharacterJudgment(CurrentTurnCharacter))
         {
+            battle.BattleCameraAngleChange(BattleCameraActiveType.EAction, battle.EActionPosF, battle.EActionPosL);
             PlayerCharacterStateChanged(CharacterStateType.BeforeAttack);
             onEnemyTurnStart?.Invoke();
+        }
+        else //現在のターンがプレイヤーキャラクターの場合、カメラアングルの設定を行う
+        {
+            battle.ResetCameraAngle();
+            var cameraSet = CharacterInfos[CurrentTurnCharacter].cameraSettings;
+            battle.BattleCameraAngleChange(BattleCameraActiveType.DefaultPlayer, 
+                cameraSet.DefaultCamPosF, cameraSet.DefaultCamPosL);
         }
     }
     
@@ -234,16 +237,23 @@ public class TurnManager : MonoBehaviour
         currentCharacter.state.ChangeCharacterState(CharacterStateType.InAction);
         TurnCharacterCommandUI(CurrentTurnCharacter, true);
         var status = currentCharacter.status.GetCharacterStatus();
+        var battle = _battleCameraAngleManager;
         if (!PlayableCharacterJudgment(CurrentTurnCharacter))
         {
             //パリィが出来る状態にする
+            battle.BattleCameraAngleChange(BattleCameraActiveType.EAction, battle.EActionPosF, battle.EActionPosL);
             PlayerCharacterStateChanged(CharacterStateType.BeforeAttack);
             onEnemyTurnStart?.Invoke();
         }
         else
         {
             status.AddMp(1);
+            battle.ResetCameraAngle();
+            var cameraSet = CharacterInfos[CurrentTurnCharacter].cameraSettings;
+            battle.BattleCameraAngleChange(BattleCameraActiveType.DefaultPlayer, 
+                cameraSet.DefaultCamPosF, cameraSet.DefaultCamPosL);
         }
+        
         if (status.IsUnderAbnormalStatus())
         {
             status.StatusEffectStart();
@@ -386,4 +396,9 @@ public class CharacterInfo
     /// Enemyのみ
     /// </summary>
     public EnemyBase enemyBase;
+    /// <summary>
+    /// カメラアングル設定
+    /// プレイヤーキャラクターのみ
+    /// </summary>
+    public CharacterCameraSettings cameraSettings;
 }

@@ -1,4 +1,6 @@
-
+/// <summary>
+/// コマンド関連の処理
+/// </summary>
 public interface ICommand
 {
     /// <summary>

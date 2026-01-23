@@ -15,6 +15,8 @@ public class BattleManager : MonoBehaviour
     [SerializeField] private PartyStatusUI _partyStatusUI;
     [Header("EnemyStatusUI")]
     [SerializeField] private EnemyStatusUI _enemyStatusUI;
+    [Header("BattleCameraAngleManager")]
+    [SerializeField] private BattleCameraAngleManager _battleCameraAngleManager;
     
    　/*TODO：プレイヤーキャラクターとEnemyのUIを追加したが、生成するタイミングをどこかで通知
    　  　　　　できたほうが楽かもしれない
