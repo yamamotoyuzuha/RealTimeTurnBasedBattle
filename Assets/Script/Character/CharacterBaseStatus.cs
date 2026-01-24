@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class CharacterBaseStatus
@@ -72,6 +73,18 @@ public class CharacterBaseStatus
     /// Enemyの行動データ
     /// </summary>
     public CharacterCommandActionData CharacterCommandActionData {get; private set;}
+    /// <summary>
+    /// Enemyが受けた防御アクション
+    /// </summary>
+    public DefenseActionType ResultDefenseActionType {get; private set;}
+    /// <summary>
+    /// Enemyが受けた防御アクションの設定
+    /// </summary>
+    /// <param name="defenseActionType">防御アクションの種類</param>
+    public void SetResultDefenseActionType(DefenseActionType defenseActionType)
+    {
+        ResultDefenseActionType = defenseActionType;
+    }
     #endregion
 
     #region 防御アクション関連
@@ -130,7 +143,38 @@ public class CharacterBaseStatus
         onHpChanged?.Invoke(this, Hp, MaxHp);
         
         //ダメージUIを表示
-        CharacterDamageUI.Instance.DamageUIShowDisplay(charaObject.transform, damage);
+        CharacterDamageUI.Instance.DamageUIShowDisplay(charaObject.transform, damage).Forget();
+        
+        DeathDetermination();
+    }
+
+    /// <summary>
+    /// ダメージUIを一斉に表示する
+    /// </summary>
+    /// <param name="damages">キャラクターごとの攻撃力</param>
+    public async UniTask DamageUIAsync(List<float> damages)
+    {
+        //ダメージUIを一斉に表示するため、リストを作成し追加する
+        List<UniTask> tasks = new List<UniTask>();
+        foreach (var damage in damages)
+        {
+            tasks.Add(DamageAsync(damage));
+        }
+        //全てのダメージUIの表示が終わるまで待機する
+        await UniTask.WhenAll(tasks);
+    }
+    /// <summary>
+    /// キャラクターにダメージを与え、HPを減らす
+    /// </summary>
+    /// <param name="damage">ダメージ</param>
+    private async UniTask DamageAsync(float damage)
+    {
+        //0を下回らないようにする
+        Hp = Math.Max(Hp - damage, 0);
+        onHpChanged?.Invoke(this, Hp, MaxHp);
+        
+        //ダメージUIを表示
+        await CharacterDamageUI.Instance.DamageUIShowDisplay(charaObject.transform, damage);
         
         DeathDetermination();
     }

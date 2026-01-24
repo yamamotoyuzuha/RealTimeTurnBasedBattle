@@ -1,4 +1,5 @@
 using System;
+using Cysharp.Threading.Tasks;
 
 public interface EnemyBase
 {
@@ -16,6 +17,10 @@ public interface EnemyBase
     /// Enemyがプレイヤーに与えるダメージ
     /// </summary>
     Action OnEnemyAttackDamage { get; }
+    /// <summary>
+    /// 防御アクションが成功していたとき
+    /// </summary>
+    Func<DefenseActionType, UniTask> OnDefenseAction { get; set; }
 
     /// <summary>
     /// Actionを登録

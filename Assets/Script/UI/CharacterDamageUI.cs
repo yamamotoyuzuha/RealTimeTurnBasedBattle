@@ -58,7 +58,7 @@ public class CharacterDamageUI : MonoBehaviour
     /// </summary>
     /// <param name="target">ダメージを受けたキャラクター</param>>
     /// <param name="damage">ダメージ</param>>
-    public void DamageUIShowDisplay(Transform target, float damage)
+    public async UniTask DamageUIShowDisplay(Transform target, float damage)
     {
         //表示中ではないDamageUIを取得
         DamageUI damageUI = null;
@@ -89,7 +89,8 @@ public class CharacterDamageUI : MonoBehaviour
             damageUI.DamageUIPrefabInstance.SetActive(true);
             
             damageUI.SetDamageText(damage);
-            damageUI.Hidden(500).Forget();
+            //damageUI.Hidden(500).Forget();
+            await damageUI.Hidden(500);
         }
     }
 

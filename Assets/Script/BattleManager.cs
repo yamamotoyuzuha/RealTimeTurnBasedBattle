@@ -173,6 +173,8 @@ public class BattleManager : MonoBehaviour
             enemy.UnsubscribeActioAttackDamage(() => EnemyAttackDamageCalculation(enemy, enemyAttack));
             enemy.OnEnemyTurnEnd += CharacterEndAction;
             enemy.RegisterActionAttackDamage(() => EnemyAttackDamageCalculation(enemy, enemyAttack));
+            enemy.OnDefenseAction -= DefenseActionAdditionalAction;
+            enemy.OnDefenseAction += DefenseActionAdditionalAction;
             
             enemy.OnEnemyTurnAction?.Invoke();
         }
@@ -293,10 +295,12 @@ public class BattleManager : MonoBehaviour
             case DefenseActionType.Parry:
                 Debug.Log("パリィではじかれた");
                 targetStatus.GetCharacterStatus().ParrySuccessProcessing(1);
+                enemyStatus.GetCharacterStatus().SetResultDefenseActionType(DefenseActionType.Parry);
                 return;
             case DefenseActionType.JustGuard:
                 Debug.Log("ジャストガードで受け流された");
                 targetStatus.GetCharacterStatus().JustGuardProcessing();
+                enemyStatus.GetCharacterStatus().SetResultDefenseActionType(DefenseActionType.JustGuard);
                 return;
         }
         
@@ -311,5 +315,55 @@ public class BattleManager : MonoBehaviour
         magic.MagicAction(targetStatus.GetCharacterStatus());
         
         Debug.Log("Enemyがプレイヤーにダメージを与える");
+    }
+    
+    /// <summary>
+    /// 防御アクションが成功した時に行う追加行動処理
+    /// </summary>
+    /// <param name="action">成功した防御アクション</param>
+    private async UniTask DefenseActionAdditionalAction(DefenseActionType action)
+    {
+        switch (action)
+        {
+            case DefenseActionType.Parry:
+                Debug.Log("プレイヤーキャラクターの一斉攻撃");
+                await AllCharacterAttack();
+                break;
+            case DefenseActionType.JustGuard:
+                Debug.Log("カウンターアクション！");
+                break;
+        }
+    }
+    
+    /// <summary>
+    /// プレイヤーキャラクターの一斉攻撃処理
+    /// </summary>
+    private async UniTask AllCharacterAttack()
+    {
+        //Enemyとプレイヤーキャラクターのステータスを取得して、Enemyにダメージを与える
+        CharacterBaseStatus enemyStatus = null;
+        List<CharacterBaseStatus> status = new List<CharacterBaseStatus>();
+        foreach (var chara in turnManager.CharacterInfos)
+        {
+            if (chara.Value.command == null)
+            {
+                enemyStatus = chara.Value.status.GetCharacterStatus();
+                continue;
+            }
+            status.Add(chara.Value.status.GetCharacterStatus());
+        }
+        
+        _battleCameraAngleManager.BattleCameraAngleChange(BattleCameraActiveType.DAction,
+            _battleCameraAngleManager.DActionPosF, _battleCameraAngleManager.DActionPosL);
+        await UniTask.Delay(TimeSpan.FromSeconds(2)); //TODO：アニメーション時間
+        //対象がいなかった場合、処理は行わない
+        if(enemyStatus == null && status.Count == 0) return;
+        //プレイヤーキャラクターのダメージリストを作成し、ダメージUIに反映を行う
+        List<float> damages = new List<float>();
+        foreach (var playerChara in status)
+        {
+            damages.Add(playerChara.Attack);
+        }
+        await enemyStatus.DamageUIAsync(damages);
     }
 }

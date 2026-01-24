@@ -34,6 +34,7 @@ public class Enemy : MonoBehaviour, Status, EnemyBase
     public Action OnEnemyTurnAction{ get; private set; }
     public Action OnEnemyTurnEnd { get; set; }
     public Action OnEnemyAttackDamage { get; private set; }
+    public Func<DefenseActionType, UniTask> OnDefenseAction { get; set; }
     public void RegisterActionAttackDamage(Action action)
     {
         OnEnemyAttackDamage += action;
@@ -147,6 +148,15 @@ public class Enemy : MonoBehaviour, Status, EnemyBase
         EnemyAttack();
         Debug.Log("攻撃を終了");
         
+        
+        //TODO：ここで防御アクションが成功していたら、追加処理を行う
+        var defense = characterBaseStatus.ResultDefenseActionType;
+        if (defense != DefenseActionType.None)
+        {
+            await OnDefenseAction(defense);
+            OnEnemyTurnEnd?.Invoke();
+            return;
+        }
         
         //アニメーションが終了した後にターンを進める
         OnEnemyTurnEnd?.Invoke();
