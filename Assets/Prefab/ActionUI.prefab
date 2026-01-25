@@ -10,7 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 2743023547717808450}
   m_Layer: 5
-  m_Name: EnemyAttackUI
+  m_Name: ActionUI
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -50,7 +50,7 @@ GameObject:
   - component: {fileID: 4159907503342217296}
   - component: {fileID: 4381826496407238559}
   m_Layer: 5
-  m_Name: AttackNameBG
+  m_Name: ActionNameBG
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -126,7 +126,7 @@ GameObject:
   - component: {fileID: 1821445172609703131}
   - component: {fileID: 7645644912318881792}
   m_Layer: 5
-  m_Name: AttackNameText
+  m_Name: ActionNameText
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

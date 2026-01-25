@@ -17,6 +17,8 @@ public class BattleManager : MonoBehaviour
     [SerializeField] private EnemyStatusUI _enemyStatusUI;
     [Header("BattleCameraAngleManager")]
     [SerializeField] private BattleCameraAngleManager _battleCameraAngleManager;
+    [Header("BehaviorDisplayUI")]
+    [SerializeField] private BehaviorDisplayUI _behaviorDisplayUI;
     
    　/*TODO：プレイヤーキャラクターとEnemyのUIを追加したが、生成するタイミングをどこかで通知
    　  　　　　できたほうが楽かもしれない
@@ -118,7 +120,6 @@ public class BattleManager : MonoBehaviour
         var character = turnManager.CurrentTurnCharacter;
 
         //キャラクターが操作キャラクターなのかを判定する
-        //if(turnManager.FriendOrFoe[character].Item1 == "Player") return true;
         if (turnManager.PlayableCharacterJudgment(character)) return true;
 
         return false;
@@ -167,14 +168,17 @@ public class BattleManager : MonoBehaviour
             Debug.Log("敵の行動です");
             
             var enemy = turnManager.CharacterInfos[turnManager.CurrentTurnCharacter].enemyBase;
-            var enemyAttack = turnManager.CharacterInfos[turnManager.CurrentTurnCharacter].status;
+            var enemyStatus = turnManager.CharacterInfos[turnManager.CurrentTurnCharacter].status;
+            enemyStatus.GetCharacterStatus().ResetResultDefenseActionType();
             //登録を行う前に登録解除し、Actionを登録する
             enemy.OnEnemyTurnEnd -= CharacterEndAction;
-            enemy.UnsubscribeActioAttackDamage(() => EnemyAttackDamageCalculation(enemy, enemyAttack));
+            enemy.UnsubscribeActioAttackDamage(() => EnemyAttackDamageCalculation(enemy, enemyStatus));
             enemy.OnEnemyTurnEnd += CharacterEndAction;
-            enemy.RegisterActionAttackDamage(() => EnemyAttackDamageCalculation(enemy, enemyAttack));
+            enemy.RegisterActionAttackDamage(() => EnemyAttackDamageCalculation(enemy, enemyStatus));
             enemy.OnDefenseAction -= DefenseActionAdditionalAction;
             enemy.OnDefenseAction += DefenseActionAdditionalAction;
+            enemy.OnEnemyAction -= _behaviorDisplayUI.SetActionUI;
+            enemy.OnEnemyAction += _behaviorDisplayUI.SetActionUI;
             
             enemy.OnEnemyTurnAction?.Invoke();
         }
@@ -185,10 +189,48 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     private void CharacterEndAction()
     {
+        //TODO：ここで勝利、敗北処理を追加する
+        if (PlayerCheckingIfAlive())
+        {
+            Debug.Log("プレイヤーキャラクターが全員死亡");
+            return;
+        }
+        if (EnemyCheckingIfAlive())
+        {
+            Debug.Log("Enemyの死亡");
+            return;
+        }
+        
         commandInputManager.SetCommandSelected(true);
         Debug.Log("行動終了");
         
         turnManager.onNextTurnSetUp?.Invoke();
+    }
+    /// <summary>
+    /// プレイヤーキャラクターが生存しているか判定
+    /// </summary>
+    /// <returns>true：死亡　false：生存</returns>
+    private bool PlayerCheckingIfAlive()
+    {
+        var players = turnManager.CharacterInfos
+            .Where(kv => kv.Value.characterName != "Enemy")
+            .Select(kv => kv.Value);
+        var list = players.ToList();
+        return list.Count == 0 ? true : false;
+    }
+    /// <summary>
+    /// Enemyが生存しているか判定
+    /// </summary>
+    /// <returns>true：死亡　false：生存</returns>
+    private bool EnemyCheckingIfAlive()
+    {
+        GameObject enemy = null;
+        foreach (var chara in turnManager.CharacterInfos)
+        {
+            if(chara.Value.characterName != "Enemy") continue;
+            enemy = chara.Key;
+        }
+        return enemy == null ? true : false;
     }
 
     /// <summary>
@@ -216,6 +258,7 @@ public class BattleManager : MonoBehaviour
         
         //TODO:この状態だと、ダメージと魔法効果がバラバラになっているため一個の方が簡潔でいいかも
         //TODO:魔法効果を行うところでダメージも与えたい方がきれいかな
+        //TODO：でも、バラバラのほうが役割としていいかもしれない
         //キャラの攻撃力を取得して、ダメージを与える
         var enemy = turnManager.Enemy;
         var damage = status.Attack;
@@ -265,11 +308,15 @@ public class BattleManager : MonoBehaviour
                 .Where(kv => kv.Key != turnManager.CurrentTurnCharacter)
                 .Select(kv => kv.Value);
             var targetList = players.ToList();
+            //プレイヤーキャラクターが生存しているときのみ、処理を通す
+            if(targetList.Count == 0) return;
             var random = UnityEngine.Random.Range(0, targetList.Count);
             AttackDamageTarget(targetList[random].status, enemyStatus);
         }
         else
         {
+            //プレイヤーキャラクターが生存しているときのみ、処理を通す
+            if(turnManager.CharacterInfos.Count == 0) return;
             //フィールドにいるプレイヤーキャラクターにダメージを与える
             var status = turnManager.CharacterInfos;
             foreach (var charaStatus in status)
@@ -309,10 +356,15 @@ public class BattleManager : MonoBehaviour
         var enemyAttack = enemyStatus.GetCharacterStatus().Attack;
         targetStatus.GetCharacterStatus().Damage(enemyAttack);
         
-        //TODO：ここでまた分岐が必要かも
-        //TODO：Enemyの攻撃がすべて、魔法とは限らないから
-        var magic = enemyStatus.GetCharacterStatus().CharacterCommandActionData.GetMagicBaseData();
-        magic.MagicAction(targetStatus.GetCharacterStatus());
+        //TODO：魔法だけでなく、caseに攻撃を増やす
+        var aData = enemyStatus.GetCharacterStatus().CharacterCommandActionData;
+        switch (aData.GetCommandType())
+        {
+            case CharacterCommandActionType.Magic:
+                var magic = aData.GetMagicBaseData();
+                magic.MagicAction(targetStatus.GetCharacterStatus());
+                break;
+        }
         
         Debug.Log("Enemyがプレイヤーにダメージを与える");
     }
@@ -327,7 +379,10 @@ public class BattleManager : MonoBehaviour
         {
             case DefenseActionType.Parry:
                 Debug.Log("プレイヤーキャラクターの一斉攻撃");
+                var text = "AllAttack";
+                _behaviorDisplayUI.OnActionUIDisplay?.Invoke(text, true);
                 await AllCharacterAttack();
+                _behaviorDisplayUI.OnActionUIDisplay?.Invoke("", false);
                 break;
             case DefenseActionType.JustGuard:
                 Debug.Log("カウンターアクション！");

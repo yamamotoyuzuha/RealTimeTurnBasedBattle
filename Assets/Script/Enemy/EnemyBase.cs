@@ -18,6 +18,10 @@ public interface EnemyBase
     /// </summary>
     Action OnEnemyAttackDamage { get; }
     /// <summary>
+    /// Enemyの行動内容の設定と表示、非表示
+    /// </summary>
+    Action<string, bool> OnEnemyAction { get; set; }
+    /// <summary>
     /// 防御アクションが成功していたとき
     /// </summary>
     Func<DefenseActionType, UniTask> OnDefenseAction { get; set; }

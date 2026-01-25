@@ -34,6 +34,7 @@ public class Enemy : MonoBehaviour, Status, EnemyBase
     public Action OnEnemyTurnAction{ get; private set; }
     public Action OnEnemyTurnEnd { get; set; }
     public Action OnEnemyAttackDamage { get; private set; }
+    public Action<string, bool> OnEnemyAction { get; set; }
     public Func<DefenseActionType, UniTask> OnDefenseAction { get; set; }
     public void RegisterActionAttackDamage(Action action)
     {
@@ -136,6 +137,9 @@ public class Enemy : MonoBehaviour, Status, EnemyBase
         var magicData = characterBaseStatus.CharacterCommandActionData.GetMagicBaseData();
         var animTime = magicData.AnimationTime;
         debugUI.SetDebugText(animTime); //TODO：デバッグ用の関数（後で削除する）
+        //行動内容UIの表示 //TODO：ここは何か内容を考えていれる
+        var text = "EnemyAction";
+        OnEnemyAction?.Invoke(text, true);
         await UniTask.Delay(TimeSpan.FromSeconds(animTime));
         
         //TODO：ここでは仮に待機を使ってデバッグを行う
@@ -147,9 +151,8 @@ public class Enemy : MonoBehaviour, Status, EnemyBase
         Debug.Log("２回目の攻撃を開始");
         EnemyAttack();
         Debug.Log("攻撃を終了");
+        OnEnemyAction?.Invoke("", false);
         
-        
-        //TODO：ここで防御アクションが成功していたら、追加処理を行う
         var defense = characterBaseStatus.ResultDefenseActionType;
         if (defense != DefenseActionType.None)
         {

@@ -281,11 +281,19 @@ public class TurnManager : MonoBehaviour
         //死亡していないキャラクターのみ追加
         foreach (var chara in fieldCharacter)
         {
-            if(CharacterInfos[chara].state.characterState != CharacterStateType.Dead)
+            if(!CharacterInfos.ContainsKey(chara)) continue;
+            if (CharacterInfos[chara].state.characterState != CharacterStateType.Dead)
+            {
                 characters.Add(chara);
+                Debug.Log(chara.name);
+            }
         }
         speedCharacterTurnQueue = new Queue<GameObject>(characters);
         CurrentTurnCharacter = speedCharacterTurnQueue.Peek();
+        
+        //状態異常の解除と行ってから、死亡したキャラ情報の削除を行う
+        CharacterInfos[character].status.GetCharacterStatus().StatusAilmentsClear();
+        CharacterInfos.Remove(character);
     }
 
     /// <summary>

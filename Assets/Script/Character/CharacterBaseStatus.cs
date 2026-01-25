@@ -85,6 +85,13 @@ public class CharacterBaseStatus
     {
         ResultDefenseActionType = defenseActionType;
     }
+    /// <summary>
+    /// 受けた防御アクションのリセット
+    /// </summary>
+    public void ResetResultDefenseActionType()
+    {
+        ResultDefenseActionType = DefenseActionType.None;
+    }
     #endregion
 
     #region 防御アクション関連
@@ -297,6 +304,14 @@ public class CharacterBaseStatus
                 statusAilments.RemoveAt(i);
             }
         }
+    }
+
+    /// <summary>
+    /// 状態異常のリストをクリアする
+    /// </summary>
+    public void StatusAilmentsClear()
+    {
+        statusAilments.Clear();
     }
 
     #endregion
