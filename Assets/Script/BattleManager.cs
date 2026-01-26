@@ -15,16 +15,14 @@ public class BattleManager : MonoBehaviour
     [SerializeField] private PartyStatusUI _partyStatusUI;
     [Header("EnemyStatusUI")]
     [SerializeField] private EnemyStatusUI _enemyStatusUI;
+    [Header("BattleCommandUI")]
+    [SerializeField] private BattleCommandUI _battleCommandUI;
     [Header("BattleCameraAngleManager")]
     [SerializeField] private BattleCameraAngleManager _battleCameraAngleManager;
     [Header("BehaviorDisplayUI")]
     [SerializeField] private BehaviorDisplayUI _behaviorDisplayUI;
-    
-   　/*TODO：プレイヤーキャラクターとEnemyのUIを追加したが、生成するタイミングをどこかで通知
-   　  　　　　できたほうが楽かもしれない
-   　  　　　　エンカウントした際に呼ばれるところで、UIも生成してしまおうと考えているがなにかいい方法がないか思考中
-   　  　　　　これは"Start()"で生成して、非表示にしておくのがいいかも
-    */
+    [Header("VictoryOrDefeatUI")]
+    [SerializeField] private VictoryOrDefeatUI _victoryOrDefeatUI;
 
     void Awake()
     {
@@ -189,14 +187,20 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     private void CharacterEndAction()
     {
-        //TODO：ここで勝利、敗北処理を追加する
+        //TODO：ここで勝敗UI以外のUIを非表示にする処理を追加する
         if (PlayerCheckingIfAlive())
         {
+            Time.timeScale = 0;
+            BattleUIHidden();
+            _victoryOrDefeatUI.OnDefeatUIDisplay?.Invoke();
             Debug.Log("プレイヤーキャラクターが全員死亡");
             return;
         }
         if (EnemyCheckingIfAlive())
         {
+            Time.timeScale = 0;
+            BattleUIHidden();
+            _victoryOrDefeatUI.OnVictoryUIDisplay?.Invoke();
             Debug.Log("Enemyの死亡");
             return;
         }
@@ -231,6 +235,17 @@ public class BattleManager : MonoBehaviour
             enemy = chara.Key;
         }
         return enemy == null ? true : false;
+    }
+    /// <summary>
+    /// 戦闘に関係のあるUIの非表示を行う
+    /// </summary>
+    private void BattleUIHidden()
+    {
+        turnManager.onTurnIconDisplay?.Invoke(false);
+        _partyStatusUI.onPartyStatusDisplay?.Invoke(false);
+        _enemyStatusUI.onEnemyStatusDisplay?.Invoke(false);
+        _battleCommandUI.OnConfirmedCommandUIDisplay?.Invoke(false);
+        _behaviorDisplayUI.OnActionUIDisplay?.Invoke("", false);
     }
 
     /// <summary>

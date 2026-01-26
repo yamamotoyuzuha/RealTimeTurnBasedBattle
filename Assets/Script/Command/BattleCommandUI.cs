@@ -1,3 +1,4 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -6,6 +7,11 @@ public class BattleCommandUI : MonoBehaviour
 {
     [Header("確定コマンドUI")]
     [SerializeField] private GameObject _confirmedCommandUI;
+    
+    /// <summary>
+    /// 確定コマンドUIの表示、非表示
+    /// </summary>
+    public Action<bool> OnConfirmedCommandUIDisplay{get; private set;}
     
     //確定コマンドのテキストを保持
     private Image  confirmedCommandUIImage;
@@ -22,6 +28,7 @@ public class BattleCommandUI : MonoBehaviour
         confirmedDescriptionUIText = _confirmedCommandUI.transform.GetChild(2).GetComponent<TextMeshProUGUI>();
         
         MagicUITextToggle(false);
+        OnConfirmedCommandUIDisplay += MagicUITextToggle;
     }
 
     /// <summary>

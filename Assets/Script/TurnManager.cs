@@ -36,6 +36,10 @@ public class TurnManager : MonoBehaviour
     /// Enemyのターンになった時に呼ぶ
     /// </summary>
     public Action onEnemyTurnStart;
+    /// <summary>
+    /// ターンアイコンの表示、非表示
+    /// </summary>
+    public Action<bool> onTurnIconDisplay;
     
     private void Start()
     {
@@ -46,6 +50,7 @@ public class TurnManager : MonoBehaviour
             CharacterIconSetUp();
             NextTurnCharacterSet();
         };
+        onTurnIconDisplay += TurnIconDisplay;
     }
     
     private void Update()
@@ -373,6 +378,24 @@ public class TurnManager : MonoBehaviour
     {
         if(CharacterInfos[CurrentTurnCharacter].characterName != "Player") return;
         CharacterInfos[CurrentTurnCharacter].command.SetCommand(state);
+    }
+
+    /// <summary>
+    /// ターンアイコンの表示、非表示
+    /// </summary>
+    /// <param name="flag">true：表示　false：非表示</param>
+    private void TurnIconDisplay(bool flag)
+    {
+        //全てのターンアイコンの表示切り替えを行う
+        foreach (var iconsValue in characterIcons.Values)
+        {
+            if(iconsValue == null) continue;
+            foreach (var icon in iconsValue)
+            {
+                if(icon != null)
+                    icon.SetActive(false);
+            }
+        }
     }
 }
 
