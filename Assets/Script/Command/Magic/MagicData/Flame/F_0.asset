@@ -19,5 +19,8 @@ MonoBehaviour:
   magicRangeType: 0
   magicPanelDisplayTime: 5
   _animationTime: 2
+  _statusEffect: {fileID: 21300000, guid: 26be86044faa7194682fdb47c626364d, type: 3}
+  _saType: 0
+  _defenseActions: 
   _damage: 20
   _damageOverTime: 2

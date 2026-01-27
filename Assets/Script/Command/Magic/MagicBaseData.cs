@@ -36,6 +36,9 @@ public class MagicBaseData : CharacterCommandActionData
     [Header("状態異常アイコン")] 
     [SerializeField] private Sprite _statusEffect;
     public Sprite StatusEffect => _statusEffect;
+    [Header("状態異常の種類")]
+    [SerializeField] private StatusAbnormalityType _saType;
+    public StatusAbnormalityType SaType => _saType;
     
     [Header("可能な防御アクション")]
     [SerializeField] private DefenseActionType[] _defenseActions;

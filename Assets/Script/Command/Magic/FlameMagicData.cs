@@ -12,6 +12,6 @@ public class FlameMagicData : MagicBaseData
     {
         //炎魔法の状態異常を生成し、ターゲットに状態異常を付与する
         var flameEffect = new FlameEffect(_damage, _damageOverTime);
-        status.StatusEffectInfliction(flameEffect);
+        status.StatusEffectInfliction(flameEffect, SaType, StatusEffect, _damageOverTime);
     }
 }

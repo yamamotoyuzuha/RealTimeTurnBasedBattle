@@ -1,4 +1,6 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -13,12 +15,11 @@ public class EnemyStatusUI : MonoBehaviour
     [SerializeField] private Transform _uiGenerationParent;
     [Header("ステータスUIのPrefab")]
     [SerializeField] private GameObject _statusUIPrefab;
-    /*
     [Header("状態異常UIの生成場所")]
-    [SerializeField] private Transform _statusAilmentParent;
+    [SerializeField] private Transform _statusAbnormalityParent;
     [Header("状態異常UIのPrefab")]
-    [SerializeField] private GameObject _statusAilmentPrefab;
-    */
+    [SerializeField] private GameObject _statusAbnormalityPrefab;
+    
     /// <summary>
     /// EnemyステータスUIの表示、非表示
     /// true：表示　false：非表示
@@ -29,7 +30,10 @@ public class EnemyStatusUI : MonoBehaviour
     private GameObject statusUIPrefabInstance;
     private TextMeshProUGUI enemyNameText;
     private Image statusHpBar;
-
+    //状態異常UI
+    private Dictionary<StatusAbnormalityInfo, StatusAbnormalityUIInfo> statusAbnormalityInfos =
+        new Dictionary<StatusAbnormalityInfo, StatusAbnormalityUIInfo>();
+    
     private CharacterBaseStatus characterBaseStatus;
 
     void Start()
@@ -64,6 +68,10 @@ public class EnemyStatusUI : MonoBehaviour
         
         characterBaseStatus.onHpChanged += HpChangeUIUpdate;
         onEnemyStatusDisplay += StatusUIDisplay;
+
+        characterBaseStatus.onStatusAbnormalityOccurrence += StatusAilmentUIGenerate;
+        characterBaseStatus.onStatusAbnormalityProgress += StatusAbnormalityUIProgress;
+        characterBaseStatus.onStatusAbnormalityEnd += StatusAbnormalityUIEnd;
     }
 
     /// <summary>
@@ -79,21 +87,59 @@ public class EnemyStatusUI : MonoBehaviour
     }
 
     /// <summary>
-    /// 状態異常になった時にUIに反映を行う
-    /// </summary>
-    private void StatusAilmentUIUpdate()
-    {
-        //TODO：状態異常のアイコンを生成
-        
-        //TODO：現状の状態異常にあう、アイコンをSpritにいれる
-    }
-
-    /// <summary>
     /// EnemyステータスUIの表示切り替え
     /// </summary>
     /// <param name="isDisplay">true：表示　false：非表示</param>
     private void StatusUIDisplay(bool isDisplay)
     {
         statusUIPrefabInstance.SetActive(isDisplay);
+    }
+    
+    /// <summary>
+    /// 状態異常UIの生成
+    /// </summary>
+    private void StatusAilmentUIGenerate(StatusAbnormalityInfo info, CharacterBaseStatus status)
+    {
+        //同じ状態異常だったらUIの生成は行わない
+        if(statusAbnormalityInfos
+           .Any(x => x.Key.statusAbnormalityType == info.statusAbnormalityType)) return;
+        
+        var obj = Instantiate(_statusAbnormalityPrefab, _statusAbnormalityParent);
+        var image = obj.transform.GetChild(0).GetComponent<Image>();
+        var text = obj.transform.GetChild(1).GetComponent<TextMeshProUGUI>();
+        var uiInfo = new StatusAbnormalityUIInfo(obj, image, text);
+        uiInfo.ui = obj;
+        uiInfo.image.sprite = info.saSprite;
+        uiInfo.text.text = info.saDuration.ToString();
+        statusAbnormalityInfos.Add(info, uiInfo);
+    }
+    /// <summary>
+    /// 状態異常UIの更新
+    /// </summary>
+    /// <param name="status">状態異常中のキャラクター</param>
+    /// <param name="type">状態異常の種類</param>
+    private void StatusAbnormalityUIProgress(CharacterBaseStatus status, StatusAbnormalityType type)
+    {
+        //状態異常が一致したら継続ターンの更新を行う
+        var sa = statusAbnormalityInfos.Keys.FirstOrDefault(kv => kv.statusAbnormalityType == type);
+        if (sa != null && statusAbnormalityInfos.TryGetValue(sa, out var uiInfo))
+        {
+            sa.saDuration--;
+            uiInfo.text.text = sa.saDuration.ToString();
+        }
+    }
+    /// <summary>
+    /// 状態異常が終了
+    /// </summary>
+    /// <param name="status">状態異常が終了したキャラクター</param>
+    /// <param name="type">終了した状態異常</param>
+    private void StatusAbnormalityUIEnd(CharacterBaseStatus status, StatusAbnormalityType type)
+    {
+        //終了した状態異常が一致したら、その状態異常を削除する
+        var sa = statusAbnormalityInfos.Keys.FirstOrDefault(kv => kv.statusAbnormalityType == type);
+        if (sa != null && statusAbnormalityInfos.Remove(sa, out var uiInfo))
+        {
+            Destroy(uiInfo.ui);
+        }
     }
 }

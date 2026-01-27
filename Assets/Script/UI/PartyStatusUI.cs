@@ -18,6 +18,8 @@ public class PartyStatusUI : MonoBehaviour
     [SerializeField] private GameObject _statusUIPrefab;
     [Header("MP")]
     [SerializeField] private GameObject _mpPrefab;
+    [Header("状態異常UIのPrefab")]
+    [SerializeField] private GameObject _statusAbnormalityPrefab;
     
     /// <summary>
     /// パーティーステータスUIの表示切り替え
@@ -28,7 +30,18 @@ public class PartyStatusUI : MonoBehaviour
     /// <summary>
     /// 生成したステータスUIの管理
     /// </summary>
-    private Dictionary<CharacterBaseStatus, PlayerStatusUI> playerStatusUIs = new Dictionary<CharacterBaseStatus, PlayerStatusUI>();
+    private Dictionary<CharacterBaseStatus, PlayerStatusUI> playerStatusUIs = 
+        new Dictionary<CharacterBaseStatus, PlayerStatusUI>();
+    /// <summary>
+    /// 状態異常UIの生成場所を保持
+    /// </summary>
+    private Dictionary<CharacterBaseStatus, Transform> saGeneratePositions =
+        new Dictionary<CharacterBaseStatus, Transform>();
+    /// <summary>
+    /// 生成した状態異常UIの情報
+    /// </summary>
+    private Dictionary<StatusAbnormalityInfo, StatusAbnormalityUIInfo> statusAbnormalityInfos =
+        new Dictionary<StatusAbnormalityInfo, StatusAbnormalityUIInfo>();
     /// <summary>
     /// プレイヤー操作キャラクター
     /// </summary>
@@ -65,18 +78,31 @@ public class PartyStatusUI : MonoBehaviour
                 mps
             );
             
-            var chara = partyCharas[i].GetComponent<Status>();
-            playerStatusUIs[chara.GetCharacterStatus()] = ui;
+            var chara = _turnManager.CharacterInfos[partyCharas[i]].status.GetCharacterStatus();
+            playerStatusUIs[chara] = ui;
             //HPなどの情報を設定
-            playerStatusUIs[chara.GetCharacterStatus()].maxHpText.text = chara.GetCharacterStatus().MaxHp.ToString();
-            playerStatusUIs[chara.GetCharacterStatus()].currentHpText.text = chara.GetCharacterStatus().Hp.ToString();
+            playerStatusUIs[chara].maxHpText.text = chara.MaxHp.ToString();
+            playerStatusUIs[chara].currentHpText.text = chara.Hp.ToString();
             //Actionの登録
-            chara.GetCharacterStatus().onHpChanged += HpIncreaseOrDecrease;
-            chara.GetCharacterStatus().onMpAdd += MpAddUI;
-            chara.GetCharacterStatus().onMpReduce += MpReduceUI;
-            chara.GetCharacterStatus().onStatusDisplay += StatusUIDisplay;
-            
+            chara.onHpChanged += HpIncreaseOrDecrease;
+            chara.onMpAdd += MpAddUI;
+            chara.onMpReduce += MpReduceUI;
+            chara.onStatusDisplay += StatusUIDisplay;
             ui.uiObj.SetActive(false);
+        }
+        
+        //状態異常UIの生成位置を取得
+        foreach (var info in _turnManager.CharacterInfos)
+        {
+            //Enemyの場合、処理を飛ばす（Enemy用の状態異常UIが別に存在するため）
+            if(info.Value.characterName == "Enemy") continue;
+            
+            var status = info.Value.status.GetCharacterStatus();
+            var ui = playerStatusUIs[status].uiObj.transform.GetChild(6);
+            saGeneratePositions.Add(status, ui);
+            status.onStatusAbnormalityOccurrence += StatusAbnormalityUIGenerate;
+            status.onStatusAbnormalityProgress += StatusAbnormalityUIProgress;
+            status.onStatusAbnormalityEnd +=  StatusAbnormalityUIEnd;
         }
     }
 
@@ -156,6 +182,47 @@ public class PartyStatusUI : MonoBehaviour
         {
             var mps = playerStatusUIs[status].mps;
             mps[i].SetActive(false);
+        }
+    }
+
+    private void StatusAbnormalityUIGenerate(StatusAbnormalityInfo info, CharacterBaseStatus status)
+    {
+        //同じ状態異常だったらUIの生成は行わない
+        if(statusAbnormalityInfos.Any(kv => 
+               kv.Key.charaStatus == status && kv.Key.statusAbnormalityType == info.statusAbnormalityType)) return;
+        
+        //UIの生成
+        var objPos = saGeneratePositions[status];
+        var obj = Instantiate(_statusAbnormalityPrefab, objPos);
+        var image = obj.transform.GetChild(0).GetComponent<Image>();
+        var text = obj.transform.GetChild(1).GetComponent<TextMeshProUGUI>();
+        var uiInfo = new StatusAbnormalityUIInfo(obj, image, text);
+        uiInfo.ui = obj;
+        uiInfo.image.sprite = info.saSprite;
+        uiInfo.text.text = info.saDuration.ToString();
+        statusAbnormalityInfos.Add(info, uiInfo);
+    }
+
+    private void StatusAbnormalityUIProgress(CharacterBaseStatus status, StatusAbnormalityType type)
+    {
+        //状態異常を受けているキャラと状態異常が一致したら継続ターンの更新を行う
+        var sa = statusAbnormalityInfos.Keys.FirstOrDefault(kv =>
+            kv.charaStatus == status && kv.statusAbnormalityType == type);
+        if (sa != null && statusAbnormalityInfos.TryGetValue(sa, out var uiInfo))
+        {
+            sa.saDuration--;
+            uiInfo.text.text = sa.saDuration.ToString();
+        }
+    }
+
+    private void StatusAbnormalityUIEnd(CharacterBaseStatus status, StatusAbnormalityType type)
+    {
+        //終了した状態異常が一致したら、その状態異常を削除する
+        var sa = statusAbnormalityInfos.Keys.FirstOrDefault(kv =>
+            kv.charaStatus == status && kv.statusAbnormalityType == type);
+        if (sa != null && statusAbnormalityInfos.Remove(sa, out var uiInfo))
+        {
+            Destroy(uiInfo.ui);
         }
     }
 }

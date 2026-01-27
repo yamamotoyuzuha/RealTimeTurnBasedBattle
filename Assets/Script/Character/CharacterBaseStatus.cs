@@ -45,6 +45,21 @@ public class CharacterBaseStatus
     /// </summary>
     public Action<CharacterBaseStatus, bool> onStatusDisplay;
 
+    #region 状態異常関連のAction
+    /// <summary>
+    /// 状態異常が発生
+    /// </summary>
+    public Action<StatusAbnormalityInfo, CharacterBaseStatus> onStatusAbnormalityOccurrence;
+    /// <summary>
+    /// 状態異常が経過
+    /// </summary>
+    public Action<CharacterBaseStatus, StatusAbnormalityType> onStatusAbnormalityProgress;
+    /// <summary>
+    /// 状態異常が終了
+    /// </summary>
+    public Action<CharacterBaseStatus, StatusAbnormalityType> onStatusAbnormalityEnd;
+    #endregion
+
     /// <summary>
     /// 現在の状態異常
     /// </summary>
@@ -281,11 +296,14 @@ public class CharacterBaseStatus
     /// 状態異常開始
     /// 魔法の効果時に呼ぶ
     /// </summary>
-    public void StatusEffectInfliction(StatusAilment status)
+    public void StatusEffectInfliction(StatusAilment status, StatusAbnormalityType type, Sprite icon, int duration)
     {
         //状態異常を開始し、このキャラクターの状態異常を追加
         status.EffectGrant();
         statusAilments.Add(status);
+
+        var info = new StatusAbnormalityInfo(this, type, icon, duration);
+        onStatusAbnormalityOccurrence?.Invoke(info, this);
     }
 
     /// <summary>
