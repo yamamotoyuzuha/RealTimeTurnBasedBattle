@@ -25,7 +25,7 @@ public class StatusAbnormalityInfo
 
     public StatusAbnormalityInfo(CharacterBaseStatus status, StatusAbnormalityType type, Sprite sprite, int duration)
     {
-        //charaStatus = status;
+        charaStatus = status;
         statusAbnormalityType = type;
         saSprite = sprite;
         saDuration = duration;

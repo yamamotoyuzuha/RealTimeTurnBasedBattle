@@ -62,11 +62,13 @@ public class BuddyMonster : MonoBehaviour, Status, ICommand
         return buddyMonsterData.AttributesType;
     }
     
+    private MagicPanel magicPanel;
     private GameObject mainCamera;
     private Rigidbody rb;
 
     private Vector2 moveInput; //移動入力を保持
     private Vector3 moveOutPut; //カメラと移動入力を含めたベクトル
+    private Vector2 massMoveInput; //マス移動入力を保持
 
     private void Awake()
     {
@@ -79,7 +81,9 @@ public class BuddyMonster : MonoBehaviour, Status, ICommand
         //InputSystemを使えるようにする
         buddyMonsterInput = new BuddyMonsterInput();
         buddyMonsterInput.Enable();
-
+        
+        magicPanel = GetComponent<MagicPanel>();
+        
         mainCamera = GameObject.Find("Main Camera");
         rb = GetComponent<Rigidbody>();
     }
@@ -96,6 +100,15 @@ public class BuddyMonster : MonoBehaviour, Status, ICommand
             Debug.Log("バディモンがジャンプ");
         }
         */
+        
+        //マジックパネルを開いている状態でのマス移動
+        if (magicPanel.IsPanelOpen && massMoveInput.magnitude > 0)
+        {
+            magicPanel.PanelMassMovement(massMoveInput);
+
+            //入力を0にする
+            massMoveInput = Vector2.zero;
+        }
     }
 
     private void FixedUpdate()
@@ -116,8 +129,8 @@ public class BuddyMonster : MonoBehaviour, Status, ICommand
     /// </summary>
     public void OnMove(InputAction.CallbackContext context)
     {
-        //プレイヤーがライドしてないときは、移動しないようにする
-        //if (!player.IsRide) return;
+        //マジックパネルを開いているときは、動けないようにする
+        if (magicPanel.IsPanelOpen) return;
 
         moveInput = context.ReadValue<Vector2>();
     }
@@ -139,6 +152,17 @@ public class BuddyMonster : MonoBehaviour, Status, ICommand
     private bool IsGroudCheck()
     {
         return Physics.Raycast(transform.position, Vector3.down, buddyMonsterData.RayDistance);
+    }
+    
+    /// <summary>
+    /// マスの移動Action（BuddyMonsterInputから呼ばれる）
+    /// </summary>
+    public void OnMassMove(InputAction.CallbackContext context)
+    {
+        //マジックパネルを開いていないときは、処理をしない
+        if (!magicPanel.IsPanelOpen) return;
+        
+        massMoveInput = context.ReadValue<Vector2>();
     }
 
     /// <summary>

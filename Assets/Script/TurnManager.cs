@@ -262,6 +262,7 @@ public class TurnManager : MonoBehaviour
         if (status.IsUnderAbnormalStatus())
         {
             status.StatusEffectStart();
+            Debug.Log("状態異常があるため、効果を実行");
         }
     }
 
@@ -273,32 +274,40 @@ public class TurnManager : MonoBehaviour
     /// <param name="character">死亡したキャラクター</param>>
     private void DeceasedCharacterSetUp(GameObject character)
     {
-        CharacterInfos[character].state.ChangeCharacterState(CharacterStateType.Dead);
-        //死亡したキャラクターのアイコンを取得し、全て削除する
-        if(!characterIcons.TryGetValue(character, out List<GameObject> icons)) return;
-        foreach (var icon in icons)
+        //死亡しているキャラクターが存在している場合、処理を行う
+        if (CharacterInfos.TryGetValue(character, out var info))
         {
-            Destroy(icon);
-        }
-        
-        speedCharacterTurnQueue.Clear();
-        List<GameObject> characters = new List<GameObject>();
-        //死亡していないキャラクターのみ追加
-        foreach (var chara in fieldCharacter)
-        {
-            if(!CharacterInfos.ContainsKey(chara)) continue;
-            if (CharacterInfos[chara].state.characterState != CharacterStateType.Dead)
+            info.state.ChangeCharacterState(CharacterStateType.Dead);
+            //死亡したキャラクターのアイコンを取得し、全て削除する
+            if(!characterIcons.TryGetValue(character, out List<GameObject> icons)) return;
+            foreach (var icon in icons)
             {
-                characters.Add(chara);
-                Debug.Log(chara.name);
+                Destroy(icon);
             }
+            
+            speedCharacterTurnQueue.Clear();
+            List<GameObject> characters = new List<GameObject>();
+            //死亡していないキャラクターのみ追加
+            foreach (var chara in fieldCharacter)
+            {
+                if(!CharacterInfos.ContainsKey(chara)) continue;
+                if (CharacterInfos[chara].state.characterState != CharacterStateType.Dead)
+                {
+                    characters.Add(chara);
+                    Debug.Log(chara.name);
+                }
+            }
+            speedCharacterTurnQueue = new Queue<GameObject>(characters);
+            CurrentTurnCharacter = speedCharacterTurnQueue.Peek();
+            
+            //TODO：ここのところで状態異常のリストをクリアしてしまっているため、継続ダメージ処理のところでエラーが出ていると思う
+            //TODO：多分
+            //TODO：検証してみないとわからないかも、発動条件は状態異常の効果で倒したときにエラーが出ると思う
+            
+            //状態異常の解除を行ってから、死亡したキャラ情報の削除を行う
+            CharacterInfos[character].status.GetCharacterStatus().StatusAilmentsClear();
+            CharacterInfos.Remove(character);
         }
-        speedCharacterTurnQueue = new Queue<GameObject>(characters);
-        CurrentTurnCharacter = speedCharacterTurnQueue.Peek();
-        
-        //状態異常の解除と行ってから、死亡したキャラ情報の削除を行う
-        CharacterInfos[character].status.GetCharacterStatus().StatusAilmentsClear();
-        CharacterInfos.Remove(character);
     }
 
     /// <summary>

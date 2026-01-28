@@ -19,12 +19,14 @@ MonoBehaviour:
     type: 3}
   characterPrefab: {fileID: 4233443982562247026, guid: 906720f2e10109549912132a2838598f,
     type: 3}
-  hp: 100
-  mp: 0
+  hp: 500
+  mp: 8
   attack: 0
   defense: 0
   speed: 10
-  magicBaseData: []
+  magicBaseData:
+  - {fileID: 11400000, guid: f44e4c97014bbd54baa3c1dae82982aa, type: 2}
+  - {fileID: 11400000, guid: 93a220fb2d265d34986a2d0f7df93d6a, type: 2}
   _attributesType: 0
   actionType: 0
   buddyMonMoveSpeed: 5

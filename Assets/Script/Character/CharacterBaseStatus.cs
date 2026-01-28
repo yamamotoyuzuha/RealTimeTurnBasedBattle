@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 
@@ -298,9 +299,13 @@ public class CharacterBaseStatus
     /// </summary>
     public void StatusEffectInfliction(StatusAilment status, StatusAbnormalityType type, Sprite icon, int duration)
     {
-        //状態異常を開始し、このキャラクターの状態異常を追加
-        status.EffectGrant();
-        statusAilments.Add(status);
+        //状態異常が被っていない場合、状態異常を開始する
+        if (!statusAilments.Any(sa  => sa.StatusAbnormalityType == type))
+        {
+            //状態異常を開始し、このキャラクターの状態異常を追加
+            status.EffectGrant();
+            statusAilments.Add(status);
+        }
 
         var info = new StatusAbnormalityInfo(this, type, icon, duration);
         onStatusAbnormalityOccurrence?.Invoke(info, this);
@@ -315,10 +320,14 @@ public class CharacterBaseStatus
         //状態異常がある場合、効果を受ける
         for (int i = statusAilments.Count - 1; i >= 0; i--)
         {
+            Debug.Log(statusAilments.Count + "状態異常効果を呼ぶ前");
             statusAilments[i].EffectActivation(this);
+            Debug.Log(statusAilments.Count + "状態異常効果を呼んだ後");
+            onStatusAbnormalityProgress?.Invoke(this, statusAilments[i].StatusAbnormalityType);
             if (statusAilments[i].IsEnd)
             {
                 statusAilments[i].EffectEnd();
+                onStatusAbnormalityEnd?.Invoke(this, statusAilments[i].StatusAbnormalityType);
                 statusAilments.RemoveAt(i);
             }
         }

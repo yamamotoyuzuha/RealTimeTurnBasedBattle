@@ -244,6 +244,7 @@ public class BattleManager : MonoBehaviour
         turnManager.onTurnIconDisplay?.Invoke(false);
         _partyStatusUI.onPartyStatusDisplay?.Invoke(false);
         _enemyStatusUI.onEnemyStatusDisplay?.Invoke(false);
+        _enemyStatusUI.onStatusAbnormalityDisplay?.Invoke(false);
         _battleCommandUI.OnConfirmedCommandUIDisplay?.Invoke(false);
         _behaviorDisplayUI.OnActionUIDisplay?.Invoke("", false);
     }
@@ -330,6 +331,10 @@ public class BattleManager : MonoBehaviour
         }
         else
         {
+            //TODO：全体攻撃の場合、リターンをしてしまうと処理がそれでおわってしまうのかもしれない
+            //TODO：なぜかUIが片方しか表示されないときがある
+            //TODO：どうするか考えておく
+            
             //プレイヤーキャラクターが生存しているときのみ、処理を通す
             if(turnManager.CharacterInfos.Count == 0) return;
             //フィールドにいるプレイヤーキャラクターにダメージを与える
@@ -350,6 +355,7 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     private void AttackDamageTarget(Status targetStatus, Status enemyStatus)
     {
+        Debug.Log("ダメージを与えるターゲット" + targetStatus.GetData().CharacterName);
         //ターゲットが防御アクションを行っているのか判定
         var dAction = targetStatus.GetCharacterStatus().DefenseActionJudgment();
         switch (dAction)
@@ -358,15 +364,30 @@ public class BattleManager : MonoBehaviour
                 Debug.Log("パリィではじかれた");
                 targetStatus.GetCharacterStatus().ParrySuccessProcessing(1);
                 enemyStatus.GetCharacterStatus().SetResultDefenseActionType(DefenseActionType.Parry);
-                return;
+                break;
             case DefenseActionType.JustGuard:
                 Debug.Log("ジャストガードで受け流された");
                 targetStatus.GetCharacterStatus().JustGuardProcessing();
                 enemyStatus.GetCharacterStatus().SetResultDefenseActionType(DefenseActionType.JustGuard);
-                return;
+                break;
+            default:
+                //攻撃力を取得し、ターゲットにダメージを与える
+                var enemyAttack = enemyStatus.GetCharacterStatus().Attack;
+                targetStatus.GetCharacterStatus().Damage(enemyAttack);
+        
+                //TODO：魔法だけでなく、caseに攻撃を増やす
+                var aData = enemyStatus.GetCharacterStatus().CharacterCommandActionData;
+                switch (aData.GetCommandType())
+                {
+                    case CharacterCommandActionType.Magic:
+                        var magic = aData.GetMagicBaseData();
+                        magic.MagicAction(targetStatus.GetCharacterStatus());
+                        break;
+                }
+                break;
         }
         
-        
+        /*
         //攻撃力を取得し、ターゲットにダメージを与える
         var enemyAttack = enemyStatus.GetCharacterStatus().Attack;
         targetStatus.GetCharacterStatus().Damage(enemyAttack);
@@ -381,7 +402,9 @@ public class BattleManager : MonoBehaviour
                 break;
         }
         
+        
         Debug.Log("Enemyがプレイヤーにダメージを与える");
+        */
     }
     
     /// <summary>

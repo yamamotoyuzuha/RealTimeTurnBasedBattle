@@ -25,6 +25,10 @@ public class EnemyStatusUI : MonoBehaviour
     /// true：表示　false：非表示
     /// </summary>
     public Action<bool> onEnemyStatusDisplay;
+    /// <summary>
+    /// 状態異常UIの表示、非表示
+    /// </summary>
+    public Action<bool> onStatusAbnormalityDisplay;
     
     //ステータスUI関連
     private GameObject statusUIPrefabInstance;
@@ -72,6 +76,7 @@ public class EnemyStatusUI : MonoBehaviour
         characterBaseStatus.onStatusAbnormalityOccurrence += StatusAilmentUIGenerate;
         characterBaseStatus.onStatusAbnormalityProgress += StatusAbnormalityUIProgress;
         characterBaseStatus.onStatusAbnormalityEnd += StatusAbnormalityUIEnd;
+        onEnemyStatusDisplay += StatusAbnormalityUIDisplay;
     }
 
     /// <summary>
@@ -140,6 +145,18 @@ public class EnemyStatusUI : MonoBehaviour
         if (sa != null && statusAbnormalityInfos.Remove(sa, out var uiInfo))
         {
             Destroy(uiInfo.ui);
+        }
+    }
+
+    /// <summary>
+    /// 状態異常UIの表示、非表示
+    /// </summary>
+    /// <param name="isDisplay">true：表示　false：非表示</param>
+    private void StatusAbnormalityUIDisplay(bool isDisplay)
+    {
+        foreach (var info in statusAbnormalityInfos)
+        {
+            info.Value.ui.SetActive(isDisplay);
         }
     }
 }

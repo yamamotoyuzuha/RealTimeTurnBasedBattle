@@ -32,6 +32,11 @@ public abstract class StatusAilment
     /// true：終了した　false：終了していない
     /// </summary>
     public bool IsEnd {get; protected set;}
+
+    /// <summary>
+    /// 状態異常の種類
+    /// </summary>
+    public StatusAbnormalityType StatusAbnormalityType {get; protected set;}
 }
 
 /// <summary>
@@ -46,10 +51,12 @@ public class FlameEffect : StatusAilment
     /// </summary>
     /// <param name="damage">持続ダメージ</param>
     /// <param name="sustainability">持続ターン</param>
-    public FlameEffect(int damage, int sustainability)
+    /// <param name="type">状態異常の種類</param>>
+    public FlameEffect(int damage, int sustainability, StatusAbnormalityType type)
     {
         flameDamage = damage;
         Sustainability = sustainability;
+        StatusAbnormalityType = type;
     }
     
     public override void EffectGrant()
