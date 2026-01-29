@@ -94,6 +94,7 @@ public class CommandInputManager : MonoBehaviour
                 _battleCameraAngleManager.BattleCameraAngleChange(BattleCameraActiveType.MagicPanelStart,
                     cameraSet.MagicPanelStartCamPosF, cameraSet.MagicPanelStartCamPosL);
                 _battleCommandUI.UndoMagicUIText();
+                BattleOperatingInstructionsUI.Instance.HiddenUI();
                 turnManager.TurnCharacterCommandUI(turnManager.CurrentTurnCharacter, false);
                 ResetCommandFlag();
                 onCommandInputComplete?.Invoke();
@@ -160,6 +161,7 @@ public class CommandInputManager : MonoBehaviour
             isMagicUISelected = true;
             battle.BattleCameraAngleChange(BattleCameraActiveType.ActionConfirmed, 
                 cameraSet.ActionConfirmedCamPosF, cameraSet.ActionConfirmedCamPosL);
+            BattleOperatingInstructionsUI.Instance.CommandSelectionUI();
             
             Debug.Log("魔法");
         }
@@ -169,6 +171,7 @@ public class CommandInputManager : MonoBehaviour
             isAttackUISelected = true;
             battle.BattleCameraAngleChange(BattleCameraActiveType.ActionConfirmed, 
                 cameraSet.ActionConfirmedCamPosF, cameraSet.ActionConfirmedCamPosL);
+            BattleOperatingInstructionsUI.Instance.CommandSelectionUI();
             Debug.Log("攻撃");
         }
         else if (commandInput.Player.Item.triggered && isInput)
@@ -177,6 +180,7 @@ public class CommandInputManager : MonoBehaviour
             isItemUISelected = true;
             battle.BattleCameraAngleChange(BattleCameraActiveType.ActionConfirmed, 
                 cameraSet.ActionConfirmedCamPosF, cameraSet.ActionConfirmedCamPosL);
+            BattleOperatingInstructionsUI.Instance.CommandSelectionUI();
             Debug.Log("アイテム");
         }
         
@@ -191,6 +195,8 @@ public class CommandInputManager : MonoBehaviour
                 CurrentMagic = null; //魔法コマンドを選択してない状態にする
                 battle.BattleCameraAngleChange(BattleCameraActiveType.ActionConfirmed, 
                     cameraSet.ActionConfirmedCamPosF, cameraSet.ActionConfirmedCamPosL);
+                BattleOperatingInstructionsUI.Instance.CommandSelectionUI();
+                
                 return;
             }
             
@@ -204,6 +210,7 @@ public class CommandInputManager : MonoBehaviour
             //カメラアングルを元に戻す
             battle.BattleCameraAngleChange(BattleCameraActiveType.ActionConfirmed, 
                 cameraSet.DefaultCamPosF, cameraSet.DefaultCamPosL);
+            BattleOperatingInstructionsUI.Instance.HiddenUI();
             
             Debug.Log("戻る");
         }
@@ -244,18 +251,21 @@ public class CommandInputManager : MonoBehaviour
             SetMagicBaseData(0);
             battle.BattleCameraAngleChange(BattleCameraActiveType.CommandConfirmed,
                 cameraSet.CommandConfirmedCamPosF, cameraSet.CommandConfirmedCamPosL);
+            BattleOperatingInstructionsUI.Instance.CommandConfirmedUI();
         }
         else if (commandInput.Player.MagicCommand1.triggered)
         {
             SetMagicBaseData(1);
             battle.BattleCameraAngleChange(BattleCameraActiveType.CommandConfirmed,
                 cameraSet.CommandConfirmedCamPosF, cameraSet.CommandConfirmedCamPosL);
+            BattleOperatingInstructionsUI.Instance.CommandConfirmedUI();
         }
         else if (commandInput.Player.MagicCommand2.triggered)
         {
             SetMagicBaseData(2);
             battle.BattleCameraAngleChange(BattleCameraActiveType.CommandConfirmed,
                 cameraSet.CommandConfirmedCamPosF, cameraSet.CommandConfirmedCamPosL);
+            BattleOperatingInstructionsUI.Instance.CommandConfirmedUI();
         }
         
         //魔法コマンドの左右を変更する

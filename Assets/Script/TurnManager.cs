@@ -51,6 +51,12 @@ public class TurnManager : MonoBehaviour
             NextTurnCharacterSet();
         };
         onTurnIconDisplay += TurnIconDisplay;
+        
+        //現在のターンがEnemy場合、防御アクションUIを表示する
+        if (!PlayableCharacterJudgment(CurrentTurnCharacter))
+        {
+            BattleOperatingInstructionsUI.Instance.DefenseActionUI(true);
+        }
     }
     
     private void Update()
@@ -248,6 +254,7 @@ public class TurnManager : MonoBehaviour
             //パリィが出来る状態にする
             battle.BattleCameraAngleChange(BattleCameraActiveType.EAction, battle.EActionPosF, battle.EActionPosL);
             PlayerCharacterStateChanged(CharacterStateType.BeforeAttack);
+            BattleOperatingInstructionsUI.Instance.DefenseActionUI(true);
             onEnemyTurnStart?.Invoke();
         }
         else

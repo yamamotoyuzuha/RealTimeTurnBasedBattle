@@ -3,13 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class CommandUI : MonoBehaviour
 {
-    /*
-    [Header("CommandInputManager")]
-    [SerializeField] private CommandInputManager commandInputManager;
-    */
     [Header("魔法UI")]
     [SerializeField] private GameObject magicUIObj;
     [Header("各魔法UI")]
@@ -76,15 +73,6 @@ public class CommandUI : MonoBehaviour
         attackUIObj.SetActive(isFlag);
         itemUIObj.SetActive(isFlag);
         
-        /*
-        //CommandInputManagerにCommandUIを渡す
-        if(isFlag) commandInputManager.GetCommandUI(this);
-        else
-        {
-            commandInputManager.GetCommandUI(null);
-            MagicUIHidden();
-        }
-        */
         if(isFlag) CommandInputManager.Instance.GetCommandUI(this);
         else
         {
@@ -237,6 +225,7 @@ public class CommandUI : MonoBehaviour
         //魔法のデータ分UIを生成する
         for (int i = 0; i < characterBaseData.MagicBaseData.Length; i++)
         {
+            var index = i % 3;
             if (i > 2) //右側に生成
             {
                 //UIを生成
@@ -248,12 +237,15 @@ public class CommandUI : MonoBehaviour
                 magicName.text = magicBaseDatas[i].MagicName;
                 var magicExplanation = eachMagic.transform.GetChild(3).GetComponent<TextMeshProUGUI>();
                 magicExplanation.text = magicBaseDatas[i].MagicExplanation;
-                
                 var notSelectedName = notSelected.transform.GetChild(1).GetComponent<TextMeshProUGUI>();
                 notSelectedName.text = magicBaseDatas[i].MagicName;
-                
                 //MPの消費コストをUIに反映
-                //TODO：テキストを取得して、魔法データから情報を反映させる
+                var mpText = eachMagic.transform.GetChild(4).transform.GetChild(1).GetComponent<TextMeshProUGUI>();
+                mpText.text = magicBaseDatas[i].ConsumptionMp.ToString();
+                
+                //操作アイコンを設定
+                var opImage = eachMagic.transform.GetChild(1).GetComponent<Image>();
+                opImage.sprite = OperationDataManager.Instance.OperationUIData.CommandInputSprites[index];
                 
                 EachMagicRight.Add(magicBaseDatas[i]);
             }
@@ -267,9 +259,13 @@ public class CommandUI : MonoBehaviour
                 magicName.text = magicBaseDatas[i].MagicName;
                 var magicExplanation = eachMagic.transform.GetChild(3).GetComponent<TextMeshProUGUI>();
                 magicExplanation.text = magicBaseDatas[i].MagicExplanation;
-                
                 var notSelectedName = notSelected.transform.GetChild(1).GetComponent<TextMeshProUGUI>();
                 notSelectedName.text = magicBaseDatas[i].MagicName;
+                var mpText = eachMagic.transform.GetChild(4).transform.GetChild(1).GetComponent<TextMeshProUGUI>();
+                mpText.text = magicBaseDatas[i].ConsumptionMp.ToString();
+                
+                var opImage = eachMagic.transform.GetChild(1).GetComponent<Image>();
+                opImage.sprite = OperationDataManager.Instance.OperationUIData.CommandInputSprites[index];
                 
                 //魔法をUIに基づいた順でリストに追加していく
                 EachMagicLeft.Add(magicBaseDatas[i]);
@@ -289,17 +285,6 @@ public class CommandUI : MonoBehaviour
         //各魔法のUIのImageColorControllerを取得する
         for (int i = 0; i < eachMagicParentLeft.childCount; i++)
         {
-            //i番目のPrefabを取得して、ImageColorControllerを配列に格納
-            /*
-            var leftChild = eachMagicParentLeft.GetChild(i); //i番目のPrefabを取得
-            leftColorController[i] = leftChild.GetChild(0).GetComponent<ImageColorController>();
-            var rightChild = eachMagicParentRight.GetChild(i);
-            rightColorController[i] = rightChild.GetChild(0).GetComponent<ImageColorController>();
-            var notSelectedLeftChild = notSelectedParentLeft.GetChild(i);
-            notSelectedLeftColorController[i] = notSelectedLeftChild.GetChild(0).GetComponent<ImageColorController>();
-            var notSelectedRightChild = notSelectedParentRight.GetChild(i);
-            notSelectedRightColorController[i] = notSelectedRightChild.GetChild(0).GetComponent<ImageColorController>();
-            */
             //i番目のPrefabを取得して、ImageColorControllerに格納
             if (eachMagicParentLeft.childCount != 0)
             {

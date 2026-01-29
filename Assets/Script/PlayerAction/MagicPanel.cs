@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Random = UnityEngine.Random;
@@ -23,6 +24,14 @@ public class MagicPanel : MonoBehaviour
     [Header("現在のマスの表示")]
     [SerializeField] private GameObject currentMass;
     private RectTransform currentMassRect;
+    [Header("魔法パネルの操作UI")] 
+    [SerializeField] private GameObject _mPanelOperationUI;
+    [Header("操作UIの生成場所")] 
+    [SerializeField] private Transform _mPanelParent;
+    [Header("操作UIのPrefab")]
+    [SerializeField] private GameObject _mPanelPrefab;
+    [Header("操作UIのText内容")]
+    [SerializeField] private string[] _operationTextContent;
 
     public bool IsPanelOpen => isPanelOpen;
     private bool isPanelOpen; //パネルを開いているか
@@ -55,7 +64,7 @@ public class MagicPanel : MonoBehaviour
     
     //TODO：再生成は完了
     //TODO：途中で縦横の幅を変更すると、配列がぐちゃぐちゃになるから初期化して配列の大きさを変更する
-
+    
     // Start is called before the first frame update
     void Start()
     {
@@ -75,6 +84,8 @@ public class MagicPanel : MonoBehaviour
         
         //ステータスを取得
         status = GetComponent<Status>();
+        
+        OperationUISettings();
     }
 
     // Update is called once per frame
@@ -106,6 +117,31 @@ public class MagicPanel : MonoBehaviour
         this.verticalSize = verticalSize;
         this.horizontalSize = horizontalSize;
     }
+    
+    /// <summary>
+    /// 魔法パネル操作UIの設定
+    /// ・生成
+    /// </summary>
+    private void OperationUISettings()
+    {
+        //マス移動の方向分、UIを生成（上下左右）
+        for (int i = 0; i < 4; i++)
+        {
+            var obj = Instantiate(_mPanelPrefab, _mPanelParent);
+            var text = _mPanelParent.transform.GetChild(i).transform.GetChild(1).GetComponent<TextMeshProUGUI>();
+            text.text =  _operationTextContent[i];
+        }
+        OperationUIDisplay(false);
+    }
+    
+    /// <summary>
+    /// 魔法パネル操作UIの表示、非表示
+    /// </summary>
+    /// <param name="isDisplay">true：表示　false：非表示</param>
+    private void OperationUIDisplay(bool isDisplay)
+    {
+        _mPanelOperationUI.SetActive(isDisplay);
+    }
 
     /// <summary>
     /// マジックパネルの表示切り替え
@@ -118,6 +154,7 @@ public class MagicPanel : MonoBehaviour
 
             currentMass.gameObject.SetActive(true);
             GenerationPanelMass();
+            OperationUIDisplay(true);
         }
         else //非表示
         {
@@ -125,6 +162,7 @@ public class MagicPanel : MonoBehaviour
 
             currentMass.gameObject.SetActive(false);
             DestroyMass();
+            OperationUIDisplay(false);
         }
     }
 

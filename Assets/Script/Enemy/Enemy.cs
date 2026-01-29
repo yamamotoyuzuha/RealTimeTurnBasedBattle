@@ -152,6 +152,7 @@ public class Enemy : MonoBehaviour, Status, EnemyBase
         EnemyAttack();
         Debug.Log("攻撃を終了");
         OnEnemyAction?.Invoke("", false);
+        BattleOperatingInstructionsUI.Instance.DefenseActionUI(false);
         
         var defense = characterBaseStatus.ResultDefenseActionType;
         if (defense != DefenseActionType.None)
