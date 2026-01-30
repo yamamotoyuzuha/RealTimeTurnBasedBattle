@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
+using Unity.VisualScripting;
 
 public class BattleManager : MonoBehaviour
 {
@@ -151,7 +152,7 @@ public class BattleManager : MonoBehaviour
                     break;
                 
                 case CommandState.Attack:
-                    AttackAction();
+                    await AttackAction(character);
                     CharacterEndAction();
                     break;
                 
@@ -187,7 +188,6 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     private void CharacterEndAction()
     {
-        //TODO：ここで勝敗UI以外のUIを非表示にする処理を追加する
         if (PlayerCheckingIfAlive())
         {
             Time.timeScale = 0;
@@ -262,11 +262,12 @@ public class BattleManager : MonoBehaviour
         var magicPanel = character.GetComponent<MagicPanel>();
         magicPanel.MagicPanelToggle();
         
-        //魔法パネルの表示待機時間を取得し、待機する
+        //魔法パネルの表示待機時間を取得
         var magic = commandInputManager.CurrentMagic;
         var disPlayTime = magic.MagicPanelDisplayTime;
-        await UniTask.Delay(TimeSpan.FromSeconds(disPlayTime));
-        
+        //魔法パネルの表示時間経過かクリアされるのどちらか早い方を待つ
+        await UniTask.WhenAny(UniTask.Delay(TimeSpan.FromSeconds(disPlayTime)),
+            magicPanel.MagicPanelCompleted());
         //表示時間以内に魔法パネルをクリア出来ていなかったら非表示にする
         if (!magicPanel.IsMagicPanelClear) magicPanel.MagicPanelToggle();
         
@@ -294,9 +295,16 @@ public class BattleManager : MonoBehaviour
     /// <summary>
     /// 通常攻撃の処理
     /// </summary>
-    private void AttackAction()
+    private async UniTask AttackAction(GameObject character)
     {
+        //通常攻撃のため、MPを増やす
+        var playerStatus = turnManager.CharacterInfos[character].status.GetCharacterStatus();
+        playerStatus.AddMp(1);
         
+        var enemyStatus = GetEnemyBaseStatus();
+        await UniTask.Delay(TimeSpan.FromSeconds(2)); //アニメーション時間分待機
+        enemyStatus.Damage(playerStatus.Attack);
+        await UniTask.Delay(TimeSpan.FromSeconds(1)); //元の位置に戻る
     }
 
     /// <summary>
@@ -306,7 +314,23 @@ public class BattleManager : MonoBehaviour
     {
         
     }
-    
+
+    /// <summary>
+    /// EnemyのCharacterBaseStatusを取得する
+    /// </summary>
+    /// <returns>EnemyのCharacterBaseStatus</returns>
+    private CharacterBaseStatus GetEnemyBaseStatus()
+    {
+        foreach (var characterInfo in turnManager.CharacterInfos)
+        {
+            if (characterInfo.Value.characterName == "Enemy")
+            {
+                return characterInfo.Value.status.GetCharacterStatus();
+            }
+        }
+
+        return null;
+    }
     
     //ここからがEnemyの処理
     /// <summary>

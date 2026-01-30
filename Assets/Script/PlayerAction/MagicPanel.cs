@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
@@ -32,16 +33,15 @@ public class MagicPanel : MonoBehaviour
     [SerializeField] private GameObject _mPanelPrefab;
     [Header("操作UIのText内容")]
     [SerializeField] private string[] _operationTextContent;
-
     public bool IsPanelOpen => isPanelOpen;
     private bool isPanelOpen; //パネルを開いているか
-
+    //生成したUI関連
     private GameObject[,] panel;
     private Image[,] panelImage;
     private RectTransform[,] rectTransforms;
     private MassStatus[,] panelMassStatus; //生成したマスのMassStatusを格納
     private List<GameObject> passedConnectMass; //通ったマスの保持
-
+    //マスの位置関連
     private int currentX; //現在のマスのXの保持
     private int currentY; //現在のマスのYの保持
     private int effectMassCount; //通った効果マスの数
@@ -55,12 +55,11 @@ public class MagicPanel : MonoBehaviour
     private bool isPanelClearCheck; //生成したパネルがゴール出来るか
     private bool isMagicPanelClear; //魔法パネルをクリアしたか　追加　いるのかわからない
     public bool IsMagicPanelClear => isMagicPanelClear;
-
     /// <summary>
     /// このキャラクターのステータスを保持
     /// </summary>
     private Status status;
-    
+    private UniTaskCompletionSource compSource;
     
     //TODO：再生成は完了
     //TODO：途中で縦横の幅を変更すると、配列がぐちゃぐちゃになるから初期化して配列の大きさを変更する
@@ -108,6 +107,23 @@ public class MagicPanel : MonoBehaviour
     }
 
     /// <summary>
+    /// 魔法パネルのクリアを待つ用
+    /// </summary>
+    /// <returns></returns>
+    public UniTask MagicPanelCompleted()
+    {
+        compSource = new UniTaskCompletionSource();
+        return compSource.Task;
+    }
+    /// <summary>
+    /// 魔法パネルをクリアしたとき
+    /// </summary>
+    private void MagicPanelClear()
+    {
+        compSource?.TrySetResult();
+    }
+
+    /// <summary>
     /// パネルサイズの設定
     /// </summary>
     /// <param name="verticalSize">縦</param>
@@ -140,6 +156,7 @@ public class MagicPanel : MonoBehaviour
     /// <param name="isDisplay">true：表示　false：非表示</param>
     private void OperationUIDisplay(bool isDisplay)
     {
+        isMagicPanelClear = true;
         _mPanelOperationUI.SetActive(isDisplay);
     }
 
@@ -337,7 +354,7 @@ public class MagicPanel : MonoBehaviour
     /// <summary>
     /// ゴールマスを配置する
     /// </summary>
-    private void GoalMassSetUp() //ゴールマスをパネルの中心に配置する　追加
+    private void GoalMassSetUp() //ゴールマスをパネルの中心に配置する
     {
         //縦横が偶数か奇数かで判定する
         if (verticalSize % 2 == 0)
@@ -647,9 +664,9 @@ public class MagicPanel : MonoBehaviour
         Debug.Log("ゴールまでつなげられた");
         
         //魔法パネルをクリア判定にする
-        isMagicPanelClear = true;
+        //isMagicPanelClear = true;
 
-        //効果マスの保持　追加
+        //効果マスの保持
         List<MagicMassData> effectMass =  new List<MagicMassData>();
         
         //通ったマスの判定をしていく
@@ -662,14 +679,14 @@ public class MagicPanel : MonoBehaviour
                 effectMassCount++;
                 Debug.Log("通った効果マスの数" + effectMassCount);
                 
-                //効果マスを追加する　追加
+                //効果マスを追加する
                 effectMass.Add(connectData);
             }
         }
 
         //内容を判定
         EffectSquareContentAssessment(effectMass);
-
+        MagicPanelClear();
         //マジックパネルを非表示にする
         MagicPanelToggle();
     }

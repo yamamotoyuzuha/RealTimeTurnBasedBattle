@@ -162,6 +162,7 @@ public class CommandUI : MonoBehaviour
                 break;
             
             case CommandState.Attack:
+                CommandUIChangeHidden(false);
                 break;
             
             case CommandState.Item:

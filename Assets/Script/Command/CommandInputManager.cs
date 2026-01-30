@@ -87,6 +87,7 @@ public class CommandInputManager : MonoBehaviour
         //デバッグ用　コマンド決定
         if (Input.GetKeyDown(KeyCode.Return))
         {
+            /*
             //コマンドが確定している状態ならターンを開始する
             if (isConfirmCommand)
             {
@@ -100,6 +101,8 @@ public class CommandInputManager : MonoBehaviour
                 onCommandInputComplete?.Invoke();
                 isConfirmCommand = false; //コマンドを確定していない状態にする
             }
+            */
+            ConfirmCommand();
         }
 
         //デバック用　バトル開始
@@ -109,6 +112,33 @@ public class CommandInputManager : MonoBehaviour
             ResetCommandFlag();
             onCommandInputComplete?.Invoke();
         }
+    }
+
+    /// <summary>
+    /// どのコマンドで確定したかを判定してターンを開始する
+    /// </summary>
+    private void ConfirmCommand()
+    {
+        if(!isConfirmCommand) return;
+
+        var cameraSet = turnManager.CharacterInfos[turnManager.CurrentTurnCharacter].cameraSettings;
+        //魔法の場合、魔法パネルがあるためそのカメラアングルに移動させる
+        if (isMagicUISelected)
+        {
+            _battleCameraAngleManager.BattleCameraAngleChange(BattleCameraActiveType.MagicPanelStart,
+                cameraSet.MagicPanelStartCamPosF, cameraSet.MagicPanelStartCamPosL);
+        }
+        else
+        {
+            _battleCameraAngleManager.BattleCameraAngleChange(BattleCameraActiveType.StartAction,
+                cameraSet.StartActionCamPosF, cameraSet.StartActionCamPosL);
+        }
+        _battleCommandUI.UndoMagicUIText();
+        BattleOperatingInstructionsUI.Instance.HiddenUI();
+        turnManager.TurnCharacterCommandUI(turnManager.CurrentTurnCharacter, false);
+        ResetCommandFlag();
+        onCommandInputComplete?.Invoke();
+        isConfirmCommand = false; //コマンドを確定していない状態にする
     }
 
     /// <summary>
@@ -124,10 +154,6 @@ public class CommandInputManager : MonoBehaviour
             //選択した魔法コマンドをBattleCanvasに表示する
             _battleCommandUI.SetMagicUIText(CurrentMagic);
             isConfirmCommand = true;
-        }
-        else if (isAttackUISelected)
-        {
-            
         }
         else if (isItemUISelected)
         {
@@ -168,15 +194,19 @@ public class CommandInputManager : MonoBehaviour
         else if (commandInput.Player.Attack.triggered && isInput)
         {
             turnManager.CharacterCommandStateChanged(CommandState.Attack);
+            currentCharacterCommandUI.ShowCommandUI(CommandState.Attack);
             isAttackUISelected = true;
-            battle.BattleCameraAngleChange(BattleCameraActiveType.ActionConfirmed, 
-                cameraSet.ActionConfirmedCamPosF, cameraSet.ActionConfirmedCamPosL);
-            BattleOperatingInstructionsUI.Instance.CommandSelectionUI();
+            battle.BattleCameraAngleChange(BattleCameraActiveType.CommandConfirmed,
+                cameraSet.CommandConfirmedCamPosF, cameraSet.CommandConfirmedCamPosL);
+            BattleOperatingInstructionsUI.Instance.CommandConfirmedUI();
+            //通常攻撃は選ぶ内容がないため、確定状態にする
+            isConfirmCommand = true;
             Debug.Log("攻撃");
         }
         else if (commandInput.Player.Item.triggered && isInput)
         {
             turnManager.CharacterCommandStateChanged(CommandState.Item);
+            currentCharacterCommandUI.ShowCommandUI(CommandState.Item);
             isItemUISelected = true;
             battle.BattleCameraAngleChange(BattleCameraActiveType.ActionConfirmed, 
                 cameraSet.ActionConfirmedCamPosF, cameraSet.ActionConfirmedCamPosL);
