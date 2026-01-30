@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using UnityEngine;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class CommandUI : MonoBehaviour
@@ -19,7 +20,12 @@ public class CommandUI : MonoBehaviour
     [SerializeField] private GameObject eachMagicObj;
     public List<MagicBaseData> EachMagicLeft { get; private set; } = new List<MagicBaseData>();
     public List<MagicBaseData> EachMagicRight { get; private set; } = new List<MagicBaseData>();
-
+    [Header("各魔法の切り替えUI")]
+    [SerializeField] private GameObject _eachMagicChangeUI;
+    [Header("切り替えUI（左）")]
+    [SerializeField] private EachMagicChangeUI _changeUILeft;
+    [Header("切り替えUI（右）")]
+    [SerializeField] private EachMagicChangeUI _changeUIRight;
     [Header("魔法の名前UIの生成場所")] 
     [SerializeField] private Transform notSelectedParentLeft;
     [SerializeField] private Transform notSelectedParentRight;
@@ -31,22 +37,58 @@ public class CommandUI : MonoBehaviour
     [Header("アイテムUI")]
     [SerializeField] private GameObject itemUIObj;
     private List<GameObject> eachItem = new List<GameObject>();
-
+    //キャラクター関連
     private GameObject characterObj; //キャラクター
     private Status characterStatus; //キャラクターのステータスを保持
     private CharacterBaseData characterBaseData; //キャラクターのデータを保持
-
     /// <summary>
     /// true：左　false：右
     /// </summary>
     public bool IsCurrentSelectedMagic { get; private set; }
-
     //各魔法のUIのImageColorControllerを保持する
     private ImageColorController[] leftColorController;
     private ImageColorController[] rightColorController;
     private ImageColorController[] notSelectedLeftColorController;
     private ImageColorController[] notSelectedRightColorController;
+    
+    /// <summary>
+    /// 各魔法の切り替えUI
+    /// </summary>
+    [Serializable]
+    public class EachMagicChangeUI
+    {
+        [Header("Dot")]
+        [SerializeField] private Image _dotImage;
+        [Header("Arrow")]
+        [SerializeField] private Image _arrowImage;
 
+        public EachMagicChangeUI(Image dot, Image arrow)
+        {
+            _dotImage = dot;
+            _arrowImage = arrow;
+        }
+        
+        /// <summary>
+        /// Imageの色を変更
+        /// </summary>
+        /// <param name="color">変更する色</param>
+        public void ImageChange(Color color)
+        {
+            _dotImage.color = color;
+            _arrowImage.color = color;
+        }
+
+        /// <summary>
+        /// Imageの表示、非表示を行う
+        /// </summary>
+        /// <param name="isDisplay">true：表示　false：非表示</param>
+        public void ImageDisplay(bool isDisplay)
+        {
+            _dotImage.gameObject.SetActive(isDisplay);
+            _arrowImage.gameObject.SetActive(isDisplay);
+        }
+    }
+    
     void Awake()
     {
         //親オブジェクトであるキャラクターのデータを取得する
@@ -61,6 +103,25 @@ public class CommandUI : MonoBehaviour
         ToggleCommandUI(false);
         EachMagicUIGenerate();
         MagicUIHidden();
+        EachActionUIIconSettings();
+    }
+    
+    /// <summary>
+    /// 各行動UIアイコンの設定
+    /// ・魔法
+    /// ・攻撃
+    /// ・アイテム
+    /// </summary>
+    private void EachActionUIIconSettings()
+    {
+        var magic = magicUIObj.transform.GetChild(1).GetComponent<Image>();
+        var attack = attackUIObj.transform.GetChild(1).GetComponent<Image>();
+        var item = itemUIObj.transform.GetChild(1).GetComponent<Image>();
+        var ope = OperationDataManager.Instance.OperationUIData;
+
+        magic.sprite = ope.CommandInputSprites[0];
+        attack.sprite = ope.CommandInputSprites[1];
+        item.sprite = ope.CommandInputSprites[2];
     }
 
     /// <summary>
@@ -93,9 +154,11 @@ public class CommandUI : MonoBehaviour
                 notSelectedParentRight.gameObject.SetActive(true);
                 eachMagicParentLeft.gameObject.SetActive(true);
                 eachMagicParentRight.gameObject.SetActive(false);
+                _eachMagicChangeUI.SetActive(true);
                 IsCurrentSelectedMagic = true;
                 
                 CommandUIChangeHidden(false);
+                EachMagicChangeUIToggle(true);
                 break;
             
             case CommandState.Attack:
@@ -133,6 +196,8 @@ public class CommandUI : MonoBehaviour
                     eachMagicParentLeft.gameObject.SetActive(false);
                     eachMagicParentRight.gameObject.SetActive(true);
                     IsCurrentSelectedMagic = false;
+                    
+                    EachMagicChangeUIToggle(false);
                 }
                 else //右側が表示されている状態
                 {
@@ -141,6 +206,8 @@ public class CommandUI : MonoBehaviour
                     eachMagicParentLeft.gameObject.SetActive(true);
                     eachMagicParentRight.gameObject.SetActive(false);
                     IsCurrentSelectedMagic = true;
+                    
+                    EachMagicChangeUIToggle(true);
                 }
                 break;
             
@@ -161,6 +228,29 @@ public class CommandUI : MonoBehaviour
         eachMagicParentRight.gameObject.SetActive(false);
         notSelectedParentLeft.gameObject.SetActive(false);
         notSelectedParentRight.gameObject.SetActive(false);
+        _eachMagicChangeUI.SetActive(false);
+    }
+
+    /// <summary>
+    /// 各魔法の切り替えUIの切り替え
+    /// </summary>
+    /// <param name="isDisplay">true：左　false：右</param>>
+    private void EachMagicChangeUIToggle(bool isDisplay)
+    {
+        if (isDisplay)
+        {
+            _changeUILeft.ImageChange(Color.white);
+            _changeUIRight.ImageChange(Color.black);
+            _changeUILeft.ImageDisplay(true);
+            _changeUIRight.ImageDisplay(false);
+        }
+        else
+        {
+            _changeUILeft.ImageChange(Color.black);
+            _changeUIRight.ImageChange(Color.white);
+            _changeUILeft.ImageDisplay(false);
+            _changeUIRight.ImageDisplay(true);
+        }
     }
 
     /// <summary>
