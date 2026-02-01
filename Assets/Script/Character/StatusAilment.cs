@@ -16,7 +16,8 @@ public abstract class StatusAilment
     /// <summary>
     /// 効果付与
     /// </summary>
-    public abstract void EffectGrant();
+    /// <param name="status">効果を受けるキャラクター</param>>
+    public abstract void EffectGrant(CharacterBaseStatus status);
     /// <summary>
     /// 効果発動
     /// </summary>
@@ -25,7 +26,7 @@ public abstract class StatusAilment
     /// <summary>
     /// 効果終了
     /// </summary>
-    public abstract void EffectEnd();
+    public abstract void EffectEnd(CharacterBaseStatus status);
     
     /// <summary>
     /// 持続ターンが終了したかのフラグ
@@ -37,10 +38,13 @@ public abstract class StatusAilment
     /// 状態異常の種類
     /// </summary>
     public StatusAbnormalityType StatusAbnormalityType {get; protected set;}
+    
+    public float WaterAbsorption {get; protected set;}
 }
 
 /// <summary>
 /// 炎魔法の効果による状態異常
+///・火傷による延焼ダメージを与える
 /// </summary>
 public class FlameEffect : StatusAilment
 {
@@ -59,7 +63,7 @@ public class FlameEffect : StatusAilment
         StatusAbnormalityType = type;
     }
     
-    public override void EffectGrant()
+    public override void EffectGrant(CharacterBaseStatus status)
     {
         Debug.Log("火傷状態になった");
     }
@@ -75,29 +79,107 @@ public class FlameEffect : StatusAilment
         IsEnd = Sustainability <= 0;
     }
 
-    public override void EffectEnd()
+    public override void EffectEnd(CharacterBaseStatus status)
     {
         Debug.Log("火傷状態が終了");
     }
 }
 /// <summary>
 /// 氷魔法の効果による状態異常
+/// ・被ダメージが○○%アップする
 /// </summary>
 public class IceEffect : StatusAilment
 {
-    public override void EffectGrant()
+    private float damageIncrease; //倍率
+    
+    /// <summary>
+    /// 効果の設定
+    /// </summary>
+    /// <param name="increase">ダメージ増加％</param>
+    /// <param name="sustainability">継続ターン</param>
+    /// <param name="type">状態異常の種類</param>
+    public IceEffect(float increase, int sustainability, StatusAbnormalityType type)
     {
-        
+        damageIncrease = increase;
+        Sustainability = sustainability;
+        StatusAbnormalityType = type;
+    }
+    
+    public override void EffectGrant(CharacterBaseStatus status)
+    {
+        Debug.Log("氷結状態によって受けるダメージが上昇");
+        status.DamageTakenCalculation.AddRate(damageIncrease);
     }
 
     public override void EffectActivation(CharacterBaseStatus status)
     {
-        
+        Sustainability--;
+        IsEnd = Sustainability <= 0;
     }
 
-    public override void EffectEnd()
+    public override void EffectEnd(CharacterBaseStatus status)
     {
-        
+        //効果が切れるとともに被ダメージの倍率をリセット
+        status.DamageTakenCalculation.ResetRate();
+    }
+}
+
+/// <summary>
+/// 雷魔法の効果による状態異常
+///・痺れ状態によるターンのスキップ（行動不能）
+/// </summary>
+public class ThunderEffect : StatusAilment
+{
+    public ThunderEffect(int sustainability, StatusAbnormalityType type)
+    {
+        Sustainability = sustainability;
+        StatusAbnormalityType = type;
+    }
+    
+    public override void EffectGrant(CharacterBaseStatus status)
+    {
+        Debug.Log("痺れ状態によって次のターンがスキップされる");
+    }
+
+    public override void EffectActivation(CharacterBaseStatus status)
+    {
+        Sustainability--;
+        IsEnd = Sustainability <= 0;
+    }
+
+    public override void EffectEnd(CharacterBaseStatus status)
+    {
+        Debug.Log("痺れ状態終了");
+    }
+}
+
+/// <summary>
+/// 水魔法の効果による状態異常
+/// ・吸水（与えたダメージの一部が与えたプレイヤーのHP回復量になる）
+/// </summary>
+public class WaterEffect : StatusAilment
+{
+    public WaterEffect(float rate, int sustainability, StatusAbnormalityType type)
+    {
+        WaterAbsorption = rate / 100f; //0.?の形にするため
+        Sustainability = sustainability;
+        StatusAbnormalityType = type;
+    }
+    
+    public override void EffectGrant(CharacterBaseStatus status)
+    {
+        Debug.Log("吸水状態によって、ダメージの一部でHPが回復");
+    }
+
+    public override void EffectActivation(CharacterBaseStatus status)
+    {
+        Sustainability--;
+        IsEnd = Sustainability <= 0;
+    }
+
+    public override void EffectEnd(CharacterBaseStatus status)
+    {
+        Debug.Log("吸水状態終了");
     }
 }
 

@@ -29,8 +29,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 93a220fb2d265d34986a2d0f7df93d6a, type: 2}
   - {fileID: 11400000, guid: 221fbba2c209fa8489e98b66478e1d8d, type: 2}
   - {fileID: 11400000, guid: e98dae4826f78fa42be0f69e3bcb3784, type: 2}
-  - {fileID: 11400000, guid: fcda386c3045a8d449793bfa6b898e45, type: 2}
-  - {fileID: 11400000, guid: c4ce004515edebe4db87fd9e5ccab50c, type: 2}
+  - {fileID: 11400000, guid: 47f7be5f6f90e224e992d87b65241981, type: 2}
+  - {fileID: 11400000, guid: d9e79491b1420d14c8a1719341f72890, type: 2}
   _attributesType: 0
   moveSpeed: 3
   jumpAbility: 5

@@ -233,16 +233,9 @@ public class TurnManager : MonoBehaviour
     /// </summary>
     private void NextTurnCharacterSet()
     {
-        //終了したターンのキャラを取得
-        var character = speedCharacterTurnQueue.Dequeue();
-        //終了したターンのキャラを末尾に追加する
-        speedCharacterTurnQueue.Enqueue(character);
-        
-        //キャラのステートを変更する
         AllCharacterStateChanged(CharacterStateType.Idle);
+        CtCharaNumbness();
         
-        //現在のターンのキャラを更新する
-        CurrentTurnCharacter = speedCharacterTurnQueue.Peek();
         //現在のターンのキャラのステートを変更する
         var currentCharacter = CharacterInfos[CurrentTurnCharacter];
         currentCharacter.state.ChangeCharacterState(CharacterStateType.InAction);
@@ -270,6 +263,44 @@ public class TurnManager : MonoBehaviour
         {
             status.StatusEffectStart();
             Debug.Log("状態異常があるため、効果を実行");
+        }
+    }
+
+    /// <summary>
+    /// 次のターンキャラクターが麻痺状態だったらターンをスキップ
+    /// </summary>
+    private void CtCharaNumbness()
+    {
+        var index = speedCharacterTurnQueue.Count;
+        while (index > 0)
+        {
+            //終了したターンのキャラを取得
+            var character = speedCharacterTurnQueue.Dequeue();
+            //終了したターンのキャラを末尾に追加する
+            speedCharacterTurnQueue.Enqueue(character);
+            //現在のターンのキャラが麻痺状態でなければ、ターンを確定する
+            var cChara = speedCharacterTurnQueue.Peek();
+            var status = CharacterInfos[cChara].status.GetCharacterStatus();
+            if (!status.IsParalysisStatus())
+            {
+                CurrentTurnCharacter = cChara;
+                break;
+            }
+
+            //ターンアイコンもターンスキップに連動させる
+            CharacterIconDestroy(cChara);
+            CharacterIconSetUp();
+            //麻痺でターンがスキップされても状態異常があれば処理を行う
+            if (status.IsUnderAbnormalStatus())
+            {
+                status.StatusEffectStart();
+            }
+            index--;
+        }
+
+        if (index <= 0)
+        {
+            Debug.LogWarning("キャラクター全員が痺れ状態");
         }
     }
 

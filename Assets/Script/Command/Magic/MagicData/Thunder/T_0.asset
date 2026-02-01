@@ -12,10 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 671b620cc922cc24490fb6c5c2bea769, type: 3}
   m_Name: T_0
   m_EditorClassIdentifier: 
-  magicName: 
-  magicExplanation: 
-  consumptionMp: 0
+  magicName: ThunderMagic
+  magicExplanation: Shock
+  consumptionMp: 3
   magicType: 4
   magicRangeType: 1
   magicPanelDisplayTime: 4
-  electricShockTurn: 0
+  _animationTime: 0
+  _statusEffect: {fileID: 21300000, guid: accebfcdffaf7a84ba6ae161e8ece375, type: 3}
+  _saType: 2
+  _defenseActions: 
+  _electricShockTurn: 2

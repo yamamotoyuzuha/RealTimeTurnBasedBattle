@@ -53,7 +53,7 @@ public class MagicPanel : MonoBehaviour
     private Vector2Int goalMass;
 
     private bool isPanelClearCheck; //生成したパネルがゴール出来るか
-    private bool isMagicPanelClear; //魔法パネルをクリアしたか　追加　いるのかわからない
+    private bool isMagicPanelClear; //魔法パネルをクリアしたか
     public bool IsMagicPanelClear => isMagicPanelClear;
     /// <summary>
     /// このキャラクターのステータスを保持
@@ -112,6 +112,7 @@ public class MagicPanel : MonoBehaviour
     /// <returns></returns>
     public UniTask MagicPanelCompleted()
     {
+        isMagicPanelClear = false;
         compSource = new UniTaskCompletionSource();
         return compSource.Task;
     }
@@ -120,6 +121,7 @@ public class MagicPanel : MonoBehaviour
     /// </summary>
     private void MagicPanelClear()
     {
+        isMagicPanelClear = true;
         compSource?.TrySetResult();
     }
 
@@ -144,7 +146,9 @@ public class MagicPanel : MonoBehaviour
         for (int i = 0; i < 4; i++)
         {
             var obj = Instantiate(_mPanelPrefab, _mPanelParent);
+            var image = _mPanelParent.transform.GetChild(i).transform.GetChild(0).GetComponent<Image>();
             var text = _mPanelParent.transform.GetChild(i).transform.GetChild(1).GetComponent<TextMeshProUGUI>();
+            image.sprite = OperationDataManager.Instance.OperationUIData.MoveSprites[i];
             text.text =  _operationTextContent[i];
         }
         OperationUIDisplay(false);
@@ -156,7 +160,6 @@ public class MagicPanel : MonoBehaviour
     /// <param name="isDisplay">true：表示　false：非表示</param>
     private void OperationUIDisplay(bool isDisplay)
     {
-        isMagicPanelClear = true;
         _mPanelOperationUI.SetActive(isDisplay);
     }
 
@@ -276,7 +279,7 @@ public class MagicPanel : MonoBehaviour
     /// <summary>
     /// 通行禁止マスを配置する
     /// </summary>
-    private void NoEntryMassSetUp() //通行禁止マスをゴールマスの縦横斜めのどこかに配置する　追加
+    private void NoEntryMassSetUp() //通行禁止マスをゴールマスの縦横斜めのどこかに配置する
     {
         //ゴールマスの位置を保持用
         var goalMassVertical = 0;
@@ -661,11 +664,6 @@ public class MagicPanel : MonoBehaviour
     /// </summary>
     private void ConnectMass()
     {
-        Debug.Log("ゴールまでつなげられた");
-        
-        //魔法パネルをクリア判定にする
-        //isMagicPanelClear = true;
-
         //効果マスの保持
         List<MagicMassData> effectMass =  new List<MagicMassData>();
         

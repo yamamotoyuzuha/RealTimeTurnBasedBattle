@@ -277,11 +277,10 @@ public class BattleManager : MonoBehaviour
         //TODO:魔法効果を行うところでダメージも与えたい方がきれいかな
         //TODO：でも、バラバラのほうが役割としていいかもしれない
         //キャラの攻撃力を取得して、ダメージを与える
-        var enemy = turnManager.Enemy;
         var damage = status.Attack;
-        var enemyStatus = enemy.GetCharacterStatus();
+        var enemyStatus = GetEnemyBaseStatus();
         enemyStatus.Damage(damage);
-        Debug.Log("攻撃を行った");
+        enemyStatus.IsWaterAbsorption(damage, status);
         //魔法特有の効果を相手に付与する
         magic.GetMagicBaseData().MagicAction(enemyStatus);
         
@@ -304,6 +303,7 @@ public class BattleManager : MonoBehaviour
         var enemyStatus = GetEnemyBaseStatus();
         await UniTask.Delay(TimeSpan.FromSeconds(2)); //アニメーション時間分待機
         enemyStatus.Damage(playerStatus.Attack);
+        enemyStatus.IsWaterAbsorption(playerStatus.Attack, playerStatus);
         await UniTask.Delay(TimeSpan.FromSeconds(1)); //元の位置に戻る
     }
 

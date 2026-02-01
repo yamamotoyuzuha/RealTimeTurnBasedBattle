@@ -12,10 +12,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 706d6c2d3c2eaa34f887a6e42f39891a, type: 3}
   m_Name: W_0
   m_EditorClassIdentifier: 
-  magicName: 
-  magicExplanation: 
-  consumptionMp: 0
+  magicName: WaterMagic
+  magicExplanation: Wet
+  consumptionMp: 2
   magicType: 3
   magicRangeType: 0
   magicPanelDisplayTime: 5
-  splashedWaterTurn: 0
+  _animationTime: 0
+  _statusEffect: {fileID: 21300000, guid: 26be86044faa7194682fdb47c626364d, type: 3}
+  _saType: 3
+  _defenseActions: 
+  _waRate: 20
+  _waterAbsorptionTurn: 2

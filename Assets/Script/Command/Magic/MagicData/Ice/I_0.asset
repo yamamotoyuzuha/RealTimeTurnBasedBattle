@@ -18,4 +18,9 @@ MonoBehaviour:
   magicType: 2
   magicRangeType: 1
   magicPanelDisplayTime: 3
-  freezeTurn: 0
+  _animationTime: 2
+  _statusEffect: {fileID: 21300000, guid: b94c008e5976ac3459f15da93ca56498, type: 3}
+  _saType: 1
+  _defenseActions: 
+  _damageIncrease: 30
+  freezeTurn: 4

@@ -62,6 +62,10 @@ public class CharacterBaseStatus
     #endregion
 
     /// <summary>
+    /// 被ダメージの倍率計算
+    /// </summary>
+    public DamageTakenCalculation DamageTakenCalculation { get; } = new DamageTakenCalculation();
+    /// <summary>
     /// 現在の状態異常
     /// </summary>
     private List<StatusAilment> statusAilments = new List<StatusAilment>();
@@ -147,7 +151,7 @@ public class CharacterBaseStatus
     /// <summary>
     /// キャラクターのHPを回復する
     /// </summary>
-    /// <param name="heal"></param>
+    /// <param name="heal">回復量</param>
     public void Heal(float heal)
     {
         //最大HPを上回らないようにする
@@ -161,13 +165,11 @@ public class CharacterBaseStatus
     /// <param name="damage">ダメージ計算済みの値</param>
     public void Damage(float damage)
     {
-        //0を下回らないようにする
-        Hp = Math.Max(Hp - damage, 0);
+        var finalDamage = damage * DamageTakenCalculation.DamageRate;
+        Hp = Mathf.Max(Hp - finalDamage, 0);
         onHpChanged?.Invoke(this, Hp, MaxHp);
-        
         //ダメージUIを表示
-        CharacterDamageUI.Instance.DamageUIShowDisplay(charaObject.transform, damage).Forget();
-        
+        CharacterDamageUI.Instance.DamageUIShowDisplay(charaObject.transform, finalDamage).Forget();
         DeathDetermination();
     }
 
@@ -192,13 +194,12 @@ public class CharacterBaseStatus
     /// <param name="damage">ダメージ</param>
     private async UniTask DamageAsync(float damage)
     {
+        var finalDamage = damage * DamageTakenCalculation.DamageRate;
         //0を下回らないようにする
-        Hp = Math.Max(Hp - damage, 0);
+        Hp = Math.Max(Hp - finalDamage, 0);
         onHpChanged?.Invoke(this, Hp, MaxHp);
-        
         //ダメージUIを表示
-        await CharacterDamageUI.Instance.DamageUIShowDisplay(charaObject.transform, damage);
-        
+        await CharacterDamageUI.Instance.DamageUIShowDisplay(charaObject.transform, finalDamage);
         DeathDetermination();
     }
     
@@ -297,16 +298,21 @@ public class CharacterBaseStatus
     /// 状態異常開始
     /// 魔法の効果時に呼ぶ
     /// </summary>
+    /// <param name="status">魔法の効果</param>>
+    /// <param name="type">状態異常の種類</param>>
+    /// <param name="icon">状態異常のアイコン</param>>
+    /// <param name="duration">状態異常の継続ターン</param>>
     public void StatusEffectInfliction(StatusAilment status, StatusAbnormalityType type, Sprite icon, int duration)
     {
         //状態異常が被っていない場合、状態異常を開始する
         if (!statusAilments.Any(sa  => sa.StatusAbnormalityType == type))
         {
             //状態異常を開始し、このキャラクターの状態異常を追加
-            status.EffectGrant();
+            status.EffectGrant(this);
             statusAilments.Add(status);
         }
 
+        //TODO：これifの中に入れていいような気がするんだ
         var info = new StatusAbnormalityInfo(this, type, icon, duration);
         onStatusAbnormalityOccurrence?.Invoke(info, this);
     }
@@ -326,7 +332,7 @@ public class CharacterBaseStatus
             onStatusAbnormalityProgress?.Invoke(this, statusAilments[i].StatusAbnormalityType);
             if (statusAilments[i].IsEnd)
             {
-                statusAilments[i].EffectEnd();
+                statusAilments[i].EffectEnd(this);
                 onStatusAbnormalityEnd?.Invoke(this, statusAilments[i].StatusAbnormalityType);
                 statusAilments.RemoveAt(i);
             }
@@ -334,13 +340,44 @@ public class CharacterBaseStatus
     }
 
     /// <summary>
+    /// 痺れ状態かを判定
+    /// </summary>
+    /// <returns>true：痺れ状態　false：痺れ状態じゃない</returns>
+    public bool IsParalysisStatus()
+    {
+        return statusAilments.Any(sa => sa.StatusAbnormalityType == StatusAbnormalityType.ElectricShock);
+    }
+    /// <summary>
+    /// 吸水状態かを判定
+    /// ・吸水状態だった場合、ダメージを与えてきたキャラクターのHPを回復
+    /// </summary>
+    /// <param name="damage">ダメージ</param>>
+    /// <param name="status">ダメージを与えてきたキャラクター</param>>
+    public void IsWaterAbsorption(float damage, CharacterBaseStatus status)
+    {
+        //水魔法の状態異常がある場合、HPを回復させる
+        var water = statusAilments.FirstOrDefault(sa =>
+            sa.StatusAbnormalityType == StatusAbnormalityType.Wet);
+        if (water != null)
+        {
+            var heal = damage * water.WaterAbsorption;
+            status.Heal(heal);
+            Debug.Log("回復");
+        }
+        else
+        {
+            Debug.Log("水魔法の状態異常はない");
+        }
+    }
+    
+    /// <summary>
     /// 状態異常のリストをクリアする
     /// </summary>
     public void StatusAilmentsClear()
     {
         statusAilments.Clear();
     }
-
+    
     #endregion
 
     #region パリィなどの防御アクション関連
