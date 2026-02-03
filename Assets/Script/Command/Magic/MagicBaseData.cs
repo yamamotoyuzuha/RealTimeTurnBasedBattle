@@ -43,6 +43,10 @@ public class MagicBaseData : CharacterCommandActionData
     [Header("可能な防御アクション")]
     [SerializeField] private DefenseActionType[] _defenseActions;
     public DefenseActionType[] DefenseActions => _defenseActions;
+
+    [Header("アニメーション情報")] 
+    [SerializeField] private CommandAnimationData _commandAnimationData;
+    public CommandAnimationData CommandAnimationData => _commandAnimationData;
     
     /// <summary>
     /// 継承先の各魔法でオーバーライドして個別処理

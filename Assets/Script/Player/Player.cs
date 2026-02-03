@@ -2,7 +2,7 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 
-public class Player : MonoBehaviour, Status, ICommand
+public class Player : MonoBehaviour, Status, ICommand, IAnimationCharacter
 {
     private PlayerInput playerInput;
 
@@ -209,5 +209,10 @@ public class Player : MonoBehaviour, Status, ICommand
             rb.isKinematic = false;
             transform.SetParent(null);
         }
+    }
+    
+    public void SetAnimationPlay(string animationName)
+    {
+        //TODO：ここでアニメーションを再生する
     }
 }

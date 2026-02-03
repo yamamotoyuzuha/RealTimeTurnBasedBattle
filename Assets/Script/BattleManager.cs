@@ -248,7 +248,7 @@ public class BattleManager : MonoBehaviour
         _battleCommandUI.OnConfirmedCommandUIDisplay?.Invoke(false);
         _behaviorDisplayUI.OnActionUIDisplay?.Invoke("", false);
     }
-
+    
     /// <summary>
     /// 魔法攻撃の処理
     /// </summary>

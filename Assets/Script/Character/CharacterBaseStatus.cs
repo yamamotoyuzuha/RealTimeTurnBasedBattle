@@ -329,6 +329,7 @@ public class CharacterBaseStatus
             Debug.Log(statusAilments.Count + "状態異常効果を呼ぶ前");
             statusAilments[i].EffectActivation(this);
             Debug.Log(statusAilments.Count + "状態異常効果を呼んだ後");
+            if(statusAilments.Count <= 0) return;
             onStatusAbnormalityProgress?.Invoke(this, statusAilments[i].StatusAbnormalityType);
             if (statusAilments[i].IsEnd)
             {

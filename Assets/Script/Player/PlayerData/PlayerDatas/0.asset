@@ -17,7 +17,7 @@ MonoBehaviour:
     type: 3}
   _titleCharacterPrefab: {fileID: 183284303825784245, guid: f37db04b950a6db4abb1728c6836c4c4,
     type: 3}
-  characterPrefab: {fileID: 1201634198674102066, guid: a0fa35ef53b06ef408004fbfc7096a8e,
+  characterPrefab: {fileID: 8370173014505705261, guid: b188b10b54151f14181cfad948f88c68,
     type: 3}
   hp: 500
   mp: 7

@@ -20,7 +20,7 @@ MonoBehaviour:
   characterPrefab: {fileID: 4233443982562247026, guid: 906720f2e10109549912132a2838598f,
     type: 3}
   hp: 500
-  mp: 8
+  mp: 7
   attack: 10
   defense: 0
   speed: 10

@@ -58,13 +58,14 @@ public class PartyStatusUI : MonoBehaviour
     /// </summary>
     private void StatusUIGenerate()
     {
-        for (int i = 0; i < 2; i++)
+        var count = partyCharas.Count;
+        for (int i = 0; i < count; i++)
         {
             var obj = Instantiate(_statusUIPrefab, _statusParent);
-            //TODO：これはキャラクターのＭＰを参照したほうがよい
             //MPを生成して、仮配列に格納
-            GameObject[] mps = new GameObject[7];
-            for (int j = 0; j < 7; j++)
+            var mpCount = _turnManager.CharacterInfos[partyCharas[i]].status.GetCharacterStatus().MaxMp;
+            GameObject[] mps = new GameObject[mpCount];
+            for (int j = 0; j < mpCount; j++)
             {
                 mps[j] = Instantiate(_mpPrefab, obj.transform.GetChild(4).transform);
             }
