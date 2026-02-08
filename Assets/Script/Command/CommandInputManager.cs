@@ -369,6 +369,13 @@ public class CommandInputManager : MonoBehaviour
                 status.ParryInput(0.5f);
                 Debug.Log("パリィ開始");
             }
+
+            //アニメーションを再生する
+            foreach (var animChara in turnManager.CharacterInfos)
+            {
+                if(animChara.Value.characterName == "Enemy") continue;
+                animChara.Value.animationCharacter.SetAnimationPlay("Parry");
+            }
         }
         if (Input.GetKeyDown(KeyCode.G))
         {
@@ -376,6 +383,12 @@ public class CommandInputManager : MonoBehaviour
             {
                 if(status.IsInputDefenseAction()) continue;
                 status.JustGuardInput(0.5f);
+            }
+            
+            foreach (var animChara in turnManager.CharacterInfos)
+            {
+                if(animChara.Value.characterName == "Enemy") continue;
+                animChara.Value.animationCharacter.SetAnimationPlay("JustGuard");
             }
         }
     }

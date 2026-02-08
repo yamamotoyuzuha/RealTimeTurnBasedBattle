@@ -18,4 +18,11 @@ MonoBehaviour:
   magicType: 1
   magicRangeType: 0
   magicPanelDisplayTime: 5
-  damageOverTime: 0
+  _animationTime: 0
+  _statusEffect: {fileID: 0}
+  _saType: 0
+  _defenseActions: 
+  _commandAnimationData:
+    _animationTriggerName: Flame
+  _damage: 0
+  _damageOverTime: 0

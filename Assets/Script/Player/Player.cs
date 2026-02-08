@@ -63,7 +63,7 @@ public class Player : MonoBehaviour, Status, ICommand, IAnimationCharacter
 
     private MagicPanel magicPanel;
     private BuddyMonster buddyMonster;
-
+    private Animator animator;
     private GameObject mainCamera;
     private Rigidbody rb;
 
@@ -85,6 +85,7 @@ public class Player : MonoBehaviour, Status, ICommand, IAnimationCharacter
         playerInput.Enable();
 
         magicPanel = GetComponent<MagicPanel>();
+        animator = GetComponent<Animator>();
 
         mainCamera = GameObject.Find("Main Camera");
         rb = GetComponent<Rigidbody>();
@@ -139,7 +140,7 @@ public class Player : MonoBehaviour, Status, ICommand, IAnimationCharacter
 
     private void FixedUpdate()
     {
-        if (IsRide || EncounterManager.instance.IsFieldSettingsComplete) return;
+        //if (IsRide || EncounterManager.instance.IsFieldSettingsComplete) return;
 
         //カメラの向きを取得
         var cameraForward = mainCamera.transform.forward;
@@ -213,6 +214,6 @@ public class Player : MonoBehaviour, Status, ICommand, IAnimationCharacter
     
     public void SetAnimationPlay(string animationName)
     {
-        //TODO：ここでアニメーションを再生する
+        animator.SetTrigger(animationName);
     }
 }

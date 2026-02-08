@@ -271,11 +271,6 @@ public class BattleManager : MonoBehaviour
         //表示時間以内に魔法パネルをクリア出来ていなかったら非表示にする
         if (!magicPanel.IsMagicPanelClear) magicPanel.MagicPanelToggle();
         
-        Debug.Log("攻撃を行う");
-        
-        //TODO:この状態だと、ダメージと魔法効果がバラバラになっているため一個の方が簡潔でいいかも
-        //TODO:魔法効果を行うところでダメージも与えたい方がきれいかな
-        //TODO：でも、バラバラのほうが役割としていいかもしれない
         //キャラの攻撃力を取得して、ダメージを与える
         var damage = status.Attack;
         var enemyStatus = GetEnemyBaseStatus();
@@ -284,11 +279,10 @@ public class BattleManager : MonoBehaviour
         //魔法特有の効果を相手に付与する
         magic.GetMagicBaseData().MagicAction(enemyStatus);
         
-        //TODO：上のダメージを与える処理だけど、出来ればアニメーションに合わせたようにしたいEnemyみたいに
-        //TODO：まあ、時間があればの話だけど
-        
-        //仮、アニメーションの時間分待機する
-        await UniTask.Delay(TimeSpan.FromSeconds(5));
+        //アニメーション関連
+        var animChara = turnManager.CharacterInfos[character].animationCharacter;
+        animChara.SetAnimationPlay(magic.CommandAnimationData._animationTriggerName);
+        await UniTask.Delay(TimeSpan.FromSeconds(magic.AnimationTime));
     }
 
     /// <summary>
@@ -301,10 +295,12 @@ public class BattleManager : MonoBehaviour
         playerStatus.AddMp(1);
         
         var enemyStatus = GetEnemyBaseStatus();
+        //アニメーション関連
+        var animChara = turnManager.CharacterInfos[character].animationCharacter;
+        animChara.SetAnimationPlay("Attack");
         await UniTask.Delay(TimeSpan.FromSeconds(2)); //アニメーション時間分待機
         enemyStatus.Damage(playerStatus.Attack);
         enemyStatus.IsWaterAbsorption(playerStatus.Attack, playerStatus);
-        await UniTask.Delay(TimeSpan.FromSeconds(1)); //元の位置に戻る
     }
 
     /// <summary>

@@ -106,6 +106,7 @@ public class TurnManager : MonoBehaviour
             var status = character.GetComponent<Status>();
             var command = character.GetComponent<ICommand>(); //操作キャラ判定
             var enemyBase = character.GetComponent<EnemyBase>();
+            var animChara = character.GetComponent<IAnimationCharacter>();
             var charaCamera = character.GetComponent<CharacterCameraSettings>();
             var player = command != null ? "Player" : "Enemy";
             if (player != "Player") //TODO：これはあとで外部から指定し、それをバトルマネージャー側のPlayerの攻撃に参照する
@@ -120,6 +121,7 @@ public class TurnManager : MonoBehaviour
                 characterName = player,
                 command = command,
                 enemyBase = enemyBase,
+                animationCharacter = animChara,
                 cameraSettings = charaCamera
             };
             CharacterInfos.Add(character, info);
@@ -474,6 +476,10 @@ public class CharacterInfo
     /// Enemyのみ
     /// </summary>
     public EnemyBase enemyBase;
+    /// <summary>
+    /// キャラクターをアニメーション管理
+    /// </summary>
+    public IAnimationCharacter animationCharacter;
     /// <summary>
     /// カメラアングル設定
     /// プレイヤーキャラクターのみ

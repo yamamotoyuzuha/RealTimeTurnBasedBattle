@@ -22,5 +22,7 @@ MonoBehaviour:
   _statusEffect: {fileID: 21300000, guid: 26be86044faa7194682fdb47c626364d, type: 3}
   _saType: 0
   _defenseActions: 
+  _commandAnimationData:
+    _animationTriggerName: Flame
   _damage: 20
   _damageOverTime: 2

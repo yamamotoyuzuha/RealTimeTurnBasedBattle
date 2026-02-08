@@ -383,7 +383,6 @@ MonoBehaviour:
   _partys:
   - {fileID: 11400000, guid: 0d4423cf0fce1a940b42ec702c7011ca, type: 2}
   - {fileID: 11400000, guid: 4a44e653e8dbe4a4f984aa9e7d47c710, type: 2}
-  - {fileID: 11400000, guid: 1605c5c3fe6cae149bbec46ded915e11, type: 2}
   _maxPartyCount: 3
 --- !u!4 &455131125
 Transform:
