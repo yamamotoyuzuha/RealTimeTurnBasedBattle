@@ -6,6 +6,8 @@ public class TurnManager : MonoBehaviour
 {
     [Header("BattleCameraAngleManager")]
     [SerializeField] private BattleCameraAngleManager _battleCameraAngleManager;
+    [Header("FieldSettings")]
+    [SerializeField] private FieldSettings _fieldSettings;
     [Header("キャラクターアイコン生成場所")]
     [SerializeField] private Transform iconParent;
     [Header("キャラクターアイコンPrefab")]
@@ -96,7 +98,7 @@ public class TurnManager : MonoBehaviour
         
         //アイコンの生成
         BattleStartCharacterIconGeneration();
-        
+        var index = 0; //キャラクター位置のインデックスを保持
         //各キャラクターのステートを取得する
         foreach (var character in speedCharacterTurnQueue)
         {
@@ -109,9 +111,15 @@ public class TurnManager : MonoBehaviour
             var animChara = character.GetComponent<IAnimationCharacter>();
             var charaCamera = character.GetComponent<CharacterCameraSettings>();
             var player = command != null ? "Player" : "Enemy";
-            if (player != "Player") //TODO：これはあとで外部から指定し、それをバトルマネージャー側のPlayerの攻撃に参照する
+            if (player != "Player") //TODO：これはあとで外部から指定し、それをバトルマネージャー側のPlayerの攻撃に参照する　これなにをしたいんだ
             {
                 Enemy = character.GetComponent<Enemy>();
+                character.transform.position = _fieldSettings.EnemyCharaPos.position;
+            }
+            else
+            {
+                character.transform.position = _fieldSettings.PlayerCharaPos[index].position;
+                index++;
             }
 
             var info = new CharacterInfo

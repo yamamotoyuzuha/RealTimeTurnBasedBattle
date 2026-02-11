@@ -39,6 +39,9 @@ public class MagicBaseData : CharacterCommandActionData
     [Header("状態異常の種類")]
     [SerializeField] private StatusAbnormalityType _saType;
     public StatusAbnormalityType SaType => _saType;
+    [Header("魔法の効果を受ける確率○○％")]
+    [SerializeField] private float magicProbability;
+    public float MagicProbability => magicProbability;
     
     [Header("可能な防御アクション")]
     [SerializeField] private DefenseActionType[] _defenseActions;
@@ -47,12 +50,12 @@ public class MagicBaseData : CharacterCommandActionData
     [Header("アニメーション情報")] 
     [SerializeField] private CommandAnimationData _commandAnimationData;
     public CommandAnimationData CommandAnimationData => _commandAnimationData;
-    
+
     /// <summary>
     /// 継承先の各魔法でオーバーライドして個別処理
     /// </summary>
     /// <param name="status">効果を受けるキャラクター</param>>
-    public virtual void MagicAction(CharacterBaseStatus status){}
+    public virtual void MagicAction(CharacterBaseStatus status) { }
 
     public override CharacterCommandActionType GetCommandType()
     {

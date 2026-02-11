@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a77864b36a26d8145819f370f5190959, type: 3}
+  m_Name: 1
+  m_EditorClassIdentifier: 
+  characterName: Player1
+  characterIconSprite: {fileID: 21300000, guid: b94c008e5976ac3459f15da93ca56498,
+    type: 3}
+  _titleCharacterPrefab: {fileID: 183284303825784245, guid: f37db04b950a6db4abb1728c6836c4c4,
+    type: 3}
+  characterPrefab: {fileID: 9031456334086428323, guid: 607bc15b7b1e8fb4596ba67f6a602725,
+    type: 3}
+  hp: 400
+  mp: 7
+  attack: 100
+  defense: 50
+  speed: 10
+  magicBaseData:
+  - {fileID: 11400000, guid: f44e4c97014bbd54baa3c1dae82982aa, type: 2}
+  - {fileID: 11400000, guid: 93a220fb2d265d34986a2d0f7df93d6a, type: 2}
+  - {fileID: 11400000, guid: 221fbba2c209fa8489e98b66478e1d8d, type: 2}
+  - {fileID: 11400000, guid: e98dae4826f78fa42be0f69e3bcb3784, type: 2}
+  - {fileID: 11400000, guid: 47f7be5f6f90e224e992d87b65241981, type: 2}
+  - {fileID: 11400000, guid: d9e79491b1420d14c8a1719341f72890, type: 2}
+  _attributesType: 0
+  moveSpeed: 3
+  jumpAbility: 5
+  rayDistance: 0.5

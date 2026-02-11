@@ -8,6 +8,7 @@ public class ThunderMagicData : MagicBaseData
 
     public override void MagicAction(CharacterBaseStatus status)
     {
+        if(!MagicEffectProbability.ProbabilityCalculation(MagicProbability)) return;
         var thunderEffect = new ThunderEffect(_electricShockTurn, SaType);
         status.StatusEffectInfliction(thunderEffect, SaType, StatusEffect, _electricShockTurn);
     }
