@@ -19,8 +19,13 @@ MonoBehaviour:
   magicRangeType: 0
   magicPanelDisplayTime: 5
   _animationTime: 0
-  _statusEffect: {fileID: 21300000, guid: 26be86044faa7194682fdb47c626364d, type: 3}
+  _statusEffect: {fileID: 21300000, guid: bdc4d6d4e97d3284289516d95ed4776a, type: 3}
   _saType: 3
+  _magicProbability: 60
   _defenseActions: 
+  _commandAnimationData:
+    _animationTriggerName: Water
+  _particleObj: {fileID: 2060900179291159282, guid: ca6705a3f9070d14d819d179493bcfa0,
+    type: 3}
   _waRate: 20
   _waterAbsorptionTurn: 2

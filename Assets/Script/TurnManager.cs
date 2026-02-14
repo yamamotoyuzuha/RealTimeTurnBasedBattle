@@ -115,6 +115,7 @@ public class TurnManager : MonoBehaviour
             {
                 Enemy = character.GetComponent<Enemy>();
                 character.transform.position = _fieldSettings.EnemyCharaPos.position;
+                character.transform.rotation = Quaternion.Euler(0, 180, 0);
             }
             else
             {
@@ -347,10 +348,6 @@ public class TurnManager : MonoBehaviour
             }
             speedCharacterTurnQueue = new Queue<GameObject>(characters);
             CurrentTurnCharacter = speedCharacterTurnQueue.Peek();
-            
-            //TODO：ここのところで状態異常のリストをクリアしてしまっているため、継続ダメージ処理のところでエラーが出ていると思う
-            //TODO：多分
-            //TODO：検証してみないとわからないかも、発動条件は状態異常の効果で倒したときにエラーが出ると思う
             
             //状態異常の解除を行ってから、死亡したキャラ情報の削除を行う
             CharacterInfos[character].status.GetCharacterStatus().StatusAilmentsClear();

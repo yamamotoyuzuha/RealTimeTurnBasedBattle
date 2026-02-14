@@ -3917,6 +3917,10 @@ MonoBehaviour:
   turnManager: {fileID: 727016208}
   _battleCommandUI: {fileID: 1064866432}
   _battleCameraAngleManager: {fileID: 173428753}
+  _parryEffectPrefab: {fileID: 5607819269926399345, guid: 45e0f06c750176947862c10346226439,
+    type: 3}
+  _justGuardEffectPrefab: {fileID: 4752457369876416285, guid: 5ad33d58a66ab154a89c9e88255601e5,
+    type: 3}
   isCommandSelected: 0
 --- !u!1001 &1495898974
 PrefabInstance:
@@ -4849,6 +4853,7 @@ MonoBehaviour:
   _battleCameraAngleManager: {fileID: 173428753}
   _behaviorDisplayUI: {fileID: 1710778307}
   _victoryOrDefeatUI: {fileID: 1010716967}
+  _fieldSettings: {fileID: 55248733}
 --- !u!4 &2004377909
 Transform:
   m_ObjectHideFlags: 0

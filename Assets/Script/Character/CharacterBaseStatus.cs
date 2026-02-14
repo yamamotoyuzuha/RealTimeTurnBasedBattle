@@ -45,6 +45,14 @@ public class CharacterBaseStatus
     /// ステータスUIの表示、非表示を行う
     /// </summary>
     public Action<CharacterBaseStatus, bool> onStatusDisplay;
+    /// <summary>
+    /// 攻撃を受けた時の演出
+    /// </summary>
+    public Action onHitEffect;
+    /// <summary>
+    /// 死亡した時の演出
+    /// </summary>
+    public Action onDeathEffect;
 
     #region 状態異常関連のAction
     /// <summary>
@@ -168,6 +176,7 @@ public class CharacterBaseStatus
         var finalDamage = damage * DamageTakenCalculation.DamageRate;
         Hp = Mathf.Max(Hp - finalDamage, 0);
         onHpChanged?.Invoke(this, Hp, MaxHp);
+        onHitEffect?.Invoke();
         //ダメージUIを表示
         CharacterDamageUI.Instance.DamageUIShowDisplay(charaObject.transform, finalDamage).Forget();
         DeathDetermination();
@@ -198,6 +207,7 @@ public class CharacterBaseStatus
         //0を下回らないようにする
         Hp = Math.Max(Hp - finalDamage, 0);
         onHpChanged?.Invoke(this, Hp, MaxHp);
+        onHitEffect?.Invoke();
         //ダメージUIを表示
         await CharacterDamageUI.Instance.DamageUIShowDisplay(charaObject.transform, finalDamage);
         DeathDetermination();
@@ -210,6 +220,7 @@ public class CharacterBaseStatus
     {
         if (Hp <= 0)
         {
+            onDeathEffect?.Invoke();
             onDeath?.Invoke(charaObject);
         }
     }

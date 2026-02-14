@@ -26,3 +26,9 @@ MonoBehaviour:
   - {fileID: 21300000, guid: 56f1002c9c66c894cb96ca4fb7172c97, type: 3}
   _parrySprite: {fileID: 21300000, guid: 04d91239aa523074498444130fbee495, type: 3}
   _justGuardSprite: {fileID: 21300000, guid: 1a9f40c9924a2d1439d3c783982f3612, type: 3}
+  _pfSprite: {fileID: 21300000, guid: 704dc657e111f524e82a844d98ab5b38, type: 3}
+  _esSprite: {fileID: 21300000, guid: 080e9c0f37c820a4ba5f661d8c493a4d, type: 3}
+  _selectSprite: {fileID: 21300000, guid: 6245ef681e7d5004ba343f7b05c31754, type: 3}
+  _deSelectSprite: {fileID: 21300000, guid: 44c2d0f09fa1bfd4da516e3c1dd20491, type: 3}
+  _leftArrowSprite: {fileID: 21300000, guid: 17760f9e1b48ec3448520e717d358d52, type: 3}
+  _rightArrowSprite: {fileID: 21300000, guid: fc7cc6af66ebe0840921aa4ea7253660, type: 3}

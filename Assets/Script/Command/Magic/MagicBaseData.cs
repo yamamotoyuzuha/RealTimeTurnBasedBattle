@@ -40,8 +40,8 @@ public class MagicBaseData : CharacterCommandActionData
     [SerializeField] private StatusAbnormalityType _saType;
     public StatusAbnormalityType SaType => _saType;
     [Header("魔法の効果を受ける確率○○％")]
-    [SerializeField] private float magicProbability;
-    public float MagicProbability => magicProbability;
+    [SerializeField] private float _magicProbability;
+    public float MagicProbability => _magicProbability;
     
     [Header("可能な防御アクション")]
     [SerializeField] private DefenseActionType[] _defenseActions;
@@ -50,6 +50,10 @@ public class MagicBaseData : CharacterCommandActionData
     [Header("アニメーション情報")] 
     [SerializeField] private CommandAnimationData _commandAnimationData;
     public CommandAnimationData CommandAnimationData => _commandAnimationData;
+    
+    [Header("魔法のエフェクト")]
+    [SerializeField] private GameObject _particleObj;
+    public GameObject ParticleObj => _particleObj;
 
     /// <summary>
     /// 継承先の各魔法でオーバーライドして個別処理

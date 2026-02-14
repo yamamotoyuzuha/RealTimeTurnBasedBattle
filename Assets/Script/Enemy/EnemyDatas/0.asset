@@ -17,7 +17,7 @@ MonoBehaviour:
     type: 3}
   _titleCharacterPrefab: {fileID: 183284303825784245, guid: f37db04b950a6db4abb1728c6836c4c4,
     type: 3}
-  characterPrefab: {fileID: 3809205871147697835, guid: a97643815f484a04f843c7fb045fdbfc,
+  characterPrefab: {fileID: 1881473636205939383, guid: 666989ebfc7673944bea9d2b9a788e5a,
     type: 3}
   hp: 300
   mp: 0
@@ -30,7 +30,7 @@ MonoBehaviour:
   _enemyAttackBaseDataN:
   - {fileID: 11400000, guid: f44e4c97014bbd54baa3c1dae82982aa, type: 2}
   - {fileID: 11400000, guid: 221fbba2c209fa8489e98b66478e1d8d, type: 2}
-  - {fileID: 11400000, guid: fcda386c3045a8d449793bfa6b898e45, type: 2}
+  - {fileID: 11400000, guid: 969514c43f319944791f002356c0708f, type: 2}
   _enemyAttackBaseDataA: []
   _enemyRace: 0
   _weaknessType: 

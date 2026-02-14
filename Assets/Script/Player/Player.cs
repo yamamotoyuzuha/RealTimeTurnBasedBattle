@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -37,6 +38,8 @@ public class Player : MonoBehaviour, Status, ICommand, IAnimationCharacter
     {
         commandUI.ToggleCommandUI(flag);
     }
+    [Header("プレイヤーキャラクター固有のエフェクト情報")]
+    [SerializeField] private List<EffectData> _effectData;
     
     /// <summary>
     /// Characterのステータス
@@ -76,6 +79,8 @@ public class Player : MonoBehaviour, Status, ICommand, IAnimationCharacter
         //ステータスを作成
         characterBaseStatus = new CharacterBaseStatus
             (playerData.Hp, playerData.Mp, playerData.Attack, playerData.Defense, playerData.Speed, this.gameObject);
+        characterBaseStatus.onHitEffect += Hit;
+        characterBaseStatus.onDeathEffect += Death;
     }
 
     void Start()
@@ -211,9 +216,39 @@ public class Player : MonoBehaviour, Status, ICommand, IAnimationCharacter
             transform.SetParent(null);
         }
     }
+
+    /// <summary>
+    /// ダメージを受けた時
+    /// </summary>
+    private void Hit()
+    {
+        SetAnimationPlay("Hit");
+    }
+    
+    /// <summary>
+    /// 死亡した時
+    /// </summary>
+    private void Death()
+    {
+        animator.SetBool("IsDeath", true);
+    }
     
     public void SetAnimationPlay(string animationName)
     {
         animator.SetTrigger(animationName);
+    }
+
+    public Transform GetEffectTransform(string effectPosName)
+    {
+        Transform pos = null;
+        foreach (var data in _effectData)
+        {
+            if (data._effectName == effectPosName)
+            {
+                pos = data._effectTransform;
+            }
+        }
+
+        return pos;
     }
 }

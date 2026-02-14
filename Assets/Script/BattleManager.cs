@@ -24,6 +24,10 @@ public class BattleManager : MonoBehaviour
     [SerializeField] private BehaviorDisplayUI _behaviorDisplayUI;
     [Header("VictoryOrDefeatUI")]
     [SerializeField] private VictoryOrDefeatUI _victoryOrDefeatUI;
+    [Header("FieldSettings")]
+    [SerializeField] private FieldSettings _fieldSettings;
+
+    private int index;
 
     void Awake()
     {
@@ -271,6 +275,18 @@ public class BattleManager : MonoBehaviour
         //表示時間以内に魔法パネルをクリア出来ていなかったら非表示にする
         if (!magicPanel.IsMagicPanelClear) magicPanel.MagicPanelToggle();
         
+        //カメラアングルの切り替え
+        var cameraSet = turnManager.CharacterInfos[character].cameraSettings;
+        _battleCameraAngleManager.BattleCameraAngleChange(BattleCameraActiveType.StartAction,
+            cameraSet.StartActionCamPosF, cameraSet.StartActionCamPosL);
+        
+        //アニメーション関連
+        var animChara = turnManager.CharacterInfos[character].animationCharacter;
+        animChara.SetAnimationPlay(magic.CommandAnimationData._animationTriggerName);
+        await UniTask.Delay(TimeSpan.FromSeconds(magic.AnimationTime));
+        //エフェクトを生成
+        var effect = Instantiate(magic.ParticleObj, _fieldSettings.EnemyCharaPos.position, Quaternion.identity);
+        Destroy(effect, 1);
         //キャラの攻撃力を取得して、ダメージを与える
         var damage = status.Attack;
         var enemyStatus = GetEnemyBaseStatus();
@@ -278,11 +294,7 @@ public class BattleManager : MonoBehaviour
         enemyStatus.IsWaterAbsorption(damage, status);
         //魔法特有の効果を相手に付与する
         magic.GetMagicBaseData().MagicAction(enemyStatus);
-        
-        //アニメーション関連
-        var animChara = turnManager.CharacterInfos[character].animationCharacter;
-        animChara.SetAnimationPlay(magic.CommandAnimationData._animationTriggerName);
-        await UniTask.Delay(TimeSpan.FromSeconds(magic.AnimationTime));
+        await UniTask.Delay(TimeSpan.FromSeconds(1));
     }
 
     /// <summary>
@@ -294,6 +306,10 @@ public class BattleManager : MonoBehaviour
         var playerStatus = turnManager.CharacterInfos[character].status.GetCharacterStatus();
         playerStatus.AddMp(1);
         
+        //カメラアングルの切り替え
+        var cameraSet = turnManager.CharacterInfos[character].cameraSettings;
+        _battleCameraAngleManager.BattleCameraAngleChange(BattleCameraActiveType.StartAction,
+            cameraSet.StartActionCamPosF, cameraSet.StartActionCamPosL);
         var enemyStatus = GetEnemyBaseStatus();
         //アニメーション関連
         var animChara = turnManager.CharacterInfos[character].animationCharacter;
@@ -301,6 +317,7 @@ public class BattleManager : MonoBehaviour
         await UniTask.Delay(TimeSpan.FromSeconds(2)); //アニメーション時間分待機
         enemyStatus.Damage(playerStatus.Attack);
         enemyStatus.IsWaterAbsorption(playerStatus.Attack, playerStatus);
+        await UniTask.Delay(TimeSpan.FromSeconds(1));
     }
 
     /// <summary>
@@ -336,7 +353,7 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     private void EnemyAttackDamageCalculation(EnemyBase enemyBase, Status enemyStatus)
     {
-        //TODO：ここでEnemyの攻撃が単体攻撃か判定を行う
+        index = 0;
         if (enemyBase.IsIndividualOrWhole())
         {
             //プレイヤーキャラクターだけを残して、ステータスを取得する（これだと敵が複数いる場合、敵にもダメージをあたえてしまう）
@@ -346,8 +363,8 @@ public class BattleManager : MonoBehaviour
             var targetList = players.ToList();
             //プレイヤーキャラクターが生存しているときのみ、処理を通す
             if(targetList.Count == 0) return;
-            var random = UnityEngine.Random.Range(0, targetList.Count);
-            AttackDamageTarget(targetList[random].status, enemyStatus);
+            index = UnityEngine.Random.Range(0, targetList.Count);
+            AttackDamageTarget(targetList[index].status, enemyStatus);
         }
         else
         {
@@ -364,6 +381,7 @@ public class BattleManager : MonoBehaviour
                 //Enemyの場合、処理を飛ばす
                 if(charaStatus.Key == turnManager.CurrentTurnCharacter) continue;
                 AttackDamageTarget(charaStatus.Value.status, enemyStatus);
+                index++;
             }
         }
     }
@@ -402,6 +420,10 @@ public class BattleManager : MonoBehaviour
                     case CharacterCommandActionType.Magic:
                         var magic = aData.GetMagicBaseData();
                         magic.MagicAction(targetStatus.GetCharacterStatus());
+                        //エフェクトの生成
+                        var effect = Instantiate(magic.ParticleObj, 
+                            _fieldSettings.PlayerCharaPos[index].position, Quaternion.identity);
+                        Destroy(effect, 1);
                         break;
                 }
                 break;

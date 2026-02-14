@@ -21,10 +21,7 @@ public class PartyFormationUIController : MonoBehaviour
     [SerializeField] private GameObject _partyCharacterUIPrefab;
     [Header("パーティーメンバーの生成場所")]
     [SerializeField] private Transform[] _partyCharacterParent;
-    [Header("パーティー編成画面の操作説明UI")]
-    [SerializeField] private GameObject _explanationPartyUI;
-    [Header("パーティー編成画面の操作説明Text（パーティー加える、外す）")]
-    [SerializeField] private TextMeshProUGUI _explanationPartyUIar;
+    
     /// <summary>
     /// パーティーメンバーUIの保持
     /// </summary>
@@ -58,11 +55,6 @@ public class PartyFormationUIController : MonoBehaviour
     /// パーティー編成画面を非表示
     /// </summary>
     public Action<bool> onPartyHideDisplay;
-    /// <summary>
-    /// パーティー編成画面に変更を加える
-    /// ・操作説明のText等
-    /// </summary>
-    public Action<bool> onPartyDisplayChange;
     
     void Awake()
     {
@@ -80,7 +72,6 @@ public class PartyFormationUIController : MonoBehaviour
             PartySwitchDisplay(flag);
             PartyCharacterSwitchDisplay(flag);
         };
-        onPartyDisplayChange += ExplanationPartyChangeUI;
     }
 
     /// <summary>
@@ -185,7 +176,6 @@ public class PartyFormationUIController : MonoBehaviour
         {
             info.partyUIObj.SetActive(flag);
         }
-        _explanationPartyUI.SetActive(flag);
     }
 
     /// <summary>
@@ -197,22 +187,6 @@ public class PartyFormationUIController : MonoBehaviour
         foreach (var info in partyCharacterInfos)
         {
             info.charaObj.SetActive(flag);
-        }
-    }
-
-    /// <summary>
-    /// パーティー編成画面の操作説明UIの更新
-    /// </summary>
-    /// <param name="flag">true：加入済み　false：加入未済</param>>
-    private void ExplanationPartyChangeUI(bool flag)
-    {
-        if (flag) //加入済みの場合、Textを外すに変更をする
-        {
-            _explanationPartyUIar.text = "Remove";
-        }
-        else
-        {
-            _explanationPartyUIar.text = "Add";
         }
     }
 }

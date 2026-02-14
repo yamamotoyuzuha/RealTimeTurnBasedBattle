@@ -11,6 +11,8 @@ public class EnemySelectionScreen : MonoBehaviour
     [SerializeField] private TitleInputManager _titleInputManager;
     [Header("EnemySelectionScreenUIController")] 
     [SerializeField] private EnemySelectionScreenUIController _selectionScreenUIController;
+    [Header("TitleUIManager")]
+    [SerializeField] private TitleUIManager _titleUIManager;
     [Header("Enemy一覧")] 
     [SerializeField] private List<CharacterBaseData> _allEnemy;
     [Header("選択したEnemy")] 
@@ -39,6 +41,7 @@ public class EnemySelectionScreen : MonoBehaviour
         _selectEnemy = _allEnemy[0];
         currentEnemy = _selectEnemy;
         SelectedChangeEnemy(0);
+        SelectEnemy(currentEnemy);
         CombatInformationManager.Instance.AddCombatInfoEnemy(_selectEnemy);
     }
 
@@ -69,11 +72,15 @@ public class EnemySelectionScreen : MonoBehaviour
             {
                 IsSelectDisplay = true;
                 _selectionScreenUIController.onEnemySelectionShowOrHidden?.Invoke(true);
+                _titleInputManager.SetGame(false);
+                _titleUIManager.onEsShow?.Invoke();
             }
             else //非表示
             {
                 IsSelectDisplay = false;
                 _selectionScreenUIController.onEnemySelectionShowOrHidden?.Invoke(false);
+                _titleInputManager.SetGame(true);
+                _titleUIManager.onTitleShow?.Invoke();
                 
                 //非表示にしたタイミングでEnemyの確定
                 CombatInformationManager.Instance.AddCombatInfoEnemy(_selectEnemy);

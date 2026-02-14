@@ -10,12 +10,22 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 67d2e3be9f27aca46b530804a524a392, type: 3}
-  m_Name: I_1
+  m_Name: I_2
   m_EditorClassIdentifier: 
   magicName: IceWall
   magicExplanation: IceWallShow
-  consumptionMp: 3
+  consumptionMp: 4
   magicType: 2
-  magicRangeType: 0
+  magicRangeType: 1
   magicPanelDisplayTime: 3
-  freezeTurn: 0
+  _animationTime: 2
+  _statusEffect: {fileID: 21300000, guid: 540bb25af05615b42805050378eda590, type: 3}
+  _saType: 1
+  _magicProbability: 70
+  _defenseActions: 
+  _commandAnimationData:
+    _animationTriggerName: Ice
+  _particleObj: {fileID: 4924508274929071776, guid: 0edef91621bb6b34384ccc9dbb98729c,
+    type: 3}
+  _damageIncrease: 30
+  freezeTurn: 4

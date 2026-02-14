@@ -14,15 +14,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   magicName: FlameSord
   magicExplanation: FlameSordShoot
-  consumptionMp: 2
+  consumptionMp: 3
   magicType: 1
-  magicRangeType: 0
+  magicRangeType: 1
   magicPanelDisplayTime: 5
-  _animationTime: 0
-  _statusEffect: {fileID: 0}
+  _animationTime: 2
+  _statusEffect: {fileID: 21300000, guid: 9ffdc0d5492605c479b30d656f563d1d, type: 3}
   _saType: 0
+  _magicProbability: 80
   _defenseActions: 
   _commandAnimationData:
     _animationTriggerName: Flame
-  _damage: 0
-  _damageOverTime: 0
+  _particleObj: {fileID: 358637981425055526, guid: 8eb503696b886e04faff8fc0f480d473,
+    type: 3}
+  _damage: 20
+  _damageOverTime: 2

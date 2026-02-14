@@ -14,6 +14,10 @@ public class CommandInputManager : MonoBehaviour
     [SerializeField] private BattleCommandUI _battleCommandUI;
     [Header("BattleCameraAngleManager")]
     [SerializeField] private BattleCameraAngleManager _battleCameraAngleManager;
+    [Header("パリィのエフェクト")]
+    [SerializeField] private GameObject _parryEffectPrefab;
+    [Header("ジャストガードのエフェクト")]
+    [SerializeField] private GameObject _justGuardEffectPrefab;
     
     /// <summary>
     /// コマンドの入力が完了
@@ -87,21 +91,6 @@ public class CommandInputManager : MonoBehaviour
         //デバッグ用　コマンド決定
         if (Input.GetKeyDown(KeyCode.Return))
         {
-            /*
-            //コマンドが確定している状態ならターンを開始する
-            if (isConfirmCommand)
-            {
-                var cameraSet = turnManager.CharacterInfos[turnManager.CurrentTurnCharacter].cameraSettings;
-                _battleCameraAngleManager.BattleCameraAngleChange(BattleCameraActiveType.MagicPanelStart,
-                    cameraSet.MagicPanelStartCamPosF, cameraSet.MagicPanelStartCamPosL);
-                _battleCommandUI.UndoMagicUIText();
-                BattleOperatingInstructionsUI.Instance.HiddenUI();
-                turnManager.TurnCharacterCommandUI(turnManager.CurrentTurnCharacter, false);
-                ResetCommandFlag();
-                onCommandInputComplete?.Invoke();
-                isConfirmCommand = false; //コマンドを確定していない状態にする
-            }
-            */
             ConfirmCommand();
         }
 
@@ -361,7 +350,7 @@ public class CommandInputManager : MonoBehaviour
         //TODO：ここはいずれinputSystemでバインドしたもの使用する
         //TODO：パリィ出来ていることが確認できたOK
         //ここは仮の入力を指定している
-        if (Input.GetKeyDown(KeyCode.P))
+        if (commandInput.Player.Parry.triggered)
         {
             foreach (var status in GetPlayerCharacterBaseStatus())
             {
@@ -375,9 +364,12 @@ public class CommandInputManager : MonoBehaviour
             {
                 if(animChara.Value.characterName == "Enemy") continue;
                 animChara.Value.animationCharacter.SetAnimationPlay("Parry");
+                var pos = animChara.Value.animationCharacter.GetEffectTransform("Parry");
+                var obj = Instantiate(_parryEffectPrefab, pos.position, Quaternion.identity);
+                Destroy(obj, 1f);
             }
         }
-        if (Input.GetKeyDown(KeyCode.G))
+        if (commandInput.Player.JustGuard.triggered)
         {
             foreach (var status in GetPlayerCharacterBaseStatus())
             {
@@ -389,6 +381,9 @@ public class CommandInputManager : MonoBehaviour
             {
                 if(animChara.Value.characterName == "Enemy") continue;
                 animChara.Value.animationCharacter.SetAnimationPlay("JustGuard");
+                var pos = animChara.Value.animationCharacter.GetEffectTransform("JustGuard");
+                var obj = Instantiate(_justGuardEffectPrefab, pos.position, Quaternion.identity);
+                Destroy(obj, 1f);
             }
         }
     }

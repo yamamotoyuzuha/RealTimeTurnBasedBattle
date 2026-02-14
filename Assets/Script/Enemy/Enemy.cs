@@ -3,7 +3,7 @@ using UnityEngine;
 using Cysharp.Threading.Tasks;
 using UnityEngine.Serialization;
 
-public class Enemy : MonoBehaviour, Status, EnemyBase
+public class Enemy : MonoBehaviour, Status, EnemyBase, IAnimationCharacter
 {
     [Header("データ")] 
     [SerializeField] private EnemyData enemyData;
@@ -56,6 +56,7 @@ public class Enemy : MonoBehaviour, Status, EnemyBase
 
     //攻撃パターン
     private int currentAttackPatten;
+    private Animator animator;
 
     //TODO：あくまでデバッグ用の表示　
     //TODO：あとで消す
@@ -74,12 +75,15 @@ public class Enemy : MonoBehaviour, Status, EnemyBase
         characterState = GetComponent<CharacterState>().characterState;
         characterBaseStatus = new CharacterBaseStatus
             (enemyData.Hp, 0, enemyData.Attack, enemyData.Defense, enemyData.Speed, this.gameObject);
+        characterBaseStatus.onHitEffect += Hit;
+        characterBaseStatus.onDeathEffect += Death;
         //Enemyの状態による行動変化（通常）
         behaviorChangeState = EnemyBehaviorChangeState.Normal;
         //攻撃パターンを設定
         currentAttackPatten = 0;
         //Enemyのターン開始に行うイベントを登録
         OnEnemyTurnAction += EnemyStatusChangeAction;
+        animator = GetComponent<Animator>();
     }
 
     /// <summary>
@@ -133,8 +137,8 @@ public class Enemy : MonoBehaviour, Status, EnemyBase
     private async UniTask BehavioralChoice()
     {
         //アニメーションを再生し、アニメーション時間分待機する
-        //TODO：アニメーションの再生
         var magicData = characterBaseStatus.CharacterCommandActionData.GetMagicBaseData();
+        SetAnimationPlay(magicData.CommandAnimationData._animationTriggerName);
         var animTime = magicData.AnimationTime;
         debugUI.SetDebugText(animTime); //TODO：デバッグ用の関数（後で削除する）
         //行動内容UIの表示 //TODO：ここは何か内容を考えていれる
@@ -142,15 +146,7 @@ public class Enemy : MonoBehaviour, Status, EnemyBase
         OnEnemyAction?.Invoke(text, true);
         await UniTask.Delay(TimeSpan.FromSeconds(animTime));
         
-        //TODO：ここでは仮に待機を使ってデバッグを行う
-        //TODO：ダメージを与えることが確認できたOK
-        Debug.Log("１回目の攻撃を開始");
-        EnemyAttack();
-        debugUI.SetDebugText(animTime); //TODO：デバッグ用の関数（後で削除する）
-        await UniTask.Delay(TimeSpan.FromSeconds(animTime));
-        Debug.Log("２回目の攻撃を開始");
-        EnemyAttack();
-        Debug.Log("攻撃を終了");
+        //攻撃が終了後の処理を行う
         OnEnemyAction?.Invoke("", false);
         BattleOperatingInstructionsUI.Instance.DefenseActionUI(false);
         
@@ -185,11 +181,37 @@ public class Enemy : MonoBehaviour, Status, EnemyBase
     }
 
     /// <summary>
+    /// ダメージを受けた時
+    /// </summary>
+    private void Hit()
+    {
+        SetAnimationPlay("Hit");
+    }
+
+    /// <summary>
+    /// 死亡した時
+    /// </summary>
+    private void Death()
+    {
+        animator.SetBool("IsDeath", true);
+    }
+
+    /// <summary>
     /// アニメーションイベント
     /// ・ダメージを与える
     /// </summary>
     public void EnemyAttack()
     {
         OnEnemyAttackDamage?.Invoke();
+    }
+
+    public void SetAnimationPlay(string animationName)
+    {
+        animator.SetTrigger(animationName);
+    }
+
+    public Transform GetEffectTransform(string effectPosName)
+    {
+        return null;
     }
 }

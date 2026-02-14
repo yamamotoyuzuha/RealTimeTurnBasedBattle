@@ -19,11 +19,13 @@ MonoBehaviour:
   magicRangeType: 0
   magicPanelDisplayTime: 5
   _animationTime: 2
-  _statusEffect: {fileID: 21300000, guid: 26be86044faa7194682fdb47c626364d, type: 3}
+  _statusEffect: {fileID: 21300000, guid: 9ffdc0d5492605c479b30d656f563d1d, type: 3}
   _saType: 0
-  magicProbability: 80
+  _magicProbability: 80
   _defenseActions: 
   _commandAnimationData:
     _animationTriggerName: Flame
+  _particleObj: {fileID: 358637981425055526, guid: 8eb503696b886e04faff8fc0f480d473,
+    type: 3}
   _damage: 20
   _damageOverTime: 2

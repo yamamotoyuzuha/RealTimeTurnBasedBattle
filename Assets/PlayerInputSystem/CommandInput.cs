@@ -125,6 +125,24 @@ public partial class @CommandInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Parry"",
+                    ""type"": ""Button"",
+                    ""id"": ""9c82b8c3-4ddd-434e-93b7-d6b158b3c214"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""JustGuard"",
+                    ""type"": ""Button"",
+                    ""id"": ""1221663e-14a9-41cd-b382-b986828f3e05"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -433,6 +451,28 @@ public partial class @CommandInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": """",
                     ""action"": ""MagicChange"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""ce38a529-21b4-4a9f-a765-aacc1351f0a5"",
+                    ""path"": ""<Keyboard>/p"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard&Mouse"",
+                    ""action"": ""Parry"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""043759ba-6927-422c-bff0-a9d16afc8765"",
+                    ""path"": ""<Keyboard>/g"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard&Mouse"",
+                    ""action"": ""JustGuard"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1031,6 +1071,8 @@ public partial class @CommandInput: IInputActionCollection2, IDisposable
         m_Player_MagicCommand2 = m_Player.FindAction("MagicCommand2", throwIfNotFound: true);
         m_Player_Back = m_Player.FindAction("Back", throwIfNotFound: true);
         m_Player_MagicChange = m_Player.FindAction("MagicChange", throwIfNotFound: true);
+        m_Player_Parry = m_Player.FindAction("Parry", throwIfNotFound: true);
+        m_Player_JustGuard = m_Player.FindAction("JustGuard", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_Navigate = m_UI.FindAction("Navigate", throwIfNotFound: true);
@@ -1115,6 +1157,8 @@ public partial class @CommandInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_MagicCommand2;
     private readonly InputAction m_Player_Back;
     private readonly InputAction m_Player_MagicChange;
+    private readonly InputAction m_Player_Parry;
+    private readonly InputAction m_Player_JustGuard;
     public struct PlayerActions
     {
         private @CommandInput m_Wrapper;
@@ -1130,6 +1174,8 @@ public partial class @CommandInput: IInputActionCollection2, IDisposable
         public InputAction @MagicCommand2 => m_Wrapper.m_Player_MagicCommand2;
         public InputAction @Back => m_Wrapper.m_Player_Back;
         public InputAction @MagicChange => m_Wrapper.m_Player_MagicChange;
+        public InputAction @Parry => m_Wrapper.m_Player_Parry;
+        public InputAction @JustGuard => m_Wrapper.m_Player_JustGuard;
         public InputActionMap Get() { return m_Wrapper.m_Player; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -1172,6 +1218,12 @@ public partial class @CommandInput: IInputActionCollection2, IDisposable
             @MagicChange.started += instance.OnMagicChange;
             @MagicChange.performed += instance.OnMagicChange;
             @MagicChange.canceled += instance.OnMagicChange;
+            @Parry.started += instance.OnParry;
+            @Parry.performed += instance.OnParry;
+            @Parry.canceled += instance.OnParry;
+            @JustGuard.started += instance.OnJustGuard;
+            @JustGuard.performed += instance.OnJustGuard;
+            @JustGuard.canceled += instance.OnJustGuard;
         }
 
         private void UnregisterCallbacks(IPlayerActions instance)
@@ -1209,6 +1261,12 @@ public partial class @CommandInput: IInputActionCollection2, IDisposable
             @MagicChange.started -= instance.OnMagicChange;
             @MagicChange.performed -= instance.OnMagicChange;
             @MagicChange.canceled -= instance.OnMagicChange;
+            @Parry.started -= instance.OnParry;
+            @Parry.performed -= instance.OnParry;
+            @Parry.canceled -= instance.OnParry;
+            @JustGuard.started -= instance.OnJustGuard;
+            @JustGuard.performed -= instance.OnJustGuard;
+            @JustGuard.canceled -= instance.OnJustGuard;
         }
 
         public void RemoveCallbacks(IPlayerActions instance)
@@ -1402,6 +1460,8 @@ public partial class @CommandInput: IInputActionCollection2, IDisposable
         void OnMagicCommand2(InputAction.CallbackContext context);
         void OnBack(InputAction.CallbackContext context);
         void OnMagicChange(InputAction.CallbackContext context);
+        void OnParry(InputAction.CallbackContext context);
+        void OnJustGuard(InputAction.CallbackContext context);
     }
     public interface IUIActions
     {

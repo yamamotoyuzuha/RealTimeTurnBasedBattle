@@ -60,6 +60,8 @@ public class MagicPanel : MonoBehaviour
     /// </summary>
     private Status status;
     private UniTaskCompletionSource compSource;
+
+    private IAnimationCharacter animationCharacter;
     
     //TODO：再生成は完了
     //TODO：途中で縦横の幅を変更すると、配列がぐちゃぐちゃになるから初期化して配列の大きさを変更する
@@ -77,12 +79,11 @@ public class MagicPanel : MonoBehaviour
 
         //グリッドレイアウトグループの縦の制約を設定する
         massParent.GetComponent<GridLayoutGroup>().constraintCount = verticalSize;
-
         //現在のマスのRectTransformを取得する
         currentMassRect = currentMass.GetComponent<RectTransform>();
-        
         //ステータスを取得
         status = GetComponent<Status>();
+        animationCharacter = GetComponent<IAnimationCharacter>();
         
         OperationUISettings();
     }

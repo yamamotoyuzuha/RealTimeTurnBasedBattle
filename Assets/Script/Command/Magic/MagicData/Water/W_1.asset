@@ -12,10 +12,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 706d6c2d3c2eaa34f887a6e42f39891a, type: 3}
   m_Name: W_1
   m_EditorClassIdentifier: 
-  magicName: 
-  magicExplanation: 
-  consumptionMp: 0
+  magicName: WaterMagic
+  magicExplanation: Wet
+  consumptionMp: 2
   magicType: 3
   magicRangeType: 0
   magicPanelDisplayTime: 5
-  splashedWaterTurn: 0
+  _animationTime: 0
+  _statusEffect: {fileID: 21300000, guid: bdc4d6d4e97d3284289516d95ed4776a, type: 3}
+  _saType: 3
+  _magicProbability: 70
+  _defenseActions: 
+  _commandAnimationData:
+    _animationTriggerName: Water
+  _particleObj: {fileID: 2060900179291159282, guid: ca6705a3f9070d14d819d179493bcfa0,
+    type: 3}
+  _waRate: 20
+  _waterAbsorptionTurn: 2

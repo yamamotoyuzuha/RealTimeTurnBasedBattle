@@ -19,8 +19,13 @@ MonoBehaviour:
   magicRangeType: 1
   magicPanelDisplayTime: 3
   _animationTime: 2
-  _statusEffect: {fileID: 21300000, guid: b94c008e5976ac3459f15da93ca56498, type: 3}
+  _statusEffect: {fileID: 21300000, guid: 540bb25af05615b42805050378eda590, type: 3}
   _saType: 1
+  _magicProbability: 50
   _defenseActions: 
+  _commandAnimationData:
+    _animationTriggerName: Ice
+  _particleObj: {fileID: 4924508274929071776, guid: 0edef91621bb6b34384ccc9dbb98729c,
+    type: 3}
   _damageIncrease: 30
   freezeTurn: 4

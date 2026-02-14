@@ -10,6 +10,8 @@ public class PartyFormation : MonoBehaviour
     [SerializeField] private TitleInputManager _titleInputManager;
     [Header("PartyFormationUIController")]
     [SerializeField] private PartyFormationUIController _partyFormationUIController;
+    [Header("TitleUIManager")]
+    [SerializeField] private TitleUIManager _titleUIManager;
     [Header("キャラクター一覧")]
     [SerializeField] private List<CharacterBaseData> _allCharacters = new List<CharacterBaseData>();
     [Header("パーティー")]
@@ -77,11 +79,15 @@ public class PartyFormation : MonoBehaviour
             {
                 IsPartyDisplay = true;
                 _partyFormationUIController.onPartyShowDisplay?.Invoke(true);
+                _titleInputManager.SetGame(false);
+                _titleUIManager.onPfShow?.Invoke();
             }
             else //非表示
             {
                 IsPartyDisplay = false;
                 _partyFormationUIController.onPartyHideDisplay?.Invoke(false);
+                _titleInputManager.SetGame(true);
+                _titleUIManager.onTitleShow?.Invoke();
                 
                 //非表示にしたタイミングでパーティー編成の確定
                 CombatInformationManager.Instance.AddCombatInfoCharacter(_partys);
@@ -132,7 +138,6 @@ public class PartyFormation : MonoBehaviour
     private void SelectedCharacterInParty(CharacterBaseData chara)
     {
         var isAdd = _partys.Contains(chara);
-        _partyFormationUIController.onPartyDisplayChange?.Invoke(isAdd);
         _partyFormationUIController.onAddOrRemoveCharacter?.Invoke(chara, isAdd);
     }
 }

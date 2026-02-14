@@ -12,10 +12,19 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 671b620cc922cc24490fb6c5c2bea769, type: 3}
   m_Name: T_1
   m_EditorClassIdentifier: 
-  magicName: 
-  magicExplanation: 
-  consumptionMp: 0
+  magicName: ThunderMagic
+  magicExplanation: Shock
+  consumptionMp: 3
   magicType: 4
   magicRangeType: 1
   magicPanelDisplayTime: 4
-  electricShockTurn: 0
+  _animationTime: 0
+  _statusEffect: {fileID: 21300000, guid: 1601e57e8a3afa847900f19343dcc45c, type: 3}
+  _saType: 2
+  _magicProbability: 50
+  _defenseActions: 
+  _commandAnimationData:
+    _animationTriggerName: Thunder
+  _particleObj: {fileID: 2965222256817593503, guid: a164e676dbbd6e54587237e619372c98,
+    type: 3}
+  _electricShockTurn: 2

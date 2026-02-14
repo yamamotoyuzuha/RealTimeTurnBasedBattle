@@ -19,7 +19,12 @@ MonoBehaviour:
   magicRangeType: 1
   magicPanelDisplayTime: 4
   _animationTime: 0
-  _statusEffect: {fileID: 21300000, guid: accebfcdffaf7a84ba6ae161e8ece375, type: 3}
+  _statusEffect: {fileID: 21300000, guid: 1601e57e8a3afa847900f19343dcc45c, type: 3}
   _saType: 2
+  _magicProbability: 40
   _defenseActions: 
+  _commandAnimationData:
+    _animationTriggerName: Thunder
+  _particleObj: {fileID: 2965222256817593503, guid: a164e676dbbd6e54587237e619372c98,
+    type: 3}
   _electricShockTurn: 2
