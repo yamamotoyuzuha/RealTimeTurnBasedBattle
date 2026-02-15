@@ -121,6 +121,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Decision",
+                    "type": "Button",
+                    "id": "2eca1a81-78b3-420b-9671-35a9760ac8ca",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -451,6 +460,17 @@
                     "processors": "",
                     "groups": "Keyboard&Mouse",
                     "action": "JustGuard",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "232617fa-3ede-4ff5-baa7-1269af8b32f0",
+                    "path": "<Keyboard>/enter",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "Decision",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

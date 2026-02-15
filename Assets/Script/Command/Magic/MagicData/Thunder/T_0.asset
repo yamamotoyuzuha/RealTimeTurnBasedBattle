@@ -21,7 +21,11 @@ MonoBehaviour:
   _animationTime: 0
   _statusEffect: {fileID: 21300000, guid: 1601e57e8a3afa847900f19343dcc45c, type: 3}
   _saType: 2
-  _magicProbability: 40
+  _magicReactionInfo:
+    _saType: 4
+    _mrType: 6
+    _damage: 0
+  _magicProbability: 30
   _defenseActions: 
   _commandAnimationData:
     _animationTriggerName: Thunder

@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using Cysharp.Threading.Tasks;
-using Unity.VisualScripting;
 
 public class BattleManager : MonoBehaviour
 {
@@ -140,8 +139,6 @@ public class BattleManager : MonoBehaviour
         //キャラクターがプレイヤーの操作キャラクターの場合、マジックパネルを表示する
         if (CurrentCharacterPlayerJudgment())
         {
-            Debug.Log("プレイヤーの操作です");
-            
             //ターンキャラクターを取得
             var character = turnManager.CurrentTurnCharacter;
             
@@ -168,12 +165,14 @@ public class BattleManager : MonoBehaviour
         }
         else //敵の行動
         {
-            Debug.Log("敵の行動です");
+            //少し待機してから、敵の行動を開始させる
+            await UniTask.Delay(TimeSpan.FromSeconds(1));
             
             var enemy = turnManager.CharacterInfos[turnManager.CurrentTurnCharacter].enemyBase;
             var enemyStatus = turnManager.CharacterInfos[turnManager.CurrentTurnCharacter].status;
             enemyStatus.GetCharacterStatus().ResetResultDefenseActionType();
             //登録を行う前に登録解除し、Actionを登録する
+            if(enemy == null) return;
             enemy.OnEnemyTurnEnd -= CharacterEndAction;
             enemy.UnsubscribeActioAttackDamage(() => EnemyAttackDamageCalculation(enemy, enemyStatus));
             enemy.OnEnemyTurnEnd += CharacterEndAction;
@@ -213,7 +212,34 @@ public class BattleManager : MonoBehaviour
         Debug.Log("行動終了");
         
         turnManager.onNextTurnSetUp?.Invoke();
+        
+        //状態異常等の処理で死亡した場合用の判定をもう一度取る
+        IsDeathCheck();
     }
+
+    /// <summary>
+    /// 死亡したかの判定を行う
+    /// </summary>
+    private void IsDeathCheck()
+    {
+        if (PlayerCheckingIfAlive())
+        {
+            Time.timeScale = 0;
+            BattleUIHidden();
+            _victoryOrDefeatUI.OnDefeatUIDisplay?.Invoke();
+            Debug.Log("プレイヤーキャラクターが全員死亡");
+            return;
+        }
+        if (EnemyCheckingIfAlive())
+        {
+            Time.timeScale = 0;
+            BattleUIHidden();
+            _victoryOrDefeatUI.OnVictoryUIDisplay?.Invoke();
+            Debug.Log("Enemyの死亡");
+            return;
+        }
+    }
+    
     /// <summary>
     /// プレイヤーキャラクターが生存しているか判定
     /// </summary>
@@ -290,8 +316,10 @@ public class BattleManager : MonoBehaviour
         //キャラの攻撃力を取得して、ダメージを与える
         var damage = status.Attack;
         var enemyStatus = GetEnemyBaseStatus();
-        enemyStatus.Damage(damage);
+        enemyStatus.Damage(damage, magic.StatusEffect);
         enemyStatus.IsWaterAbsorption(damage, status);
+        //魔法パネルでバフがかかっていたのを元に戻す
+        status.UndoAttackStatus();
         //魔法特有の効果を相手に付与する
         magic.GetMagicBaseData().MagicAction(enemyStatus);
         await UniTask.Delay(TimeSpan.FromSeconds(1));
@@ -315,7 +343,7 @@ public class BattleManager : MonoBehaviour
         var animChara = turnManager.CharacterInfos[character].animationCharacter;
         animChara.SetAnimationPlay("Attack");
         await UniTask.Delay(TimeSpan.FromSeconds(2)); //アニメーション時間分待機
-        enemyStatus.Damage(playerStatus.Attack);
+        enemyStatus.Damage(playerStatus.Attack, null);
         enemyStatus.IsWaterAbsorption(playerStatus.Attack, playerStatus);
         await UniTask.Delay(TimeSpan.FromSeconds(1));
     }
@@ -364,7 +392,7 @@ public class BattleManager : MonoBehaviour
             //プレイヤーキャラクターが生存しているときのみ、処理を通す
             if(targetList.Count == 0) return;
             index = UnityEngine.Random.Range(0, targetList.Count);
-            AttackDamageTarget(targetList[index].status, enemyStatus);
+            AttackDamageTargetCheck(targetList[index].status, enemyStatus);
         }
         else
         {
@@ -380,73 +408,84 @@ public class BattleManager : MonoBehaviour
             {
                 //Enemyの場合、処理を飛ばす
                 if(charaStatus.Key == turnManager.CurrentTurnCharacter) continue;
-                AttackDamageTarget(charaStatus.Value.status, enemyStatus);
+                AttackDamageTargetCheck(charaStatus.Value.status, enemyStatus);
                 index++;
             }
         }
     }
 
     /// <summary>
-    /// ターゲットにダメージを与える
+    /// ターゲットにダメージを与えられるか判定
     /// <param name="targetStatus">ターゲットのステータス</param>
     /// <param name="enemyStatus">Enemyのステータス</param>>
     /// </summary>
-    private void AttackDamageTarget(Status targetStatus, Status enemyStatus)
+    private void AttackDamageTargetCheck(Status targetStatus, Status enemyStatus)
     {
-        Debug.Log("ダメージを与えるターゲット" + targetStatus.GetData().CharacterName);
         //ターゲットが防御アクションを行っているのか判定
         var dAction = targetStatus.GetCharacterStatus().DefenseActionJudgment();
+        var aData = enemyStatus.GetCharacterStatus().CharacterCommandActionData;
         switch (dAction)
         {
             case DefenseActionType.Parry:
-                Debug.Log("パリィではじかれた");
+                if (!DefenseActionCheck(dAction, aData))
+                {
+                    TargetDamage(targetStatus, enemyStatus, aData);
+                    return;
+                }
                 targetStatus.GetCharacterStatus().ParrySuccessProcessing(1);
                 enemyStatus.GetCharacterStatus().SetResultDefenseActionType(DefenseActionType.Parry);
                 break;
             case DefenseActionType.JustGuard:
-                Debug.Log("ジャストガードで受け流された");
+                if (!DefenseActionCheck(dAction, aData))
+                {
+                    TargetDamage(targetStatus, enemyStatus, aData);
+                    return;
+                }
                 targetStatus.GetCharacterStatus().JustGuardProcessing();
                 enemyStatus.GetCharacterStatus().SetResultDefenseActionType(DefenseActionType.JustGuard);
                 break;
             default:
-                //攻撃力を取得し、ターゲットにダメージを与える
-                var enemyAttack = enemyStatus.GetCharacterStatus().Attack;
-                targetStatus.GetCharacterStatus().Damage(enemyAttack);
-        
-                //TODO：魔法だけでなく、caseに攻撃を増やす
-                var aData = enemyStatus.GetCharacterStatus().CharacterCommandActionData;
-                switch (aData.GetCommandType())
-                {
-                    case CharacterCommandActionType.Magic:
-                        var magic = aData.GetMagicBaseData();
-                        magic.MagicAction(targetStatus.GetCharacterStatus());
-                        //エフェクトの生成
-                        var effect = Instantiate(magic.ParticleObj, 
-                            _fieldSettings.PlayerCharaPos[index].position, Quaternion.identity);
-                        Destroy(effect, 1);
-                        break;
-                }
+                TargetDamage(targetStatus, enemyStatus, aData);
                 break;
         }
-        
-        /*
+    }
+
+    /// <summary>
+    /// 防御アクションが可能かどうかの判定
+    /// </summary>
+    /// <param name="type">防御アクションの種類</param>
+    /// <param name="data">発動する魔法</param>
+    /// <returns>true：可能　false：不可能</returns>
+    private bool DefenseActionCheck(DefenseActionType type, CharacterCommandActionData data)
+    {
+        var magic = data.GetMagicBaseData();
+        return magic.IsDefenceActionPossible(type);
+    }
+    
+    /// <summary>
+    /// ターゲットにダメージを与える
+    /// </summary>
+    /// <param name="targetStatus">ターゲット</param>
+    /// <param name="enemyStatus">Enemy</param>
+    /// <param name="data">コマンド内容</param>>
+    private void TargetDamage(Status targetStatus, Status enemyStatus, CharacterCommandActionData data)
+    {
         //攻撃力を取得し、ターゲットにダメージを与える
         var enemyAttack = enemyStatus.GetCharacterStatus().Attack;
-        targetStatus.GetCharacterStatus().Damage(enemyAttack);
-        
-        //TODO：魔法だけでなく、caseに攻撃を増やす
-        var aData = enemyStatus.GetCharacterStatus().CharacterCommandActionData;
-        switch (aData.GetCommandType())
+        //targetStatus.GetCharacterStatus().Damage(enemyAttack);
+
+        switch (data.GetCommandType())
         {
             case CharacterCommandActionType.Magic:
-                var magic = aData.GetMagicBaseData();
+                var magic = data.GetMagicBaseData();
+                targetStatus.GetCharacterStatus().Damage(enemyAttack, magic.StatusEffect);
                 magic.MagicAction(targetStatus.GetCharacterStatus());
+                //エフェクトの生成
+                var effect = Instantiate(magic.ParticleObj, 
+                    _fieldSettings.PlayerCharaPos[index].position, Quaternion.identity);
+                Destroy(effect, 1);
                 break;
         }
-        
-        
-        Debug.Log("Enemyがプレイヤーにダメージを与える");
-        */
     }
     
     /// <summary>

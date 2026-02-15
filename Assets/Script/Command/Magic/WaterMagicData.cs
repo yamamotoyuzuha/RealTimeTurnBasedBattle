@@ -10,8 +10,14 @@ public class WaterMagicData : MagicBaseData
 
     public override void MagicAction(CharacterBaseStatus status)
     {
+        status.IsMagicReactionCheck(this);
         if(!MagicEffectProbability.ProbabilityCalculation(MagicProbability)) return;
         var waterEffect = new WaterEffect(_waRate, _waterAbsorptionTurn, SaType);
         status.StatusEffectInfliction(waterEffect, SaType, StatusEffect, _waterAbsorptionTurn);
+    }
+    
+    public override bool IsDefenceActionPossible(DefenseActionType type)
+    {
+        return DefenseActions.Contains(type);
     }
 }

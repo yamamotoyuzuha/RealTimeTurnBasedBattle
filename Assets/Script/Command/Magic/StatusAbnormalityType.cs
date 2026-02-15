@@ -9,8 +9,9 @@ public enum StatusAbnormalityType
 {
     Burn,
     Frozen,
-    ElectricShock,
-    Wet
+    Electrification,
+    Wet,
+    None
 }
 
 /// <summary>

@@ -4,6 +4,7 @@ using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using DG.Tweening;
+using UnityEngine.UI;
 
 public class CharacterDamageUI : MonoBehaviour
 {
@@ -44,8 +45,9 @@ public class CharacterDamageUI : MonoBehaviour
         {
             var obj = Instantiate(_damageUIPrefab, _damageUIParent);
             var text = obj.transform.GetChild(0).GetComponent<TextMeshProUGUI>();
+            var image = obj.transform.GetChild(1).GetComponent<Image>();
             var damageUI = new DamageUI(
-                obj, text);
+                obj, text, image);
             
             damageUIs.Add(damageUI);
             damageUIs[i].DamageUIPrefabInstance.SetActive(false);
@@ -58,7 +60,8 @@ public class CharacterDamageUI : MonoBehaviour
     /// </summary>
     /// <param name="target">ダメージを受けたキャラクター</param>>
     /// <param name="damage">ダメージ</param>>
-    public async UniTask DamageUIShowDisplay(Transform target, float damage)
+    /// <param name="icon">ダメージアイコン</param>>
+    public async UniTask DamageUIShowDisplay(Transform target, float damage, Sprite icon)
     {
         //表示中ではないDamageUIを取得
         DamageUI damageUI = null;
@@ -89,7 +92,7 @@ public class CharacterDamageUI : MonoBehaviour
             damageUI.DamageUIPrefabInstance.SetActive(true);
             
             damageUI.SetDamageText(damage);
-            //damageUI.Hidden(500).Forget();
+            damageUI.SetIcon(icon);
             await damageUI.Hidden(500);
         }
     }
@@ -116,11 +119,13 @@ public class DamageUI
 {
     public GameObject DamageUIPrefabInstance{get; private set;}
     private TextMeshProUGUI damageUIText;
+    private Image imageIcon;
 
-    public DamageUI(GameObject obj, TextMeshProUGUI text)
+    public DamageUI(GameObject obj, TextMeshProUGUI text, Image icon)
     {
         DamageUIPrefabInstance = obj;
         damageUIText = text;
+        imageIcon = icon;
     }
     
     public Vector2 GetCanvasLocalPosition(Vector3 screenPosition, Canvas canvas)
@@ -149,17 +154,45 @@ public class DamageUI
     }
 
     /// <summary>
+    /// ダメージアイコンを設定
+    /// </summary>
+    /// <param name="icon">アイコンの画像</param>
+    public void SetIcon(Sprite icon)
+    {
+        if (icon != null)
+        {
+            imageIcon.enabled = true;
+        }
+        else
+        {
+            imageIcon.enabled = false;
+        }
+        imageIcon.sprite = icon;
+    }
+
+    /// <summary>
     /// ダメージを表示したあと、指定時間後に非表示にする
     /// </summary>
     /// <param name="time">待機時間</param>>
     public async UniTask Hidden(int time)
     {
         //拡大してから、縮小して非表示にする
-        await DamageUIPrefabInstance.transform.DOScale(
-            new Vector3(2f, 2f, 2f), 0.5f).SetEase(Ease.InQuart).AsyncWaitForCompletion();
+        var enlargementT = DamageUIPrefabInstance.transform.DOScale(
+            new Vector3(2f, 2f, 2f), 0.5f).SetEase(Ease.InQuart);
+        //シーンを遷移することを考慮
+        enlargementT.OnKill(() =>
+        {
+            if (DamageUIPrefabInstance != null) DamageUIPrefabInstance.transform.DOKill();
+        });
+        await enlargementT.AsyncWaitForCompletion();
         await UniTask.Delay(TimeSpan.FromMilliseconds(time));
-        await DamageUIPrefabInstance.transform.DOScale(
-            new Vector3(0.5f, 0.5f, 0.5f), 0.5f).SetEase(Ease.InQuart).AsyncWaitForCompletion();
-        DamageUIPrefabInstance.SetActive(false);
+        var reductionT = DamageUIPrefabInstance.transform.DOScale(
+            new Vector3(0.5f, 0.5f, 0.5f), 0.5f).SetEase(Ease.InQuart);
+        reductionT.OnKill(() =>
+        {
+            if (DamageUIPrefabInstance != null) DamageUIPrefabInstance.transform.DOKill();
+        });
+        await reductionT.AsyncWaitForCompletion();
+        if(DamageUIPrefabInstance != null) DamageUIPrefabInstance.SetActive(false);
     }
 }

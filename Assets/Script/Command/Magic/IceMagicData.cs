@@ -10,9 +10,15 @@ public class IceMagicData : MagicBaseData
 
     public override void MagicAction(CharacterBaseStatus status)
     {
+        status.IsMagicReactionCheck(this);
         if(!MagicEffectProbability.ProbabilityCalculation(MagicProbability)) return;
         //氷魔法の状態異常を付与する
         var iceEffect = new IceEffect(_damageIncrease, freezeTurn, SaType);
         status.StatusEffectInfliction(iceEffect, SaType, StatusEffect, freezeTurn);
+    }
+    
+    public override bool IsDefenceActionPossible(DefenseActionType type)
+    {
+        return DefenseActions.Contains(type);
     }
 }

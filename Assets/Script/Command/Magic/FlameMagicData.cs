@@ -10,9 +10,15 @@ public class FlameMagicData : MagicBaseData
 
     public override void MagicAction(CharacterBaseStatus status)
     {
+        status.IsMagicReactionCheck(this);
         if(!MagicEffectProbability.ProbabilityCalculation(MagicProbability)) return;
         //炎魔法の状態異常を生成し、ターゲットに状態異常を付与する
-        var flameEffect = new FlameEffect(_damage, _damageOverTime, SaType);
+        var flameEffect = new FlameEffect(_damage, StatusEffect, _damageOverTime, SaType);
         status.StatusEffectInfliction(flameEffect, SaType, StatusEffect, _damageOverTime);
+    }
+
+    public override bool IsDefenceActionPossible(DefenseActionType type)
+    {
+        return DefenseActions.Contains(type);
     }
 }

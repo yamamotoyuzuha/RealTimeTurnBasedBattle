@@ -270,49 +270,6 @@ public class CommandUI : MonoBehaviour
         //MP消費量の順番でソート
         magicBaseDatas = magicBaseDatas.OrderBy(i => i.ConsumptionMp).ToList();
 
-        /*
-        //その魔法の情報をUIに反映
-        for (int i = 0; i < 6; i++)
-        {
-            if (i > 2) //右側に生成
-            {
-                //UIを生成
-                var eachMagic = Instantiate(eachMagicObj, eachMagicParentRight);
-                var notSelected = Instantiate(notSelectedMagicObj, notSelectedParentRight);
-
-                //生成したUIからTextを取得して、魔法の情報を反映させる
-                var magicName = eachMagic.transform.GetChild(2).GetComponent<TextMeshProUGUI>();
-                magicName.text = magicBaseDatas[i].MagicName;
-                var magicExplanation = eachMagic.transform.GetChild(3).GetComponent<TextMeshProUGUI>();
-                magicExplanation.text = magicBaseDatas[i].MagicExplanation;
-                
-                var notSelectedName = notSelected.transform.GetChild(1).GetComponent<TextMeshProUGUI>();
-                notSelectedName.text = magicBaseDatas[i].MagicName;
-                
-                //MPの消費コストをUIに反映
-                //TODO：テキストを取得して、魔法データから情報を反映させる
-                
-                EachMagicRight.Add(magicBaseDatas[i]);
-            }
-            else //左側に生成
-            {
-                var eachMagic = Instantiate(eachMagicObj,  eachMagicParentLeft);
-                var notSelected = Instantiate(notSelectedMagicObj, notSelectedParentLeft);
-                
-                //生成したUIからTextを取得して、魔法の情報を反映させる
-                var magicName = eachMagic.transform.GetChild(2).GetComponent<TextMeshProUGUI>();
-                magicName.text = magicBaseDatas[i].MagicName;
-                var magicExplanation = eachMagic.transform.GetChild(3).GetComponent<TextMeshProUGUI>();
-                magicExplanation.text = magicBaseDatas[i].MagicExplanation;
-                
-                var notSelectedName = notSelected.transform.GetChild(1).GetComponent<TextMeshProUGUI>();
-                notSelectedName.text = magicBaseDatas[i].MagicName;
-                
-                //魔法をUIに基づいた順でリストに追加していく
-                EachMagicLeft.Add(magicBaseDatas[i]);
-            }
-        }
-        */
         //魔法のデータ分UIを生成する
         for (int i = 0; i < characterBaseData.MagicBaseData.Length; i++)
         {

@@ -143,6 +143,15 @@ public partial class @CommandInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""Decision"",
+                    ""type"": ""Button"",
+                    ""id"": ""2eca1a81-78b3-420b-9671-35a9760ac8ca"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -473,6 +482,17 @@ public partial class @CommandInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": ""Keyboard&Mouse"",
                     ""action"": ""JustGuard"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""232617fa-3ede-4ff5-baa7-1269af8b32f0"",
+                    ""path"": ""<Keyboard>/enter"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard&Mouse"",
+                    ""action"": ""Decision"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1073,6 +1093,7 @@ public partial class @CommandInput: IInputActionCollection2, IDisposable
         m_Player_MagicChange = m_Player.FindAction("MagicChange", throwIfNotFound: true);
         m_Player_Parry = m_Player.FindAction("Parry", throwIfNotFound: true);
         m_Player_JustGuard = m_Player.FindAction("JustGuard", throwIfNotFound: true);
+        m_Player_Decision = m_Player.FindAction("Decision", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_Navigate = m_UI.FindAction("Navigate", throwIfNotFound: true);
@@ -1159,6 +1180,7 @@ public partial class @CommandInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_MagicChange;
     private readonly InputAction m_Player_Parry;
     private readonly InputAction m_Player_JustGuard;
+    private readonly InputAction m_Player_Decision;
     public struct PlayerActions
     {
         private @CommandInput m_Wrapper;
@@ -1176,6 +1198,7 @@ public partial class @CommandInput: IInputActionCollection2, IDisposable
         public InputAction @MagicChange => m_Wrapper.m_Player_MagicChange;
         public InputAction @Parry => m_Wrapper.m_Player_Parry;
         public InputAction @JustGuard => m_Wrapper.m_Player_JustGuard;
+        public InputAction @Decision => m_Wrapper.m_Player_Decision;
         public InputActionMap Get() { return m_Wrapper.m_Player; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -1224,6 +1247,9 @@ public partial class @CommandInput: IInputActionCollection2, IDisposable
             @JustGuard.started += instance.OnJustGuard;
             @JustGuard.performed += instance.OnJustGuard;
             @JustGuard.canceled += instance.OnJustGuard;
+            @Decision.started += instance.OnDecision;
+            @Decision.performed += instance.OnDecision;
+            @Decision.canceled += instance.OnDecision;
         }
 
         private void UnregisterCallbacks(IPlayerActions instance)
@@ -1267,6 +1293,9 @@ public partial class @CommandInput: IInputActionCollection2, IDisposable
             @JustGuard.started -= instance.OnJustGuard;
             @JustGuard.performed -= instance.OnJustGuard;
             @JustGuard.canceled -= instance.OnJustGuard;
+            @Decision.started -= instance.OnDecision;
+            @Decision.performed -= instance.OnDecision;
+            @Decision.canceled -= instance.OnDecision;
         }
 
         public void RemoveCallbacks(IPlayerActions instance)
@@ -1462,6 +1491,7 @@ public partial class @CommandInput: IInputActionCollection2, IDisposable
         void OnMagicChange(InputAction.CallbackContext context);
         void OnParry(InputAction.CallbackContext context);
         void OnJustGuard(InputAction.CallbackContext context);
+        void OnDecision(InputAction.CallbackContext context);
     }
     public interface IUIActions
     {

@@ -63,22 +63,6 @@ public class TurnManager : MonoBehaviour
     
     private void Update()
     {
-        //デバック用　後で消す
-        //ターンアイコンの生成を行う
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            BattleStartCharacterIconGeneration();
-        }
-
-        /*
-        //デバック用　後で消す
-        if (Input.GetKeyDown(KeyCode.Q))
-        {
-            CharacterIconDestroy(currentTurnCharacter);
-            CharacterIconSetUp();
-            NextTurnCharacterSet();
-        }
-        */
     }
 
     /// <summary>

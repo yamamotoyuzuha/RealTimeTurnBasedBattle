@@ -13,8 +13,6 @@ using DG.Tweening;
 /// </summary>
 public class PartyFormationUIController : MonoBehaviour
 {
-    [Header("パーティー編成UI")]
-    [SerializeField] private GameObject _partyFormationUI;
     [Header("パーティーメンバーUIの生成場所")] 
     [SerializeField] private Transform _partyFormationParent;
     [Header("パーティーメンバーUIのPrefab")]

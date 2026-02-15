@@ -152,8 +152,20 @@ public class CharacterBaseStatus
         Attack = attack;
         Defense = defense;
         Speed = speed;
-
         charaObject = obj;
+        OriginalStatusSet();
+    }
+
+    /// <summary>
+    /// 元のステータスを設定
+    /// </summary>
+    private void OriginalStatusSet()
+    {
+        originalHp = Hp;
+        originalMp = Mp;
+        originalAttack = Attack;
+        originalDefense = Defense;
+        originalSpeed = Speed;
     }
 
     /// <summary>
@@ -171,14 +183,15 @@ public class CharacterBaseStatus
     /// キャラクターにダメージを与え、HPを減らす
     /// </summary>
     /// <param name="damage">ダメージ計算済みの値</param>
-    public void Damage(float damage)
+    /// <param name="image">ダメージアイコン</param>>
+    public void Damage(float damage, Sprite image)
     {
         var finalDamage = damage * DamageTakenCalculation.DamageRate;
         Hp = Mathf.Max(Hp - finalDamage, 0);
         onHpChanged?.Invoke(this, Hp, MaxHp);
         onHitEffect?.Invoke();
         //ダメージUIを表示
-        CharacterDamageUI.Instance.DamageUIShowDisplay(charaObject.transform, finalDamage).Forget();
+        CharacterDamageUI.Instance.DamageUIShowDisplay(charaObject.transform, finalDamage, image).Forget();
         DeathDetermination();
     }
 
@@ -209,7 +222,7 @@ public class CharacterBaseStatus
         onHpChanged?.Invoke(this, Hp, MaxHp);
         onHitEffect?.Invoke();
         //ダメージUIを表示
-        await CharacterDamageUI.Instance.DamageUIShowDisplay(charaObject.transform, finalDamage);
+        await CharacterDamageUI.Instance.DamageUIShowDisplay(charaObject.transform, finalDamage, null);
         DeathDetermination();
     }
     
@@ -222,6 +235,7 @@ public class CharacterBaseStatus
         {
             onDeathEffect?.Invoke();
             onDeath?.Invoke(charaObject);
+            Debug.LogWarning("死亡した");
         }
     }
 
@@ -292,6 +306,14 @@ public class CharacterBaseStatus
         Defense = originalDefense;
         Speed = originalSpeed;
     }
+    
+    /// <summary>
+    /// キャラクターの攻撃力を元に戻す
+    /// </summary>
+    public void UndoAttackStatus()
+    {
+        Attack = originalAttack;
+    }
 
     #region 魔法の効果による状態異常の管理
 
@@ -357,7 +379,7 @@ public class CharacterBaseStatus
     /// <returns>true：痺れ状態　false：痺れ状態じゃない</returns>
     public bool IsParalysisStatus()
     {
-        return statusAilments.Any(sa => sa.StatusAbnormalityType == StatusAbnormalityType.ElectricShock);
+        return statusAilments.Any(sa => sa.StatusAbnormalityType == StatusAbnormalityType.Electrification);
     }
     /// <summary>
     /// 吸水状態かを判定
@@ -390,6 +412,43 @@ public class CharacterBaseStatus
         statusAilments.Clear();
     }
     
+    #endregion
+
+    #region 魔法反応
+
+    /// <summary>
+    /// 魔法反応が起きるか判定を行う
+    /// </summary>
+    /// <param name="mData">魔法の情報</param>>
+    public void IsMagicReactionCheck(MagicBaseData mData)
+    {
+        //魔法反応が起きる状態異常かを判定する
+        var msaType = mData.MagicReactionInfo.SaType;
+        if (statusAilments.Any(sa => sa.StatusAbnormalityType == msaType))
+        {
+            var type = mData.MagicReactionInfo.MrType;
+            MagicReactionClassification(type, mData);
+        }
+    }
+
+    /// <summary>
+    /// 魔法反応の種類別で処理
+    /// </summary>
+    /// <param name="type">魔法反応</param>
+    /// <param name="mData">魔法の情報</param>
+    private void MagicReactionClassification(MagicReactionType type, MagicBaseData mData)
+    {
+        switch (type)
+        {
+            case MagicReactionType.Evaporation:
+                var evaporation = new Evaporation(mData.MagicReactionInfo.Damage, mData.StatusEffect);
+                evaporation.MagicReactionAction(this);
+                break;
+            case MagicReactionType.Dissolution:
+                break;
+        }
+    }
+
     #endregion
 
     #region パリィなどの防御アクション関連
@@ -472,28 +531,28 @@ public class CharacterBaseStatus
     {
         if (IsParry)
         {
-            Debug.Log("パリィ成功");
+            Debug.Log("パリィ");
             ParrySuccess = true;
             return DefenseActionType.Parry;
         }
 
         if (IsJustGuard)
         {
-            Debug.Log("ジャストガード成功");
+            Debug.Log("ジャストガード");
             JustGuardSuccess = true;
             return DefenseActionType.JustGuard;
         }
 
         if (IsJump)
         {
-            Debug.Log("ジャンプ成功");
+            Debug.Log("ジャンプ");
             JumpSuccess = true;
             return DefenseActionType.Jump;
         }
 
         if (IsEvasion)
         {
-            Debug.Log("回避成功");
+            Debug.Log("回避");
             EvasionSuccess = true;
             return DefenseActionType.Evasion;
         }

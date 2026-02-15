@@ -13,6 +13,7 @@ public class TitleInputManager : MonoBehaviour
 
     void Awake()
     {
+        Time.timeScale = 1;
         //InputSystemを使えるようにする
         TitleInput = new TitleInput();
         TitleInput.Enable();

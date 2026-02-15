@@ -2610,6 +2610,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2516e5d97543a9a4e85a2ac8647b8334, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _commandInputManager: {fileID: 1462539147}
   _victoryUI: {fileID: 1863214196}
   _defeatUI: {fileID: 402162539}
   _uiTransform: {fileID: 1633221986}

@@ -10,16 +10,12 @@ using DG.Tweening;
 /// </summary>
 public class EnemySelectionScreenUIController : MonoBehaviour
 {
-    [Header("Enemy選択画面UI")]
-    [SerializeField] private GameObject _selectionUI;
     [Header("EnemyUIの生成場所")]
     [SerializeField] private Transform _enemyUIParent;
     [Header("EnemyUIのPrefab")] 
     [SerializeField] private GameObject _enemyUIPrefab;
     [Header("EnemyPrefabの生成場所")] 
     [SerializeField] private Transform[] _enemyObjParents;
-    [Header("Enemy選択画面の操作説明UI")] 
-    [SerializeField] private GameObject _explanationUI;
     /// <summary>
     /// EnemyUIの保持
     /// </summary>

@@ -18,24 +18,30 @@ public class TitleUIManager : MonoBehaviour
     [Header("TitleOperationUIのOperationUI")]
     [SerializeField] private Image _toImage0;
     [SerializeField] private Image _toImage1;
+    [SerializeField] private Image _toImage2;
     [SerializeField] private TextMeshProUGUI _toText0;
     [SerializeField] private TextMeshProUGUI _toText1;
+    [SerializeField] private TextMeshProUGUI _toText2;
     [Header("PFOperationUIのOperationUI")]
     [SerializeField] private Image _pfImage0;
     [SerializeField] private Image _pfImage1;
     [SerializeField] private Image _pfImage2;
     [SerializeField] private Image _pfImage3;
+    [SerializeField] private Image _pfImage4;
     [SerializeField] private TextMeshProUGUI _pfText0;
     [SerializeField] private TextMeshProUGUI _pfText1;
     [SerializeField] private TextMeshProUGUI _pfText2;
     [SerializeField] private TextMeshProUGUI _pfText3;
+    [SerializeField] private TextMeshProUGUI _pfText4;
     [Header("ESOperationUIのOperationUI")]
     [SerializeField] private Image _esImage0;
     [SerializeField] private Image _esImage1;
     [SerializeField] private Image _esImage2;
+    [SerializeField] private Image _esImage3;
     [SerializeField] private TextMeshProUGUI _esText0;
     [SerializeField] private TextMeshProUGUI _esText1;
     [SerializeField] private TextMeshProUGUI _esText2;
+    [SerializeField] private TextMeshProUGUI _esText3;
 
     /// <summary>
     /// タイトルの操作UIを表示
@@ -73,26 +79,32 @@ public class TitleUIManager : MonoBehaviour
         //タイトル操作UI
         _toImage0.sprite = data.PfSprite;
         _toImage1.sprite = data.EsSprite;
+        _toImage2.sprite = data.ExecuteSprite;
         _toText0.text = "PartyFormation";
         _toText1.text = "EnemySelect";
+        _toText2.text = "GameStart";
 
         //パーティー編成操作UI
         _pfImage0.sprite = data.SelectSprite;
         _pfImage1.sprite = data.DeSelectSprite;
         _pfImage2.sprite = data.LeftArrowSprite;
         _pfImage3.sprite = data.RightArrowSprite;
+        _pfImage4.sprite = data.PfSprite;
         _pfText0.text = "Add";
         _pfText1.text = "Remove";
         _pfText2.text = "Left";
         _pfText3.text = "Right";
+        _pfText4.text = "Back";
 
         //Enemy選択操作UI
         _esImage0.sprite = data.SelectSprite;
         _esImage1.sprite = data.LeftArrowSprite;
         _esImage2.sprite = data.RightArrowSprite;
+        _esImage3.sprite = data.EsSprite;
         _esText0.text = "Add";
         _esText1.text = "Left";
         _esText2.text = "Right";
+        _esText3.text = "Back";
     }
 
     private void TitleShow()

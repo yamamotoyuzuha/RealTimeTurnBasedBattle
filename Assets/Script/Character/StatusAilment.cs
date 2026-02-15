@@ -49,16 +49,19 @@ public abstract class StatusAilment
 public class FlameEffect : StatusAilment
 {
     private int flameDamage; //持続ダメージ
+    private Sprite imageIcon;
     
     /// <summary>
     /// 効果の設定を行う
     /// </summary>
     /// <param name="damage">持続ダメージ</param>
+    /// <param name="image">持続ダメージのアイコン</param>>
     /// <param name="sustainability">持続ターン</param>
     /// <param name="type">状態異常の種類</param>>
-    public FlameEffect(int damage, int sustainability, StatusAbnormalityType type)
+    public FlameEffect(int damage, Sprite image, int sustainability, StatusAbnormalityType type)
     {
         flameDamage = damage;
+        imageIcon = image;
         Sustainability = sustainability;
         StatusAbnormalityType = type;
     }
@@ -72,7 +75,7 @@ public class FlameEffect : StatusAilment
     {
         Debug.Log("火傷ダメージを与える前" + status.Hp);
         //持続ターンが０になったら効果終了
-        status.Damage(flameDamage);
+        status.Damage(flameDamage, imageIcon);
         Sustainability--;
         Debug.Log("火傷ダメージを与える" + status.Hp);
         

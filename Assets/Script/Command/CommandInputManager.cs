@@ -6,8 +6,8 @@ using UnityEngine;
 public class CommandInputManager : MonoBehaviour
 {
     public static CommandInputManager Instance;
-    private CommandInput commandInput;
-    
+    public CommandInput CommandInput { get; private set; }
+
     [Header("TurnManager")]
     [SerializeField] private TurnManager turnManager;
     [Header("BattleUI")]
@@ -74,8 +74,8 @@ public class CommandInputManager : MonoBehaviour
     private void Start()
     {
         //InputSystemを使えるようにする
-        commandInput = new CommandInput();
-        commandInput.Enable();
+        CommandInput = new CommandInput();
+        CommandInput.Enable();
     }
     
     private void Update()
@@ -87,19 +87,10 @@ public class CommandInputManager : MonoBehaviour
         
         MagicCommandInput();
         CommandSelected();
-
-        //デバッグ用　コマンド決定
-        if (Input.GetKeyDown(KeyCode.Return))
+        
+        if (CommandInput.Player.Decision.triggered)
         {
             ConfirmCommand();
-        }
-
-        //デバック用　バトル開始
-        if (Input.GetKeyDown(KeyCode.K))
-        {
-            turnManager.TurnCharacterCommandUI(turnManager.CurrentTurnCharacter, false);
-            ResetCommandFlag();
-            onCommandInputComplete?.Invoke();
         }
     }
 
@@ -169,7 +160,7 @@ public class CommandInputManager : MonoBehaviour
         var battle = _battleCameraAngleManager;
         var cameraSet = turnManager.CharacterInfos[turnManager.CurrentTurnCharacter].cameraSettings;
 
-        if (commandInput.Player.Magic.triggered && isInput)
+        if (CommandInput.Player.Magic.triggered && isInput)
         {
             turnManager.CharacterCommandStateChanged(CommandState.Magic);
             currentCharacterCommandUI.ShowCommandUI(CommandState.Magic);
@@ -180,7 +171,7 @@ public class CommandInputManager : MonoBehaviour
             
             Debug.Log("魔法");
         }
-        else if (commandInput.Player.Attack.triggered && isInput)
+        else if (CommandInput.Player.Attack.triggered && isInput)
         {
             turnManager.CharacterCommandStateChanged(CommandState.Attack);
             currentCharacterCommandUI.ShowCommandUI(CommandState.Attack);
@@ -192,7 +183,7 @@ public class CommandInputManager : MonoBehaviour
             isConfirmCommand = true;
             Debug.Log("攻撃");
         }
-        else if (commandInput.Player.Item.triggered && isInput)
+        else if (CommandInput.Player.Item.triggered && isInput)
         {
             turnManager.CharacterCommandStateChanged(CommandState.Item);
             currentCharacterCommandUI.ShowCommandUI(CommandState.Item);
@@ -204,7 +195,7 @@ public class CommandInputManager : MonoBehaviour
         }
         
         //選択している状態だったら、”戻る”を入力出来るようにする
-        if (commandInput.Player.Back.triggered && !isInput)
+        if (CommandInput.Player.Back.triggered && !isInput)
         {
             //コマンド確定画面から戻る場合
             if (isConfirmCommand)
@@ -265,21 +256,21 @@ public class CommandInputManager : MonoBehaviour
         var battle =  _battleCameraAngleManager;
         var cameraSet = turnManager.CharacterInfos[turnManager.CurrentTurnCharacter].cameraSettings;
         //魔法を選択
-        if (commandInput.Player.MagicCommand0.triggered)
+        if (CommandInput.Player.MagicCommand0.triggered)
         {
             SetMagicBaseData(0);
             battle.BattleCameraAngleChange(BattleCameraActiveType.CommandConfirmed,
                 cameraSet.CommandConfirmedCamPosF, cameraSet.CommandConfirmedCamPosL);
             BattleOperatingInstructionsUI.Instance.CommandConfirmedUI();
         }
-        else if (commandInput.Player.MagicCommand1.triggered)
+        else if (CommandInput.Player.MagicCommand1.triggered)
         {
             SetMagicBaseData(1);
             battle.BattleCameraAngleChange(BattleCameraActiveType.CommandConfirmed,
                 cameraSet.CommandConfirmedCamPosF, cameraSet.CommandConfirmedCamPosL);
             BattleOperatingInstructionsUI.Instance.CommandConfirmedUI();
         }
-        else if (commandInput.Player.MagicCommand2.triggered)
+        else if (CommandInput.Player.MagicCommand2.triggered)
         {
             SetMagicBaseData(2);
             battle.BattleCameraAngleChange(BattleCameraActiveType.CommandConfirmed,
@@ -288,7 +279,7 @@ public class CommandInputManager : MonoBehaviour
         }
         
         //魔法コマンドの左右を変更する
-        if (commandInput.Player.MagicChange.triggered)
+        if (CommandInput.Player.MagicChange.triggered)
         {
             currentCharacterCommandUI.ChangeCommandUI(CommandState.Magic);
         }
@@ -347,10 +338,7 @@ public class CommandInputManager : MonoBehaviour
             status.UpdateDefenseActionTimer(Time.deltaTime);
         }
         
-        //TODO：ここはいずれinputSystemでバインドしたもの使用する
-        //TODO：パリィ出来ていることが確認できたOK
-        //ここは仮の入力を指定している
-        if (commandInput.Player.Parry.triggered)
+        if (CommandInput.Player.Parry.triggered)
         {
             foreach (var status in GetPlayerCharacterBaseStatus())
             {
@@ -369,7 +357,7 @@ public class CommandInputManager : MonoBehaviour
                 Destroy(obj, 1f);
             }
         }
-        if (commandInput.Player.JustGuard.triggered)
+        if (CommandInput.Player.JustGuard.triggered)
         {
             foreach (var status in GetPlayerCharacterBaseStatus())
             {

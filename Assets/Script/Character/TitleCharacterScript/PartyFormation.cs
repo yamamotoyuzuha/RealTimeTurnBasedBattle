@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -19,9 +20,17 @@ public class PartyFormation : MonoBehaviour
     [Header("最大パーティー人数")]
     [SerializeField] private int _maxPartyCount;
     /// <summary>
+    /// 魔法編成画面の表示切り替え
+    /// </summary>
+    public Action onMagicFormationUI;
+    /// <summary>
+    /// 魔法編成画面の更新
+    /// </summary>
+    public Action onMagicUpdate;
+    /// <summary>
     /// 現在、選択しているキャラクター
     /// </summary>
-    private CharacterBaseData selectedChara;
+    public CharacterBaseData SelectedChara { get; private set; }
     /// <summary>
     /// パーティー編成画面が表示、非表示
     /// true：表示　false：非表示
@@ -39,8 +48,11 @@ public class PartyFormation : MonoBehaviour
         }
         //初期設定
         currentIndex = 0;
-        selectedChara = _allCharacters[0];
-        SelectedCharacter(0);
+        SelectedChara = _allCharacters[0];
+        for (int i = 0; i < _partys.Count; i++)
+        {
+            SelectedCharacter(i);
+        }
         CombatInformationManager.Instance.AddCombatInfoCharacter(_partys);
     }
 
@@ -60,12 +72,20 @@ public class PartyFormation : MonoBehaviour
 
         if (_titleInputManager.TitleInput.Player.Add.triggered) //パーティーに加える
         {
-            AddChara(selectedChara);
+            AddChara(SelectedChara);
         }
         if (_titleInputManager.TitleInput.Player.Remove.triggered) //パーティーから外す
         {
-            RemoveChara(selectedChara);
+            RemoveChara(SelectedChara);
         }
+
+        /*
+        //魔法編成画面の表示切り替え
+        if (_titleInputManager.TitleInput.Player.MagicFormationDisplay.triggered)
+        {
+            onMagicFormationUI?.Invoke();
+        }
+        */
     }
 
     /// <summary>
@@ -124,11 +144,11 @@ public class PartyFormation : MonoBehaviour
     {
         //左右どちらにも循環をする
         currentIndex = (currentIndex + index + _allCharacters.Count) % _allCharacters.Count;
-        selectedChara = _allCharacters[currentIndex];
-        _partyFormationUIController.onSelectCharacter?.Invoke(selectedChara);
-        Debug.Log(selectedChara);
+        SelectedChara = _allCharacters[currentIndex];
+        _partyFormationUIController.onSelectCharacter?.Invoke(SelectedChara);
+        Debug.Log(SelectedChara);
 
-        SelectedCharacterInParty(selectedChara);
+        SelectedCharacterInParty(SelectedChara);
     }
 
     /// <summary>

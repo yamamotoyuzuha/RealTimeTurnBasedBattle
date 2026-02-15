@@ -1,9 +1,9 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
+using UnityEngine.SceneManagement;
 
 /// <summary>
 /// 勝敗UIの管理
@@ -11,6 +11,8 @@ using DG.Tweening;
 /// </summary>
 public class VictoryOrDefeatUI : MonoBehaviour
 {
+    [Header("CommandInputManager")]
+    [SerializeField] private CommandInputManager _commandInputManager;
     [Header("勝利UI")]
     [SerializeField] private GameObject _victoryUI;
     [Header("敗北UI")]
@@ -61,6 +63,10 @@ public class VictoryOrDefeatUI : MonoBehaviour
         seq.Join(move);
         seq.SetUpdate(true);
         await seq.AsyncWaitForCompletion();
+        
+        //入力されるまで待機する
+        await UniTask.WaitUntil(() => _commandInputManager.CommandInput.Player.Decision.triggered);
+        SceneManager.LoadScene("Title");
     }
 
     /// <summary>
@@ -77,5 +83,8 @@ public class VictoryOrDefeatUI : MonoBehaviour
         seq.Join(move);
         seq.SetUpdate(true);
         await seq.AsyncWaitForCompletion();
+        
+        await UniTask.WaitUntil(() => _commandInputManager.CommandInput.Player.Decision.triggered);
+        SceneManager.LoadScene("Title");
     }
 }

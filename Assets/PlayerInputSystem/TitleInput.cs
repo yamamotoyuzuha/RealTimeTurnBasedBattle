@@ -82,6 +82,15 @@ public partial class @TitleInput: IInputActionCollection2, IDisposable
                     ""initialStateCheck"": false
                 },
                 {
+                    ""name"": ""MagicFormationDisplay"",
+                    ""type"": ""Button"",
+                    ""id"": ""9cfab9d0-a4ba-4562-8ff8-91d5daf6cc13"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
+                },
+                {
                     ""name"": ""Decision"",
                     ""type"": ""Button"",
                     ""id"": ""10dd84e6-ee02-4163-beb9-5edb747ca18a"",
@@ -168,6 +177,17 @@ public partial class @TitleInput: IInputActionCollection2, IDisposable
                     ""action"": ""Decision"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""cc1d54ab-8b89-432f-ab09-e73f245c7968"",
+                    ""path"": ""<Keyboard>/m"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard&Mouse"",
+                    ""action"": ""MagicFormationDisplay"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -243,6 +263,7 @@ public partial class @TitleInput: IInputActionCollection2, IDisposable
         m_Player_Remove = m_Player.FindAction("Remove", throwIfNotFound: true);
         m_Player_PartyDisplay = m_Player.FindAction("PartyDisplay", throwIfNotFound: true);
         m_Player_EnemySelectDisplay = m_Player.FindAction("EnemySelectDisplay", throwIfNotFound: true);
+        m_Player_MagicFormationDisplay = m_Player.FindAction("MagicFormationDisplay", throwIfNotFound: true);
         m_Player_Decision = m_Player.FindAction("Decision", throwIfNotFound: true);
     }
 
@@ -311,6 +332,7 @@ public partial class @TitleInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Remove;
     private readonly InputAction m_Player_PartyDisplay;
     private readonly InputAction m_Player_EnemySelectDisplay;
+    private readonly InputAction m_Player_MagicFormationDisplay;
     private readonly InputAction m_Player_Decision;
     public struct PlayerActions
     {
@@ -322,6 +344,7 @@ public partial class @TitleInput: IInputActionCollection2, IDisposable
         public InputAction @Remove => m_Wrapper.m_Player_Remove;
         public InputAction @PartyDisplay => m_Wrapper.m_Player_PartyDisplay;
         public InputAction @EnemySelectDisplay => m_Wrapper.m_Player_EnemySelectDisplay;
+        public InputAction @MagicFormationDisplay => m_Wrapper.m_Player_MagicFormationDisplay;
         public InputAction @Decision => m_Wrapper.m_Player_Decision;
         public InputActionMap Get() { return m_Wrapper.m_Player; }
         public void Enable() { Get().Enable(); }
@@ -350,6 +373,9 @@ public partial class @TitleInput: IInputActionCollection2, IDisposable
             @EnemySelectDisplay.started += instance.OnEnemySelectDisplay;
             @EnemySelectDisplay.performed += instance.OnEnemySelectDisplay;
             @EnemySelectDisplay.canceled += instance.OnEnemySelectDisplay;
+            @MagicFormationDisplay.started += instance.OnMagicFormationDisplay;
+            @MagicFormationDisplay.performed += instance.OnMagicFormationDisplay;
+            @MagicFormationDisplay.canceled += instance.OnMagicFormationDisplay;
             @Decision.started += instance.OnDecision;
             @Decision.performed += instance.OnDecision;
             @Decision.canceled += instance.OnDecision;
@@ -375,6 +401,9 @@ public partial class @TitleInput: IInputActionCollection2, IDisposable
             @EnemySelectDisplay.started -= instance.OnEnemySelectDisplay;
             @EnemySelectDisplay.performed -= instance.OnEnemySelectDisplay;
             @EnemySelectDisplay.canceled -= instance.OnEnemySelectDisplay;
+            @MagicFormationDisplay.started -= instance.OnMagicFormationDisplay;
+            @MagicFormationDisplay.performed -= instance.OnMagicFormationDisplay;
+            @MagicFormationDisplay.canceled -= instance.OnMagicFormationDisplay;
             @Decision.started -= instance.OnDecision;
             @Decision.performed -= instance.OnDecision;
             @Decision.canceled -= instance.OnDecision;
@@ -448,6 +477,7 @@ public partial class @TitleInput: IInputActionCollection2, IDisposable
         void OnRemove(InputAction.CallbackContext context);
         void OnPartyDisplay(InputAction.CallbackContext context);
         void OnEnemySelectDisplay(InputAction.CallbackContext context);
+        void OnMagicFormationDisplay(InputAction.CallbackContext context);
         void OnDecision(InputAction.CallbackContext context);
     }
 }
