@@ -5,7 +5,10 @@ public class CharacterBaseData : ScriptableObject
     [Header("キャラクターの名前")]
     [SerializeField] private string characterName;
     public string CharacterName => characterName;
-    [Header("キャラクターのアイコン")]
+    [Header("キャラクターアイコン（ステータス表示用）")]
+    [SerializeField] private Sprite _characterStatusIconSprite;
+    public Sprite CharacterStatusIconSprite => _characterStatusIconSprite;
+    [Header("キャラクターのアイコン（ターン表示用）")]
     [SerializeField] private Sprite characterIconSprite;
     public Sprite CharacterIconSprite => characterIconSprite;
     [Header("キャラクターPrefab（Title用）")]

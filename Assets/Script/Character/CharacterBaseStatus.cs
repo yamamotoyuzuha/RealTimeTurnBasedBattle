@@ -187,11 +187,12 @@ public class CharacterBaseStatus
     public void Damage(float damage, Sprite image)
     {
         var finalDamage = damage * DamageTakenCalculation.DamageRate;
-        Hp = Mathf.Max(Hp - finalDamage, 0);
+        var rollUpDamage = Mathf.Round(finalDamage);
+        Hp = Mathf.Max(Hp - rollUpDamage, 0);
         onHpChanged?.Invoke(this, Hp, MaxHp);
         onHitEffect?.Invoke();
         //ダメージUIを表示
-        CharacterDamageUI.Instance.DamageUIShowDisplay(charaObject.transform, finalDamage, image).Forget();
+        CharacterDamageUI.Instance.DamageUIShowDisplay(charaObject.transform, rollUpDamage, image).Forget();
         DeathDetermination();
     }
 
@@ -217,12 +218,13 @@ public class CharacterBaseStatus
     private async UniTask DamageAsync(float damage)
     {
         var finalDamage = damage * DamageTakenCalculation.DamageRate;
+        var rollUpDamage = Mathf.Round(finalDamage);
         //0を下回らないようにする
-        Hp = Math.Max(Hp - finalDamage, 0);
+        Hp = Math.Max(Hp - rollUpDamage, 0);
         onHpChanged?.Invoke(this, Hp, MaxHp);
         onHitEffect?.Invoke();
         //ダメージUIを表示
-        await CharacterDamageUI.Instance.DamageUIShowDisplay(charaObject.transform, finalDamage, null);
+        await CharacterDamageUI.Instance.DamageUIShowDisplay(charaObject.transform, rollUpDamage, null);
         DeathDetermination();
     }
     

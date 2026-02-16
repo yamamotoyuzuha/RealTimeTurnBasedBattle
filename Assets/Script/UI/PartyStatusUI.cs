@@ -73,6 +73,7 @@ public class PartyStatusUI : MonoBehaviour
             //UIの情報を作成する
             var ui = new PlayerStatusUI(
                 obj,
+                obj.transform.GetChild(1).GetComponent<Image>(),
                 obj.transform.GetChild(2).GetComponent<Image>(),
                 obj.transform.GetChild(5).GetChild(0).GetComponent<TextMeshProUGUI>(),
                 obj.transform.GetChild(5).GetChild(1).GetComponent<TextMeshProUGUI>(),
@@ -82,6 +83,8 @@ public class PartyStatusUI : MonoBehaviour
             var chara = _turnManager.CharacterInfos[partyCharas[i]].status.GetCharacterStatus();
             playerStatusUIs[chara] = ui;
             //HPなどの情報を設定
+            playerStatusUIs[chara].charaIcon.sprite =
+                _turnManager.CharacterInfos[partyCharas[i]].status.GetData().CharacterStatusIconSprite;
             playerStatusUIs[chara].maxHpText.text = chara.MaxHp.ToString();
             playerStatusUIs[chara].currentHpText.text = chara.Hp.ToString();
             //Actionの登録
@@ -236,6 +239,9 @@ public class PlayerStatusUI
     //生成したUI
     public GameObject uiObj;
     
+    //キャラクターアイコン
+    public Image charaIcon;
+    
     //HP関連
     public Image hpBar;
     public TextMeshProUGUI maxHpText;
@@ -244,9 +250,10 @@ public class PlayerStatusUI
     //MP関連
     public GameObject[] mps;
 
-    public PlayerStatusUI(GameObject uiObj, Image hpBar, TextMeshProUGUI maxHpText, TextMeshProUGUI currentHpText, GameObject[] mps)
+    public PlayerStatusUI(GameObject uiObj, Image icon, Image hpBar, TextMeshProUGUI maxHpText, TextMeshProUGUI currentHpText, GameObject[] mps)
     {
         this.uiObj = uiObj;
+        this.charaIcon = icon;
         this.hpBar = hpBar;
         this.maxHpText = maxHpText;
         this.currentHpText = currentHpText;

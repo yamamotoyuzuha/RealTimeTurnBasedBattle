@@ -13,7 +13,9 @@ MonoBehaviour:
   m_Name: 1
   m_EditorClassIdentifier: 
   characterName: Player1
-  characterIconSprite: {fileID: 21300000, guid: b94c008e5976ac3459f15da93ca56498,
+  _characterStatusIconSprite: {fileID: 21300000, guid: 8f82f88b8751fce448e3189949764e45,
+    type: 3}
+  characterIconSprite: {fileID: 21300000, guid: c90bf1d03f44bcf469004c8bab4d74a4,
     type: 3}
   _titleCharacterPrefab: {fileID: 183284303825784245, guid: f37db04b950a6db4abb1728c6836c4c4,
     type: 3}
