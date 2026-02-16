@@ -26,7 +26,7 @@ MonoBehaviour:
     _mrType: 0
     _damage: 30
   _magicProbability: 80
-  _defenseActions: 01000000
+  _defenseActions: 0100000000000000
   _commandAnimationData:
     _animationTriggerName: Flame
   _particleObj: {fileID: 358637981425055526, guid: 8eb503696b886e04faff8fc0f480d473,

@@ -472,7 +472,6 @@ public class BattleManager : MonoBehaviour
     {
         //攻撃力を取得し、ターゲットにダメージを与える
         var enemyAttack = enemyStatus.GetCharacterStatus().Attack;
-        //targetStatus.GetCharacterStatus().Damage(enemyAttack);
 
         switch (data.GetCommandType())
         {
@@ -517,6 +516,7 @@ public class BattleManager : MonoBehaviour
         //Enemyとプレイヤーキャラクターのステータスを取得して、Enemyにダメージを与える
         CharacterBaseStatus enemyStatus = null;
         List<CharacterBaseStatus> status = new List<CharacterBaseStatus>();
+        List<IAnimationCharacter> animations = new List<IAnimationCharacter>();
         foreach (var chara in turnManager.CharacterInfos)
         {
             if (chara.Value.command == null)
@@ -525,6 +525,7 @@ public class BattleManager : MonoBehaviour
                 continue;
             }
             status.Add(chara.Value.status.GetCharacterStatus());
+            animations.Add(chara.Value.animationCharacter);
         }
         
         _battleCameraAngleManager.BattleCameraAngleChange(BattleCameraActiveType.DAction,
@@ -537,6 +538,11 @@ public class BattleManager : MonoBehaviour
         foreach (var playerChara in status)
         {
             damages.Add(playerChara.Attack);
+        }
+        //プレイヤーキャラクターを一斉にアニメーションさせる
+        foreach (var anim in animations)
+        {
+            anim.SetAnimationPlay("Attack");
         }
         await enemyStatus.DamageUIAsync(damages);
     }
