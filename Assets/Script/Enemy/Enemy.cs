@@ -68,8 +68,8 @@ public class Enemy : MonoBehaviour, Status, EnemyBase, IAnimationCharacter
     {
         //デバッグ用UIの生成 //TODO：あとで消す
         var canvas = GameObject.Find("BattleCanvas");
-        var debugObj = Instantiate(_enemyDebugUI, canvas.transform);
-        debugUI = debugObj.GetComponent<EnemyDebugUI>();
+        //var debugObj = Instantiate(_enemyDebugUI, canvas.transform);
+        //debugUI = debugObj.GetComponent<EnemyDebugUI>();
         
         //キャラクターの情報を取得
         characterState = GetComponent<CharacterState>().characterState;
@@ -140,7 +140,7 @@ public class Enemy : MonoBehaviour, Status, EnemyBase, IAnimationCharacter
         var magicData = characterBaseStatus.CharacterCommandActionData.GetMagicBaseData();
         SetAnimationPlay(magicData.CommandAnimationData._animationTriggerName);
         var animTime = magicData.AnimationTime;
-        debugUI.SetDebugText(animTime); //TODO：デバッグ用の関数（後で削除する）
+        //debugUI.SetDebugText(animTime); //TODO：デバッグ用の関数（後で削除する）
         //行動内容UIの表示 //TODO：ここは何か内容を考えていれる
         var text = "EnemyAction";
         OnEnemyAction?.Invoke(text, true);

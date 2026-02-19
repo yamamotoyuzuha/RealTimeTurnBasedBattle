@@ -17,7 +17,7 @@ MonoBehaviour:
     type: 3}
   characterIconSprite: {fileID: 21300000, guid: c90bf1d03f44bcf469004c8bab4d74a4,
     type: 3}
-  _titleCharacterPrefab: {fileID: 183284303825784245, guid: f37db04b950a6db4abb1728c6836c4c4,
+  _titleCharacterPrefab: {fileID: 56995825459094021, guid: 6aed7d5a7a495f94d8d55a61815701c6,
     type: 3}
   characterPrefab: {fileID: 9031456334086428323, guid: 607bc15b7b1e8fb4596ba67f6a602725,
     type: 3}

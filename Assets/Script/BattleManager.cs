@@ -45,7 +45,16 @@ public class BattleManager : MonoBehaviour
         _enemyStatusUI.onEnemyStatusDisplay?.Invoke(true);
         if(_enemyStatusUI.onEnemyStatusDisplay == null) Debug.Log("null");
     }
-    
+
+    private void Update() //TODO：デバック用に追加
+    {
+        if (Input.GetKeyDown(KeyCode.Y))
+        {
+            turnManager.onUpdateTurnOrder?.Invoke();
+            Debug.LogWarning("ターン順の再計算を行った");
+        }
+    }
+
     //TODO：これはエンカウント用のため使わないから削除する
     /// <summary>
     /// キャラクターの行動順を計算する

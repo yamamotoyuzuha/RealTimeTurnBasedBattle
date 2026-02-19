@@ -18,9 +18,13 @@ MonoBehaviour:
   magicType: 3
   magicRangeType: 0
   magicPanelDisplayTime: 5
-  _animationTime: 0
+  _animationTime: 2
   _statusEffect: {fileID: 21300000, guid: bdc4d6d4e97d3284289516d95ed4776a, type: 3}
   _saType: 3
+  _magicReactionInfo:
+    _saType: 0
+    _mrType: 0
+    _damage: 0
   _magicProbability: 70
   _defenseActions: 
   _commandAnimationData:

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 58fc2c348f1227f4c94296f88c756036, type: 3}
   m_Name: F_0
   m_EditorClassIdentifier: 
-  magicName: fireBoal
+  magicName: Fireball
   magicExplanation: fire
   consumptionMp: 2
   magicType: 1

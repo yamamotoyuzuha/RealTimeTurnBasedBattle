@@ -87,6 +87,7 @@ public class EnemySelectionScreenUIController : MonoBehaviour
     private void EnemyPrefabGenerate(CharacterBaseData characterBaseData, int index)
     {
         var obj = Instantiate(characterBaseData.TitleCharacterPrefab, _enemyObjParents[index]);
+        obj.transform.rotation = Quaternion.Euler(0, 180, 0);
         var info = new ESelectionInfo()
         {
             enemyData = characterBaseData,

@@ -69,6 +69,7 @@ public class CommandInputManager : MonoBehaviour
         {
             Instance = this;
         }
+        turnManager.onCommandInputPossible += SetCommandSelected;
     }
     
     private void Start()

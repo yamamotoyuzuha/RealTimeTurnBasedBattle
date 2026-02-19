@@ -102,6 +102,7 @@ public class PartyFormationUIController : MonoBehaviour
     private void PartyFormationCharacterGenerate(CharacterBaseData characterBaseData, int index)
     {
         var obj = Instantiate(characterBaseData.TitleCharacterPrefab, _partyCharacterParent[index]);
+        obj.transform.rotation = Quaternion.Euler(0, 180, 0);
         var info = new PartyCharacterInfo()
         {
             charaData = characterBaseData,

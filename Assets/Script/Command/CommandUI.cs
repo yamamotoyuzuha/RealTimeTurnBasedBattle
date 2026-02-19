@@ -96,14 +96,18 @@ public class CommandUI : MonoBehaviour
         characterStatus = characterObj.GetComponent<Status>();
         characterBaseData = characterStatus.GetData();
         Debug.Log(characterBaseData);
-    }
-
-    void Start()
-    {
         ToggleCommandUI(false);
         EachMagicUIGenerate();
         MagicUIHidden();
         EachActionUIIconSettings();
+    }
+
+    void Start()
+    {
+        //ToggleCommandUI(false);
+        //EachMagicUIGenerate();
+        //MagicUIHidden();
+        //EachActionUIIconSettings();
     }
     
     /// <summary>

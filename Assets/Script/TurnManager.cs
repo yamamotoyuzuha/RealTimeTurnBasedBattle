@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 public class TurnManager : MonoBehaviour
@@ -22,14 +23,33 @@ public class TurnManager : MonoBehaviour
     private GameObject lastTurnCharacter;
     //次のターンのキャラクターを保持
     private GameObject nextTurnCharacter;
-    //キャラクターデータの保持
-    private List<GameObject>  fieldCharacter = new List<GameObject>();
+    //キャラクターの保持
+    private List<GameObject> fieldCharacter = new List<GameObject>(); //最新のターン順
+    private List<GameObject> oldFieldCharacter = new List<GameObject>(); //古いターン順
     private Queue<GameObject> speedCharacterTurnQueue = new Queue<GameObject>();
+    /// <summary>
+    /// 割り込みなどあったか
+    /// true：あった　false：なかった
+    /// </summary>
+    private bool isInterruptionsEtc;
+    /// <summary>
+    /// 割り込みなどを行ったキャラクター
+    /// </summary>
+    private GameObject interruptionsEtcChara;
+    /// <summary>
+    /// 割り込みなどが行われる前に現在のターンだったキャラクター
+    /// </summary>
+    private GameObject beforeInterruptionChara;
     /// <summary>
     /// キャラクターの情報をすべて保持
     /// </summary>
     public Dictionary<GameObject, CharacterInfo> CharacterInfos { get; private set; } = new Dictionary<GameObject, CharacterInfo>();
-    
+
+    /// <summary>
+    /// 操作キャラクターのコマンド入力を可否
+    /// true：可能　false：不可能
+    /// </summary>
+    public Action<bool> onCommandInputPossible;
     /// <summary>
     /// 次のターンを設定するイベント
     /// </summary>
@@ -42,27 +62,70 @@ public class TurnManager : MonoBehaviour
     /// ターンアイコンの表示、非表示
     /// </summary>
     public Action<bool> onTurnIconDisplay;
+    /// <summary>
+    /// ターン順の更新を行う
+    /// </summary>
+    public Action onUpdateTurnOrder;
+    /// <summary>
+    /// ターンキャラクターの変更を行う
+    /// ・GameObjectには変更後のキャラクターを設定
+    /// ・必殺技や割り込みなど
+    /// </summary>
+    public Action<GameObject> onChangeTurnCharacter;
     
     private void Start()
     {
         //イベントの登録
         onNextTurnSetUp = () =>
         {
-            CharacterIconDestroy(CurrentTurnCharacter);
-            CharacterIconSetUp();
-            NextTurnCharacterSet();
+            if (isInterruptionsEtc)
+            {
+                RemoveSpecifiedCharacterIcon(interruptionsEtcChara);
+                RestoreBeforeInterruptSet();
+                isInterruptionsEtc = false;
+            }
+            else
+            {
+                CharacterIconDestroy(CurrentTurnCharacter);
+                CharacterIconSetUp();
+                NextTurnCharacterSet();
+            }
+            //CharacterIconDestroy(CurrentTurnCharacter);
+            //CharacterIconSetUp();
+            //NextTurnCharacterSet();
         };
         onTurnIconDisplay += TurnIconDisplay;
+        onUpdateTurnOrder = () =>
+        {
+            RecalculatingTurnOrder();
+            ResetTurnIcon();
+        };
+        onChangeTurnCharacter = (chara) =>
+        {
+            ChangeCurrentTurnCharacter(chara);
+            GenerateSpecifiedCharacterIcon(chara);
+        };
         
         //現在のターンがEnemy場合、防御アクションUIを表示する
         if (!PlayableCharacterJudgment(CurrentTurnCharacter))
         {
             BattleOperatingInstructionsUI.Instance.DefenseActionUI(true);
         }
+        else
+        {
+            BattleOperatingInstructionsUI.Instance.DefenseActionUI(false);
+        }
     }
     
     private void Update()
     {
+        //TODO：デバッグ用
+        if (Input.GetKeyDown(KeyCode.T))
+        {
+            //TODO：デバッグのため、適当に指定しているが本番ではちゃんと合ってるキャラクターを指定する
+            ChangeCurrentTurnCharacter(fieldCharacter[0]);
+            GenerateSpecifiedCharacterIcon(fieldCharacter[0]);
+        }
     }
 
     /// <summary>
@@ -131,12 +194,14 @@ public class TurnManager : MonoBehaviour
             PlayerCharacterStateChanged(CharacterStateType.BeforeAttack);
             onEnemyTurnStart?.Invoke();
         }
-        else //現在のターンがプレイヤーキャラクターの場合、カメラアングルの設定を行う
+        else //現在のターンがプレイヤーキャラクターの場合、操作が出来る状態にする
         {
             battle.ResetCameraAngle();
             var cameraSet = CharacterInfos[CurrentTurnCharacter].cameraSettings;
             battle.BattleCameraAngleChange(BattleCameraActiveType.DefaultPlayer, 
                 cameraSet.DefaultCamPosF, cameraSet.DefaultCamPosL);
+            TurnCharacterCommandUI(CurrentTurnCharacter, true);
+            onCommandInputPossible?.Invoke(true);
         }
     }
     
@@ -201,7 +266,6 @@ public class TurnManager : MonoBehaviour
         {
             nextTurnCharacter = fieldCharacter[0];
         }
-        
         CharacterIconGenerate();
         
         //最後に生成したキャラクターの更新
@@ -221,6 +285,42 @@ public class TurnManager : MonoBehaviour
         
         //キャラクターアイコンを設定する
         icon.GetComponent<TurnCharacterIcon>().SetCharacterIcon(nextTurnCharacter.GetComponent<Status>().GetData());
+    }
+
+    /// <summary>
+    /// 指定したキャラクターのアイコンを生成する
+    /// </summary>
+    /// <param name="character">指定したキャラクター</param>
+    private void GenerateSpecifiedCharacterIcon(GameObject character)
+    {
+        //指定したキャラクターが存在しない場合、処理を行わない
+        if(!characterIcons.TryGetValue(character, out List<GameObject> icons)) return;
+        //アイコンを生成し、アイコンの設定を行う
+        var icon = Instantiate(characterIconObj, iconParent);
+        icons.Add(icon);
+        var data = CharacterInfos[character].status.GetData();
+        icon.GetComponent<TurnCharacterIcon>().SetCharacterIcon(data);
+        icon.transform.SetSiblingIndex(0);
+    }
+
+    /// <summary>
+    /// 必殺技や割り込みなどによる場合でのアイコン生成に伴うアイコン削除
+    /// </summary>
+    /// <param name="character">必殺技や割り込みを行ったキャラクター</param>
+    private void RemoveSpecifiedCharacterIcon(GameObject character)
+    {
+        //キャラクターが存在しない場合は、処理を行わない
+        if (!characterIcons.TryGetValue(character, out List<GameObject> icons)) return;
+        if (icons.Count == 0) return;
+        //UI上の一番上にあるものを削除する
+        var icon = iconParent.GetChild(0).gameObject;
+        var index = 0;
+        for (int i = 0; i < icons.Count; i++)
+        {
+            if (icons[i] == icon) index = i;
+        }
+        icons.RemoveAt(index);
+        Destroy(icon);
     }
 
     /// <summary>
@@ -262,13 +362,225 @@ public class TurnManager : MonoBehaviour
     }
 
     /// <summary>
+    /// 割り込みが行われる前のターン状態に戻す
+    /// </summary>
+    private void RestoreBeforeInterruptSet()
+    {
+        AllCharacterStateChanged(CharacterStateType.Idle);
+        CtCharaNumbness();
+        
+        //現在のターンのキャラのステートを変更する
+        var currentCharacter = CharacterInfos[CurrentTurnCharacter];
+        currentCharacter.state.ChangeCharacterState(CharacterStateType.InAction);
+        TurnCharacterCommandUI(CurrentTurnCharacter, true);
+        var status = currentCharacter.status.GetCharacterStatus();
+        var battle = _battleCameraAngleManager;
+        if (!PlayableCharacterJudgment(CurrentTurnCharacter))
+        {
+            //パリィが出来る状態にする
+            battle.BattleCameraAngleChange(BattleCameraActiveType.EAction, battle.EActionPosF, battle.EActionPosL);
+            PlayerCharacterStateChanged(CharacterStateType.BeforeAttack);
+            BattleOperatingInstructionsUI.Instance.DefenseActionUI(true);
+            onEnemyTurnStart?.Invoke();
+        }
+        else
+        {
+            status.AddMp(1);
+            battle.ResetCameraAngle();
+            var cameraSet = CharacterInfos[CurrentTurnCharacter].cameraSettings;
+            battle.BattleCameraAngleChange(BattleCameraActiveType.DefaultPlayer, 
+                cameraSet.DefaultCamPosF, cameraSet.DefaultCamPosL);
+        }
+        
+        if (status.IsUnderAbnormalStatus())
+        {
+            status.StatusEffectStart();
+            Debug.Log("状態異常があるため、効果を実行");
+        }
+    }
+
+    //TODO：この関数を使って、もし変更がある場合、ターン順に変更があったときのActionを呼ぶ
+    /// <summary>
+    /// キャラクターの速度が変更されたかを判定する
+    /// </summary>
+    /// <returns>true：変更なし　false：変更あり</returns>
+    private bool CheckSpeedCharacters()
+    {
+        //現在のターン順リストとターン順を計算したリストの中身と順番が一致しているか判定する
+        List<GameObject> characters = new List<GameObject>(fieldCharacter);
+        characters = characters.OrderByDescending(i =>
+            CharacterInfos[i].status.GetData().Speed).ToList();
+        return fieldCharacter.SequenceEqual(characters);
+    }
+
+    /// <summary>
+    /// ターン順の再計算
+    /// </summary>
+    private void RecalculatingTurnOrder()
+    {
+        oldFieldCharacter = fieldCharacter; //最新のターン順になる前に元状態のものを保持
+        fieldCharacter = fieldCharacter.OrderByDescending(i => 
+            i.GetComponent<Status>().GetData().Speed).ToList();
+        speedCharacterTurnQueue = new Queue<GameObject>(fieldCharacter);
+        //最後のターンキャラの設定
+        var index = fieldCharacter.Count - 1;
+        lastTurnCharacter = fieldCharacter[index];
+    }
+
+    /// <summary>
+    /// ターンアイコンの再設定
+    /// </summary>
+    private void ResetTurnIcon()
+    {
+        Dictionary<GameObject, Queue<GameObject>> iconQueues = new Dictionary<GameObject, Queue<GameObject>>();
+        foreach (var chara in fieldCharacter) //新しいターン順
+        {
+            iconQueues[chara] = new Queue<GameObject>(characterIcons[chara]);
+        }
+
+        int siblingIndex = 0; //UIの順番を保持
+        bool iconsRemaining = true; //処理していないアイコンが残っているか判定
+
+        while (iconsRemaining)
+        {
+            iconsRemaining = false;
+            foreach (var chara in fieldCharacter) //新しいターン順
+            {
+                if (iconQueues[chara].Count > 0) //まだ、未配置のアイコンがある場合
+                {
+                    //アイコンが残っていることにし、キャラのアイコンを取り出す
+                    iconsRemaining = true;
+                    var icon = iconQueues[chara].Dequeue();
+                    var charaData = CharacterInfos[chara].status;
+                    //アイコン更新
+                    icon.GetComponent<TurnCharacterIcon>().SetCharacterIcon(charaData.GetData());
+                    //UI上の順番を更新
+                    icon.transform.SetSiblingIndex(siblingIndex);
+                    siblingIndex++;
+                }
+            }
+        }
+    }
+
+    /// <summary>
+    /// 現在のターンキャラクターを変更する
+    /// ・必殺技による割り込みなど
+    /// </summary>
+    /// <param name="character">変更するキャラクター</param>>
+    private void ChangeCurrentTurnCharacter(GameObject character)
+    {
+        //割り込みなどがあったことを保持しておく
+        isInterruptionsEtc = true;
+        interruptionsEtcChara = character;
+        beforeInterruptionChara = CurrentTurnCharacter;
+        //現在のターンのキャラクターを設定する
+        AllCharacterStateChanged(CharacterStateType.Idle);
+        CurrentTurnCharacter = character;
+        //現在のターンのキャラのステートを変更する
+        var currentCharacter = CharacterInfos[CurrentTurnCharacter];
+        currentCharacter.state.ChangeCharacterState(CharacterStateType.InAction);
+        
+        //カメラを設定する
+        var cameraSet = CharacterInfos[CurrentTurnCharacter].cameraSettings;
+        if (!PlayableCharacterJudgment(CurrentTurnCharacter)) //プレイヤーかEnemyかの判定を行う
+        {
+            _battleCameraAngleManager.BattleCameraAngleChange(BattleCameraActiveType.EAction, 
+                _battleCameraAngleManager.EActionPosF, _battleCameraAngleManager.EActionPosL);
+            PlayerCharacterStateChanged(CharacterStateType.BeforeAttack);
+            BattleOperatingInstructionsUI.Instance.DefenseActionUI(true);
+            onEnemyTurnStart?.Invoke();
+        }
+        else
+        {
+            _battleCameraAngleManager.BattleCameraAngleChange(BattleCameraActiveType.DefaultPlayer,
+                cameraSet.DefaultCamPosF, cameraSet.DefaultCamPosL);
+        }
+    }
+
+    /// <summary>
     /// 次のターンキャラクターが麻痺状態だったらターンをスキップ
     /// </summary>
     private void CtCharaNumbness()
     {
         var index = speedCharacterTurnQueue.Count;
+        var flag = false; //割り込み前のキャラクターの判定を行ったか
         while (index > 0)
         {
+            if (isInterruptionsEtc)
+            {
+                if (!flag) //割り込み前のキャラクターの判定を行う
+                {
+                    flag = true;
+                    //割り込み前のキャラが麻痺状態でない場合、そのまま割り込み前のキャラが現在ターンキャラになる
+                    var character = beforeInterruptionChara;
+                    var status = CharacterInfos[character].status.GetCharacterStatus();
+                    if (!status.IsParalysisStatus())
+                    {
+                        CurrentTurnCharacter = character;
+                        break;
+                    }
+                    
+                    //ターンアイコンもターンスキップに連動させる
+                    CharacterIconDestroy(character);
+                    CharacterIconSetUp();
+                    //麻痺でターンがスキップされても状態異常があれば処理を行う
+                    if (status.IsUnderAbnormalStatus())
+                    {
+                        status.StatusEffectStart();
+                    }
+                }
+                else
+                {
+                    //終了したターンのキャラを取得
+                    var character = speedCharacterTurnQueue.Dequeue();
+                    //終了したターンのキャラを末尾に追加する
+                    speedCharacterTurnQueue.Enqueue(character);
+                    //現在のターンのキャラが麻痺状態でなければ、ターンを確定する
+                    var cChara = speedCharacterTurnQueue.Peek();
+                    var status = CharacterInfos[cChara].status.GetCharacterStatus();
+                    if (!status.IsParalysisStatus())
+                    {
+                        CurrentTurnCharacter = cChara;
+                        break;
+                    }
+
+                    //ターンアイコンもターンスキップに連動させる
+                    CharacterIconDestroy(cChara);
+                    CharacterIconSetUp();
+                    //麻痺でターンがスキップされても状態異常があれば処理を行う
+                    if (status.IsUnderAbnormalStatus())
+                    {
+                        status.StatusEffectStart();
+                    }
+                    index--;
+                }
+            }
+            else
+            {
+                //終了したターンのキャラを取得
+                var character = speedCharacterTurnQueue.Dequeue();
+                //終了したターンのキャラを末尾に追加する
+                speedCharacterTurnQueue.Enqueue(character);
+                //現在のターンのキャラが麻痺状態でなければ、ターンを確定する
+                var cChara = speedCharacterTurnQueue.Peek();
+                var status = CharacterInfos[cChara].status.GetCharacterStatus();
+                if (!status.IsParalysisStatus())
+                {
+                    CurrentTurnCharacter = cChara;
+                    break;
+                }
+
+                //ターンアイコンもターンスキップに連動させる
+                CharacterIconDestroy(cChara);
+                CharacterIconSetUp();
+                //麻痺でターンがスキップされても状態異常があれば処理を行う
+                if (status.IsUnderAbnormalStatus())
+                {
+                    status.StatusEffectStart();
+                }
+                index--;
+            }
+            /*
             //終了したターンのキャラを取得
             var character = speedCharacterTurnQueue.Dequeue();
             //終了したターンのキャラを末尾に追加する
@@ -291,6 +603,7 @@ public class TurnManager : MonoBehaviour
                 status.StatusEffectStart();
             }
             index--;
+            */
         }
 
         if (index <= 0)
