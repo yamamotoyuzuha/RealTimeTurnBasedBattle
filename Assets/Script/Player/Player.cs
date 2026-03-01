@@ -78,7 +78,8 @@ public class Player : MonoBehaviour, Status, ICommand, IAnimationCharacter
     {
         //ステータスを作成
         characterBaseStatus = new CharacterBaseStatus
-            (playerData.Hp, playerData.Mp, playerData.Attack, playerData.Defense, playerData.Speed, this.gameObject);
+            (playerData.Hp, playerData.Mp, playerData.Attack, playerData.Defense, 
+                playerData.Speed, this.gameObject, 0, playerData.SpecialMove);
         characterBaseStatus.onHitEffect += Hit;
         characterBaseStatus.onDeathEffect += Death;
     }

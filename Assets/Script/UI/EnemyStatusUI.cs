@@ -34,6 +34,7 @@ public class EnemyStatusUI : MonoBehaviour
     private GameObject statusUIPrefabInstance;
     private TextMeshProUGUI enemyNameText;
     private Image statusHpBar;
+    private Image trunkBar;
     //状態異常UI
     private Dictionary<StatusAbnormalityInfo, StatusAbnormalityUIInfo> statusAbnormalityInfos =
         new Dictionary<StatusAbnormalityInfo, StatusAbnormalityUIInfo>();
@@ -68,9 +69,11 @@ public class EnemyStatusUI : MonoBehaviour
         enemyNameText = statusUIPrefabInstance.transform.GetChild(2).GetComponent<TextMeshProUGUI>();
         enemyNameText.text = enemy != null ? enemy.GetData().CharacterName : "";
         statusHpBar = statusUIPrefabInstance.transform.GetChild(1).GetComponent<Image>();
+        trunkBar = statusUIPrefabInstance.transform.GetChild(4).GetComponent<Image>();
         //statusUIPrefabInstance.SetActive(false);
         
         characterBaseStatus.onHpChanged += HpChangeUIUpdate;
+        characterBaseStatus.onCoreGaugeChanged += CoreGaugeChangeUIUpdate;
         onEnemyStatusDisplay += StatusUIDisplay;
 
         characterBaseStatus.onStatusAbnormalityOccurrence += StatusAilmentUIGenerate;
@@ -158,5 +161,15 @@ public class EnemyStatusUI : MonoBehaviour
         {
             info.Value.ui.SetActive(isDisplay);
         }
+    }
+
+    /// <summary>
+    /// 体幹ゲージ量の変動
+    /// </summary>
+    /// <param name="currentTrunk">現在の体幹量</param>>
+    /// <param name="maxTrunk">最大の体幹量</param>>
+    private void CoreGaugeChangeUIUpdate(float currentTrunk, float maxTrunk)
+    {
+        trunkBar.fillAmount = currentTrunk / maxTrunk;
     }
 }

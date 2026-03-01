@@ -74,7 +74,7 @@ public class Enemy : MonoBehaviour, Status, EnemyBase, IAnimationCharacter
         //キャラクターの情報を取得
         characterState = GetComponent<CharacterState>().characterState;
         characterBaseStatus = new CharacterBaseStatus
-            (enemyData.Hp, 0, enemyData.Attack, enemyData.Defense, enemyData.Speed, this.gameObject);
+            (enemyData.Hp, 0, enemyData.Attack, enemyData.Defense, enemyData.Speed, this.gameObject, enemyData.Trunk, enemyData.SpecialMove);
         characterBaseStatus.onHitEffect += Hit;
         characterBaseStatus.onDeathEffect += Death;
         //Enemyの状態による行動変化（通常）

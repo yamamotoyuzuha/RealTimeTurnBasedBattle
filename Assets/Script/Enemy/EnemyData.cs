@@ -20,6 +20,13 @@ public class EnemyData : CharacterBaseData
     [Header("弱点属性")]
     [SerializeField] private CharacterAttributesType[] _weaknessType;
     public CharacterAttributesType[] WeaknessTypes => _weaknessType;
+
+    [Header("体幹（ゲージの量）")]
+    [SerializeField] private float _trunk;
+    /// <summary>
+    /// 体幹
+    /// </summary>
+    public float Trunk => _trunk;
 }
 
 /// <summary>

@@ -37,6 +37,13 @@ public class CharacterBaseData : ScriptableObject
     [Header("属性")]
     [SerializeField] private CharacterAttributesType _attributesType;
     public CharacterAttributesType AttributesType => _attributesType;
+
+    [Header("必殺技（ゲージ量）")]
+    [SerializeField] private int _specialMove;
+    /// <summary>
+    /// 必殺技ゲージ量
+    /// </summary>
+    public int SpecialMove => _specialMove;
     
     public float Hp => hp;
     public int Mp => mp;

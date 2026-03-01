@@ -13,6 +13,7 @@ public class CharacterBaseStatus
     public float Attack { get; private set; }
     public float Defense { get; private set; }
     public int Speed { get; private set; }
+    public int SpecialMove { get; private set; }
   
     //TODO：これ引数にCharacterBaseStatusを置いてるけど、要らない気がする
     /// <summary>
@@ -30,6 +31,16 @@ public class CharacterBaseStatus
     /// （MPが減ったキャラ、増減後のMP、増減前の）
     /// </summary>
     public Action<CharacterBaseStatus, int, int> onMpReduce;
+    /// <summary>
+    /// 体幹ゲージの変動
+    /// （現在の体幹ゲージ量、最大体幹ゲージ量）
+    /// </summary>
+    public Action<float, float> onCoreGaugeChanged;
+    /// <summary>
+    /// 必殺技ゲージ量の変動
+    /// （現在の必殺技ゲージ量、最大必殺技ゲージ量）
+    /// </summary>
+    public Action<int, int> onSpecialMoveChanged;
     /// <summary>
     /// 死亡
     /// </summary>
@@ -120,6 +131,10 @@ public class CharacterBaseStatus
     {
         ResultDefenseActionType = DefenseActionType.None;
     }
+    /// <summary>
+    /// 現在の体幹ゲージ量
+    /// </summary>
+    private float currentCoreGauge;
     #endregion
 
     #region 防御アクション関連
@@ -143,7 +158,9 @@ public class CharacterBaseStatus
     /// <param name="defense">CharacterBaseData：Defense</param>
     /// <param name="speed">CharacterBaseData：Speed</param>
     /// <param name="obj">キャラクター本体</param>>
-    public CharacterBaseStatus(float hp, int mp, float attack, float defense, int speed, GameObject obj)
+    /// <param name="core">体幹ゲージ量</param>>
+    /// <param name="special">必殺技ゲージ量</param>>
+    public CharacterBaseStatus(float hp, int mp, float attack, float defense, int speed, GameObject obj, float core, int special)
     {
         MaxHp = hp;
         Hp = hp;
@@ -153,6 +170,8 @@ public class CharacterBaseStatus
         Defense = defense;
         Speed = speed;
         charaObject = obj;
+        currentCoreGauge = core;
+        SpecialMove = special;
         OriginalStatusSet();
     }
 
@@ -571,6 +590,17 @@ public class CharacterBaseStatus
         JustGuardSuccess = false;
         JumpSuccess = false;
         EvasionSuccess = false;
+    }
+
+    /// <summary>
+    /// ジャストガードによる体幹ゲージの減少
+    /// </summary>
+    /// <param name="decrease">減少量</param>>
+    /// <param name="maxCore">最大体幹ゲージ量</param>>
+    public void CoreGaugeDecrease(float decrease, float maxCore)
+    {
+        currentCoreGauge -= decrease;
+        onCoreGaugeChanged?.Invoke(decrease, maxCore);
     }
     #endregion
 

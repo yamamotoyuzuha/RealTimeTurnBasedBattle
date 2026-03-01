@@ -73,7 +73,8 @@ public class BuddyMonster : MonoBehaviour, Status, ICommand
     private void Awake()
     {
         characterBaseStatus = new CharacterBaseStatus
-            (buddyMonsterData.Hp, buddyMonsterData.Mp, buddyMonsterData.Attack, buddyMonsterData.Defense, buddyMonsterData.Speed, this.gameObject);
+            (buddyMonsterData.Hp, buddyMonsterData.Mp, buddyMonsterData.Attack, buddyMonsterData.Defense, 
+                buddyMonsterData.Speed, this.gameObject, 0, buddyMonsterData.SpecialMove);
     }
 
     void Start()
