@@ -55,10 +55,11 @@ public class MagicPanel : MonoBehaviour
     private bool isPanelClearCheck; //生成したパネルがゴール出来るか
     private bool isMagicPanelClear; //魔法パネルをクリアしたか
     public bool IsMagicPanelClear => isMagicPanelClear;
+    
     /// <summary>
-    /// このキャラクターのステータスを保持
+    /// このキャラクターの情報
     /// </summary>
-    private Status status;
+    private Character _character;
     private UniTaskCompletionSource compSource;
 
     private IAnimationCharacter animationCharacter;
@@ -82,7 +83,7 @@ public class MagicPanel : MonoBehaviour
         //現在のマスのRectTransformを取得する
         currentMassRect = currentMass.GetComponent<RectTransform>();
         //ステータスを取得
-        status = GetComponent<Status>();
+        _character = GetComponent<Status>().GetCharacter();
         animationCharacter = GetComponent<IAnimationCharacter>();
         
         OperationUISettings();
@@ -117,6 +118,7 @@ public class MagicPanel : MonoBehaviour
         compSource = new UniTaskCompletionSource();
         return compSource.Task;
     }
+    
     /// <summary>
     /// 魔法パネルをクリアしたとき
     /// </summary>
@@ -697,7 +699,7 @@ public class MagicPanel : MonoBehaviour
     private void EffectSquareContentAssessment(List<MagicMassData> effectMass)
     {
         //キャラクターのステータスを取得
-        var playerStatus = status.GetCharacterStatus();
+        var playerStatus = _character.BaseStatus;
         
         //効果マスの内容
         for (int i = 0; i < effectMass.Count; i++)

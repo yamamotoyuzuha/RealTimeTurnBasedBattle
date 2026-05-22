@@ -62,8 +62,8 @@ public class PartyStatusUI : MonoBehaviour
         for (int i = 0; i < count; i++)
         {
             var obj = Instantiate(_statusUIPrefab, _statusParent);
-            //MPを生成して、仮配列に格納
-            var mpCount = _turnManager.CharacterInfos[partyCharas[i]].status.GetCharacterStatus().MaxMp;
+            // MPを生成して、仮配列に格納
+            var mpCount = _turnManager.Characters[partyCharas[i]].BaseStatus.MaxMp;
             GameObject[] mps = new GameObject[mpCount];
             for (int j = 0; j < mpCount; j++)
             {
@@ -80,30 +80,32 @@ public class PartyStatusUI : MonoBehaviour
                 mps
             );
             
-            var chara = _turnManager.CharacterInfos[partyCharas[i]].status.GetCharacterStatus();
-            playerStatusUIs[chara] = ui;
-            //HPなどの情報を設定
-            playerStatusUIs[chara].charaIcon.sprite =
-                _turnManager.CharacterInfos[partyCharas[i]].status.GetData().CharacterStatusIconSprite;
-            playerStatusUIs[chara].maxHpText.text = chara.MaxHp.ToString();
-            playerStatusUIs[chara].currentHpText.text = chara.Hp.ToString();
-            //Actionの登録
-            chara.onHpChanged += HpIncreaseOrDecrease;
-            chara.onMpAdd += MpAddUI;
-            chara.onMpReduce += MpReduceUI;
-            chara.onStatusDisplay += StatusUIDisplay;
+            var chara = _turnManager.Characters[partyCharas[i]];
+            var baseStatus = chara.BaseStatus;
+            playerStatusUIs[baseStatus] = ui;
+            // HPなどの情報を設定
+            playerStatusUIs[baseStatus].charaIcon.sprite = 
+                _turnManager.Characters[partyCharas[i]].BaseData.CharacterStatusIconSprite;
+            playerStatusUIs[baseStatus].maxHpText.text = chara.BaseStatus.MaxMp.ToString();
+            playerStatusUIs[baseStatus].currentHpText.text = chara.BaseStatus.Hp.ToString();
+            // Actionの登録
+            chara.EventsSystem.onHpChanged += HpIncreaseOrDecrease;
+            chara.EventsSystem.onMpAdd += MpAddUI;
+            chara.EventsSystem.onMpReduce += MpReduceUI;
+            chara.EventsSystem.onStatusDisplay += StatusUIDisplay;
             ui.uiObj.SetActive(false);
         }
         
         //状態異常UIの生成位置を取得
-        foreach (var info in _turnManager.CharacterInfos)
+        foreach (var info in _turnManager.Characters.Values)
         {
             //Enemyの場合、処理を飛ばす（Enemy用の状態異常UIが別に存在するため）
-            if(info.Value.characterName == "Enemy") continue;
+            if(!info.IsPlayer) continue;
             
-            var status = info.Value.status.GetCharacterStatus();
-            var ui = playerStatusUIs[status].uiObj.transform.GetChild(6);
-            saGeneratePositions.Add(status, ui);
+            var status = info.EventsSystem;
+            var baseStatus = info.BaseStatus;
+            var ui = playerStatusUIs[baseStatus].uiObj.transform.GetChild(6);
+            saGeneratePositions.Add(baseStatus, ui);
             status.onStatusAbnormalityOccurrence += StatusAbnormalityUIGenerate;
             status.onStatusAbnormalityProgress += StatusAbnormalityUIProgress;
             status.onStatusAbnormalityEnd +=  StatusAbnormalityUIEnd;
@@ -130,6 +132,7 @@ public class PartyStatusUI : MonoBehaviour
             ui.Value.uiObj.SetActive(isDisplay);
         }
     }
+    
     /// <summary>
     /// ステータスUIの表示切り替え
     /// </summary>

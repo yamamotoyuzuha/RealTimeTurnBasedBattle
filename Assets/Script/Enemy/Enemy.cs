@@ -7,26 +7,7 @@ public class Enemy : MonoBehaviour, Status, EnemyBase, IAnimationCharacter
 {
     [Header("データ")] 
     [SerializeField] private EnemyData enemyData;
-    public CharacterBaseData GetData()
-    {
-        return enemyData;
-    }
-    /// <summary>
-    /// キャラクターのステータス
-    /// </summary>
-    private CharacterBaseStatus characterBaseStatus;
-    public CharacterBaseStatus GetCharacterStatus()
-    {
-        return characterBaseStatus;
-    }
-    public int GetMp()
-    {
-        return characterBaseStatus.Mp;
-    }
-    public int GetSpeed()
-    {
-        return characterBaseStatus.Speed;
-    }
+    
     public CharacterAttributesType GetAttributes()
     {
         return enemyData.AttributesType;
@@ -63,6 +44,9 @@ public class Enemy : MonoBehaviour, Status, EnemyBase, IAnimationCharacter
     [Header("パリィなどのデバッグ用のUI")]
     [SerializeField] private GameObject _enemyDebugUI;
     private EnemyDebugUI debugUI;
+    
+    private Character _character;
+    public Character GetCharacter(){return _character;}
 
     void Awake()
     {
@@ -73,10 +57,12 @@ public class Enemy : MonoBehaviour, Status, EnemyBase, IAnimationCharacter
         
         //キャラクターの情報を取得
         characterState = GetComponent<CharacterState>().characterState;
-        characterBaseStatus = new CharacterBaseStatus
-            (enemyData.Hp, 0, enemyData.Attack, enemyData.Defense, enemyData.Speed, this.gameObject, enemyData.Trunk, enemyData.SpecialMove);
-        characterBaseStatus.onHitEffect += Hit;
-        characterBaseStatus.onDeathEffect += Death;
+        
+        // キャラクターの情報を取得
+        _character = new Character(enemyData, this.gameObject, false);
+        _character.EventsSystem.onHitEffect += Hit;
+        _character.EventsSystem.onDeathEffect += Death;
+        
         //Enemyの状態による行動変化（通常）
         behaviorChangeState = EnemyBehaviorChangeState.Normal;
         //攻撃パターンを設定
@@ -123,8 +109,7 @@ public class Enemy : MonoBehaviour, Status, EnemyBase, IAnimationCharacter
         {
             if (currentAttackPatten == i)
             {
-                //CurrentActionData = actionData[i];
-                characterBaseStatus.SetActionData(actionData[i]);
+                _character.EnemyOnlySystem.SetActionData(actionData[i]);
                 currentAttackPatten++;
                 break;
             }
@@ -137,7 +122,7 @@ public class Enemy : MonoBehaviour, Status, EnemyBase, IAnimationCharacter
     private async UniTask BehavioralChoice()
     {
         //アニメーションを再生し、アニメーション時間分待機する
-        var magicData = characterBaseStatus.CharacterCommandActionData.GetMagicBaseData();
+        var magicData = _character.EnemyOnlySystem.CharacterCommandActionData.GetMagicBaseData();
         SetAnimationPlay(magicData.CommandAnimationData._animationTriggerName);
         var animTime = magicData.AnimationTime;
         //debugUI.SetDebugText(animTime); //TODO：デバッグ用の関数（後で削除する）
@@ -150,7 +135,7 @@ public class Enemy : MonoBehaviour, Status, EnemyBase, IAnimationCharacter
         OnEnemyAction?.Invoke("", false);
         BattleOperatingInstructionsUI.Instance.DefenseActionUI(false);
         
-        var defense = characterBaseStatus.ResultDefenseActionType;
+        var defense = _character.EnemyOnlySystem.ResultDefenseActionType;
         if (defense != DefenseActionType.None)
         {
             await OnDefenseAction(defense);
@@ -164,7 +149,7 @@ public class Enemy : MonoBehaviour, Status, EnemyBase, IAnimationCharacter
     
     public bool IsIndividualOrWhole()
     {
-        var data = characterBaseStatus.CharacterCommandActionData;
+        var data = _character.EnemyOnlySystem.CharacterCommandActionData;
         switch (data.GetCommandType())
         {
             case CharacterCommandActionType.None:

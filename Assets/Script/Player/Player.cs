@@ -9,11 +9,6 @@ public class Player : MonoBehaviour, Status, ICommand, IAnimationCharacter
 
     [Header("プレイヤーデータ")]
     [SerializeField] private PlayerData playerData;
-    public CharacterBaseData GetData()
-    {
-        return playerData;
-    }
-    public PlayerData PlayerData => playerData;
     
     [Header("PlayerRideCheck")]
     [SerializeField] private PlayerRideCheck playerRideCheck;
@@ -41,22 +36,6 @@ public class Player : MonoBehaviour, Status, ICommand, IAnimationCharacter
     [Header("プレイヤーキャラクター固有のエフェクト情報")]
     [SerializeField] private List<EffectData> _effectData;
     
-    /// <summary>
-    /// Characterのステータス
-    /// </summary>
-    private CharacterBaseStatus characterBaseStatus;
-    public CharacterBaseStatus GetCharacterStatus()
-    {
-        return characterBaseStatus;
-    }
-    public int GetMp()
-    {
-        return characterBaseStatus.Mp;
-    }
-    public int GetSpeed()
-    {
-        return characterBaseStatus.Speed;
-    }
     public CharacterAttributesType GetAttributes()
     {
         return playerData.AttributesType;
@@ -73,15 +52,16 @@ public class Player : MonoBehaviour, Status, ICommand, IAnimationCharacter
     private Vector2 moveInput; //移動入力を保持
     private Vector3 moveOutPut; //カメラと移動入力を含めたベクトル
     private Vector2 massMoveInput; //マス移動入力を保持
+    
+    private Character _character;
+    public Character GetCharacter(){ return _character;}
 
     void Awake()
     {
-        //ステータスを作成
-        characterBaseStatus = new CharacterBaseStatus
-            (playerData.Hp, playerData.Mp, playerData.Attack, playerData.Defense, 
-                playerData.Speed, this.gameObject, 0, playerData.SpecialMove);
-        characterBaseStatus.onHitEffect += Hit;
-        characterBaseStatus.onDeathEffect += Death;
+        // キャラクターの情報を作成
+        _character = new Character(playerData, this.gameObject, true, commandUI,GetComponent<CharacterCameraSettings>());
+        _character.EventsSystem.onHitEffect += Hit;
+        _character.EventsSystem.onDeathEffect += Death;
     }
 
     void Start()

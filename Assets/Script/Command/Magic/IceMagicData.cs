@@ -8,7 +8,7 @@ public class IceMagicData : MagicBaseData
     [Header("被ダメージ増加の継続ターン")] 
     [SerializeField] private int freezeTurn;
 
-    public override void MagicAction(CharacterBaseStatus status)
+    public override void MagicAction(CharacterStatusEffectSystem status)
     {
         status.IsMagicReactionCheck(this);
         if(!MagicEffectProbability.ProbabilityCalculation(MagicProbability)) return;

@@ -13,10 +13,7 @@ public class BuddyMonster : MonoBehaviour, Status, ICommand
 
     [Header("バディモンデータ")]
     [SerializeField] private BuddyMonsterData buddyMonsterData;
-    public CharacterBaseData GetData()
-    {
-        return buddyMonsterData;
-    }
+    
     public BuddyMonsterData BuddyMonsterData => buddyMonsterData;
     
     [Header("ライド位置")]
@@ -41,22 +38,6 @@ public class BuddyMonster : MonoBehaviour, Status, ICommand
         commandUI.ToggleCommandUI(flag);
     }
     
-    /// <summary>
-    /// Characterのステータス
-    /// </summary>
-    private CharacterBaseStatus characterBaseStatus;
-    public CharacterBaseStatus GetCharacterStatus()
-    {
-        return characterBaseStatus;
-    }
-    public int GetMp()
-    {
-        return characterBaseStatus.Mp;
-    }
-    public int GetSpeed()
-    {
-        return characterBaseStatus.Speed;
-    }
     public CharacterAttributesType GetAttributes()
     {
         return buddyMonsterData.AttributesType;
@@ -70,11 +51,18 @@ public class BuddyMonster : MonoBehaviour, Status, ICommand
     private Vector3 moveOutPut; //カメラと移動入力を含めたベクトル
     private Vector2 massMoveInput; //マス移動入力を保持
 
+    public Character GetCharacter()
+    {
+        return null;
+    }
+
     private void Awake()
     {
+        /*
         characterBaseStatus = new CharacterBaseStatus
             (buddyMonsterData.Hp, buddyMonsterData.Mp, buddyMonsterData.Attack, buddyMonsterData.Defense, 
                 buddyMonsterData.Speed, this.gameObject, 0, buddyMonsterData.SpecialMove);
+        */
     }
 
     void Start()

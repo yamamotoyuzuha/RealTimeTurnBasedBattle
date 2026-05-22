@@ -40,6 +40,7 @@ public class EnemyStatusUI : MonoBehaviour
         new Dictionary<StatusAbnormalityInfo, StatusAbnormalityUIInfo>();
     
     private CharacterBaseStatus characterBaseStatus;
+    private Character _character;
 
     void Start()
     {
@@ -54,12 +55,11 @@ public class EnemyStatusUI : MonoBehaviour
     {
         Status enemy = null;
         //Enemyを取得する
-        foreach (var info in _turnManager.CharacterInfos)
+        foreach (var info in _turnManager.Characters.Values)
         {
-            if (info.Value.characterName == "Enemy")
+            if (!info.IsPlayer)
             {
-                enemy = info.Value.status;
-                characterBaseStatus = enemy.GetCharacterStatus();
+                _character = info;
                 break;
             }
         }
@@ -67,18 +67,18 @@ public class EnemyStatusUI : MonoBehaviour
         //UIの生成
         statusUIPrefabInstance = Instantiate(_statusUIPrefab, _uiGenerationParent);
         enemyNameText = statusUIPrefabInstance.transform.GetChild(2).GetComponent<TextMeshProUGUI>();
-        enemyNameText.text = enemy != null ? enemy.GetData().CharacterName : "";
+        enemyNameText.text = enemy != null ? enemy.GetCharacter().BaseData.CharacterName : "";
         statusHpBar = statusUIPrefabInstance.transform.GetChild(1).GetComponent<Image>();
         trunkBar = statusUIPrefabInstance.transform.GetChild(4).GetComponent<Image>();
         //statusUIPrefabInstance.SetActive(false);
         
-        characterBaseStatus.onHpChanged += HpChangeUIUpdate;
-        characterBaseStatus.onCoreGaugeChanged += CoreGaugeChangeUIUpdate;
+        _character.EventsSystem.onHpChanged += HpChangeUIUpdate;
+        _character.EventsSystem.onCoreGaugeChanged += CoreGaugeChangeUIUpdate;
         onEnemyStatusDisplay += StatusUIDisplay;
-
-        characterBaseStatus.onStatusAbnormalityOccurrence += StatusAilmentUIGenerate;
-        characterBaseStatus.onStatusAbnormalityProgress += StatusAbnormalityUIProgress;
-        characterBaseStatus.onStatusAbnormalityEnd += StatusAbnormalityUIEnd;
+        
+        _character.EventsSystem.onStatusAbnormalityOccurrence += StatusAilmentUIGenerate;
+        _character.EventsSystem.onStatusAbnormalityProgress += StatusAbnormalityUIProgress;
+        _character.EventsSystem.onStatusAbnormalityEnd += StatusAbnormalityUIEnd;
         onEnemyStatusDisplay += StatusAbnormalityUIDisplay;
     }
 
@@ -121,6 +121,7 @@ public class EnemyStatusUI : MonoBehaviour
         uiInfo.text.text = info.saDuration.ToString();
         statusAbnormalityInfos.Add(info, uiInfo);
     }
+    
     /// <summary>
     /// 状態異常UIの更新
     /// </summary>

@@ -102,7 +102,8 @@ public class CommandInputManager : MonoBehaviour
     {
         if(!isConfirmCommand) return;
 
-        var cameraSet = turnManager.CharacterInfos[turnManager.CurrentTurnCharacter].cameraSettings;
+        //var cameraSet = turnManager.CharacterInfos[turnManager.CurrentTurnCharacter].cameraSettings;
+        var cameraSet = turnManager.Characters[turnManager.CurrentTurnCharacter].CameraSettings;
         //魔法の場合、魔法パネルがあるためそのカメラアングルに移動させる
         if (isMagicUISelected)
         {
@@ -159,7 +160,7 @@ public class CommandInputManager : MonoBehaviour
         //まだ、何も選択していない状態かの判定
         var isInput = (!isMagicUISelected && !isAttackUISelected && !isItemUISelected);
         var battle = _battleCameraAngleManager;
-        var cameraSet = turnManager.CharacterInfos[turnManager.CurrentTurnCharacter].cameraSettings;
+        var cameraSet = turnManager.Characters[turnManager.CurrentTurnCharacter].CameraSettings;
 
         if (CommandInput.Player.Magic.triggered && isInput)
         {
@@ -255,7 +256,7 @@ public class CommandInputManager : MonoBehaviour
         if (!isMagicUISelected || isConfirmCommand) return;
         
         var battle =  _battleCameraAngleManager;
-        var cameraSet = turnManager.CharacterInfos[turnManager.CurrentTurnCharacter].cameraSettings;
+        var cameraSet = turnManager.Characters[turnManager.CurrentTurnCharacter].CameraSettings;
         //魔法を選択
         if (CommandInput.Player.MagicCommand0.triggered)
         {
@@ -325,29 +326,30 @@ public class CommandInputManager : MonoBehaviour
     /// </summary>
     private void DefenseActionInput()
     {
-        //防御アクションの状態ではない時は処理を行わない
-        foreach (var chara in turnManager.CharacterInfos)
+        foreach (var chara in turnManager.Characters.Values)
         {
-            if(chara.Value.characterName == "Enemy") continue;
-            var state = chara.Value.state.characterState;
+            // Enemyでなく、防御アクションの状態ではないときは処理を行わない
+            if(!chara.IsPlayer) continue;
+            var state = chara.StateMachine.CharacterState;
             if(state != CharacterStateType.BeforeAttack) return;
         }
         
-        //入力有効時間のタイマーを更新
-        foreach (var status in GetPlayerCharacterBaseStatus())
+        // 入力有効時間のタイマーを更新
+        foreach (var defenseActionSystem in GetCharacterDefenseActionSystem())
         {
-            status.UpdateDefenseActionTimer(Time.deltaTime);
+            defenseActionSystem.UpdateDefenseActionTimer(Time.deltaTime);
         }
         
         if (CommandInput.Player.Parry.triggered)
         {
-            foreach (var status in GetPlayerCharacterBaseStatus())
+            foreach (var defenseActionSystem in GetCharacterDefenseActionSystem())
             {
-                if(status.IsInputDefenseAction()) continue;
-                status.ParryInput(0.5f);
+                if(defenseActionSystem.IsInputDefenseAction()) continue;
+                defenseActionSystem.ParryInput(0.5f);
                 Debug.Log("パリィ開始");
             }
 
+            /* TODO：アニメーション周りのコードは後で考えるものとする
             //アニメーションを再生する
             foreach (var animChara in turnManager.CharacterInfos)
             {
@@ -357,15 +359,17 @@ public class CommandInputManager : MonoBehaviour
                 var obj = Instantiate(_parryEffectPrefab, pos.position, Quaternion.identity);
                 Destroy(obj, 1f);
             }
+            */
         }
         if (CommandInput.Player.JustGuard.triggered)
         {
-            foreach (var status in GetPlayerCharacterBaseStatus())
+            foreach (var defenseActionSystem in GetCharacterDefenseActionSystem())
             {
-                if(status.IsInputDefenseAction()) continue;
-                status.JustGuardInput(0.5f);
+                if(defenseActionSystem.IsInputDefenseAction()) continue;
+                defenseActionSystem.JustGuardInput(0.5f);
             }
             
+            /*
             foreach (var animChara in turnManager.CharacterInfos)
             {
                 if(animChara.Value.characterName == "Enemy") continue;
@@ -374,19 +378,18 @@ public class CommandInputManager : MonoBehaviour
                 var obj = Instantiate(_justGuardEffectPrefab, pos.position, Quaternion.identity);
                 Destroy(obj, 1f);
             }
+            */
         }
     }
 
     /// <summary>
-    /// プレイヤー操作キャラのCharacterBaseStatusを取得
-    /// ・IEnumerableで返すためforeachで使える
+    /// プレイヤー操作キャラのCharacterDefenseActionSystemを取得する
     /// </summary>
-    /// <returns>プレイヤーのみのCharacterBaseStatus</returns>
-    private IEnumerable<CharacterBaseStatus> GetPlayerCharacterBaseStatus()
+    /// <returns>プレイヤー操作キャラのCharacterDefenseActionSystem</returns>
+    private IEnumerable<CharacterDefenseActionSystem> GetCharacterDefenseActionSystem()
     {
-        //Enemyを除いた
-        return turnManager.CharacterInfos
-            .Where(kv => kv.Value.characterName != "Enemy")
-            .Select(kv => kv.Value.status.GetCharacterStatus());
+        return turnManager.Characters
+            .Where(kv => kv.Value.IsPlayer)
+            .Select(kv => kv.Value.DefenseActionSystem);
     }
 }

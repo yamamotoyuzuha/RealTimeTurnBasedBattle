@@ -8,7 +8,7 @@ public class FlameMagicData : MagicBaseData
     [Header("持続ダメージ継続ターン")] 
     [SerializeField] private int _damageOverTime;
 
-    public override void MagicAction(CharacterBaseStatus status)
+    public override void MagicAction(CharacterStatusEffectSystem status)
     {
         status.IsMagicReactionCheck(this);
         if(!MagicEffectProbability.ProbabilityCalculation(MagicProbability)) return;

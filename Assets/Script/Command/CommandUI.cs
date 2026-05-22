@@ -94,7 +94,7 @@ public class CommandUI : MonoBehaviour
         //親オブジェクトであるキャラクターのデータを取得する
         characterObj = transform.root.gameObject;
         characterStatus = characterObj.GetComponent<Status>();
-        characterBaseData = characterStatus.GetData();
+        characterBaseData = characterStatus.GetCharacter().BaseData;
         Debug.Log(characterBaseData);
         ToggleCommandUI(false);
         EachMagicUIGenerate();
@@ -366,7 +366,7 @@ public class CommandUI : MonoBehaviour
     public void CurrentMpMagicUsableChangeColor(Status status)
     {
         //現在のMPを取得する
-        var mp = status.GetMp();
+        var mp = status.GetCharacter().BaseStatus.Mp;
 
         //キャラクターが保持している魔法の消費MPと比較
         for (int i = 0; i < EachMagicLeft.Count; i++)

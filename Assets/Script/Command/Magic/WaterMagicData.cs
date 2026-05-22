@@ -8,7 +8,7 @@ public class WaterMagicData : MagicBaseData
     [Header("吸水状態の継続ターン")] 
     [SerializeField] private int _waterAbsorptionTurn;
 
-    public override void MagicAction(CharacterBaseStatus status)
+    public override void MagicAction(CharacterStatusEffectSystem status)
     {
         status.IsMagicReactionCheck(this);
         if(!MagicEffectProbability.ProbabilityCalculation(MagicProbability)) return;

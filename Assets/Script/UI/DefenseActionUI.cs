@@ -20,14 +20,14 @@ public class DefenseActionUI : MonoBehaviour
     private TextMeshProUGUI defenseActionText;
     private TextMeshProUGUI successMpCountText;
     //プレイヤーキャラ
-    private CharacterBaseStatus characterBaseStatus;
+    private Character _character;
 
     void Start()
     {
-        characterBaseStatus = transform.root.GetComponent<Status>().GetCharacterStatus();
+        _character = transform.root.GetComponent<Status>().GetCharacter();
         DefenseActionUIGenerate();
-        characterBaseStatus.onParrySuccess += ParryUI;
-        characterBaseStatus.onJustGuardSuccess += JustGuardUI;
+        _character.EventsSystem.onParrySuccess += ParryUI;
+        _character.EventsSystem.onJustGuardSuccess += JustGuardUI;
     }
 
     /// <summary>
@@ -55,6 +55,7 @@ public class DefenseActionUI : MonoBehaviour
         HiddenUI(defenseUIPrefabInstance, 0.4f).Forget();
         HiddenUI(successMpUIPrefabInstance, 0.4f).Forget();
     }
+    
     /// <summary>
     /// ジャストガードが成功した時にUIを表示する
     /// </summary>

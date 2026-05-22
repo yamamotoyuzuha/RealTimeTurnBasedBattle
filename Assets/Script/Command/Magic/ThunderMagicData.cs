@@ -6,7 +6,7 @@ public class ThunderMagicData : MagicBaseData
     [Header("感電の継続ターン")] 
     [SerializeField] private int _electricShockTurn;
 
-    public override void MagicAction(CharacterBaseStatus status)
+    public override void MagicAction(CharacterStatusEffectSystem status)
     {
         status.IsMagicReactionCheck(this);
         if(!MagicEffectProbability.ProbabilityCalculation(MagicProbability)) return;

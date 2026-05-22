@@ -10,8 +10,8 @@ public abstract class MagicReaction
     /// <summary>
     /// 魔法反応を発動
     /// </summary>
-    /// <param name="status">魔法反応を受けるキャラクター</param>>
-    public abstract void MagicReactionAction(CharacterBaseStatus status);
+    /// <param name="system">魔法反応を受けるキャラクター</param>>
+    public abstract void MagicReactionAction(CharacterCombatSystem system);
 }
 
 /// <summary>
@@ -27,9 +27,10 @@ public class Evaporation : MagicReaction
         imageIcon = image;
     }
     
-    public override void MagicReactionAction(CharacterBaseStatus status)
+    public override void MagicReactionAction(CharacterCombatSystem system)
     {
-        status.Damage(damage, imageIcon);
+        //status.Damage(damage, imageIcon);
+        system.TakeDamage(damage, imageIcon);
     }
 }
 
@@ -44,7 +45,7 @@ public class Dissolution : MagicReaction
         this.damage = damage;
     }
 
-    public override void MagicReactionAction(CharacterBaseStatus status)
+    public override void MagicReactionAction(CharacterCombatSystem system)
     {
         
     }

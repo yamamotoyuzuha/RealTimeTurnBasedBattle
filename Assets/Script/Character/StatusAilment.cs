@@ -17,16 +17,16 @@ public abstract class StatusAilment
     /// 効果付与
     /// </summary>
     /// <param name="status">効果を受けるキャラクター</param>>
-    public abstract void EffectGrant(CharacterBaseStatus status);
+    public abstract void EffectGrant(Character status);
     /// <summary>
     /// 効果発動
     /// </summary>
     /// <param name="status">この効果を受けるキャラクター</param>
-    public abstract void EffectActivation(CharacterBaseStatus status);
+    public abstract void EffectActivation(Character status);
     /// <summary>
     /// 効果終了
     /// </summary>
-    public abstract void EffectEnd(CharacterBaseStatus status);
+    public abstract void EffectEnd(Character status);
     
     /// <summary>
     /// 持続ターンが終了したかのフラグ
@@ -66,23 +66,24 @@ public class FlameEffect : StatusAilment
         StatusAbnormalityType = type;
     }
     
-    public override void EffectGrant(CharacterBaseStatus status)
+    public override void EffectGrant(Character status)
     {
         Debug.Log("火傷状態になった");
     }
 
-    public override void EffectActivation(CharacterBaseStatus status)
+    public override void EffectActivation(Character status)
     {
-        Debug.Log("火傷ダメージを与える前" + status.Hp);
+        Debug.Log("火傷ダメージを与える前" + status.BaseStatus.Hp);
         //持続ターンが０になったら効果終了
-        status.Damage(flameDamage, imageIcon);
+        //status.Damage(flameDamage, imageIcon);
+        status.CombatSystem.TakeDamage(flameDamage, imageIcon);
         Sustainability--;
-        Debug.Log("火傷ダメージを与える" + status.Hp);
+        Debug.Log("火傷ダメージを与える" + status.BaseStatus.Hp);
         
         IsEnd = Sustainability <= 0;
     }
 
-    public override void EffectEnd(CharacterBaseStatus status)
+    public override void EffectEnd(Character status)
     {
         Debug.Log("火傷状態が終了");
     }
@@ -108,22 +109,24 @@ public class IceEffect : StatusAilment
         StatusAbnormalityType = type;
     }
     
-    public override void EffectGrant(CharacterBaseStatus status)
+    public override void EffectGrant(Character status)
     {
         Debug.Log("氷結状態によって受けるダメージが上昇");
-        status.DamageTakenCalculation.AddRate(damageIncrease);
+        //status.DamageTakenCalculation.AddRate(damageIncrease);
+        status.CombatSystem.DamageTakenCalculation.AddRate(damageIncrease);
     }
 
-    public override void EffectActivation(CharacterBaseStatus status)
+    public override void EffectActivation(Character status)
     {
         Sustainability--;
         IsEnd = Sustainability <= 0;
     }
 
-    public override void EffectEnd(CharacterBaseStatus status)
+    public override void EffectEnd(Character status)
     {
         //効果が切れるとともに被ダメージの倍率をリセット
-        status.DamageTakenCalculation.ResetRate();
+        //status.DamageTakenCalculation.ResetRate();
+        status.CombatSystem.DamageTakenCalculation.ResetRate();
     }
 }
 
@@ -139,18 +142,18 @@ public class ThunderEffect : StatusAilment
         StatusAbnormalityType = type;
     }
     
-    public override void EffectGrant(CharacterBaseStatus status)
+    public override void EffectGrant(Character status)
     {
         Debug.Log("痺れ状態によって次のターンがスキップされる");
     }
 
-    public override void EffectActivation(CharacterBaseStatus status)
+    public override void EffectActivation(Character status)
     {
         Sustainability--;
         IsEnd = Sustainability <= 0;
     }
 
-    public override void EffectEnd(CharacterBaseStatus status)
+    public override void EffectEnd(Character status)
     {
         Debug.Log("痺れ状態終了");
     }
@@ -169,18 +172,18 @@ public class WaterEffect : StatusAilment
         StatusAbnormalityType = type;
     }
     
-    public override void EffectGrant(CharacterBaseStatus status)
+    public override void EffectGrant(Character status)
     {
         Debug.Log("吸水状態によって、ダメージの一部でHPが回復");
     }
 
-    public override void EffectActivation(CharacterBaseStatus status)
+    public override void EffectActivation(Character status)
     {
         Sustainability--;
         IsEnd = Sustainability <= 0;
     }
 
-    public override void EffectEnd(CharacterBaseStatus status)
+    public override void EffectEnd(Character status)
     {
         Debug.Log("吸水状態終了");
     }

@@ -63,7 +63,7 @@ public class MagicBaseData : CharacterCommandActionData
     /// 継承先の各魔法でオーバーライドして個別処理
     /// </summary>
     /// <param name="status">効果を受けるキャラクター</param>>
-    public virtual void MagicAction(CharacterBaseStatus status){}
+    public virtual void MagicAction(CharacterStatusEffectSystem status){}
     /// <summary>
     /// 継承先で可能な防御アクションかの判定を行う
     /// 一致した場合は、可能の判定となる

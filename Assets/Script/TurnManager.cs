@@ -40,10 +40,11 @@ public class TurnManager : MonoBehaviour
     /// 割り込みなどが行われる前に現在のターンだったキャラクター
     /// </summary>
     private GameObject beforeInterruptionChara;
+    
     /// <summary>
-    /// キャラクターの情報をすべて保持
+    /// キャラクターの情報を保持
     /// </summary>
-    public Dictionary<GameObject, CharacterInfo> CharacterInfos { get; private set; } = new Dictionary<GameObject, CharacterInfo>();
+    public Dictionary<GameObject, Character> Characters { get; private set; } = new Dictionary<GameObject, Character>();
 
     /// <summary>
     /// 操作キャラクターのコマンド入力を可否
@@ -90,9 +91,6 @@ public class TurnManager : MonoBehaviour
                 CharacterIconSetUp();
                 NextTurnCharacterSet();
             }
-            //CharacterIconDestroy(CurrentTurnCharacter);
-            //CharacterIconSetUp();
-            //NextTurnCharacterSet();
         };
         onTurnIconDisplay += TurnIconDisplay;
         onUpdateTurnOrder = () =>
@@ -149,6 +147,21 @@ public class TurnManager : MonoBehaviour
         //各キャラクターのステートを取得する
         foreach (var character in speedCharacterTurnQueue)
         {
+            var chara = character.GetComponent<Status>().GetCharacter();
+            Characters.Add(character, chara);
+            Characters[character].EventsSystem.onDeath += DeceasedCharacterSetUp;
+            if (!Characters[character].IsPlayer)
+            {
+                character.transform.position = _fieldSettings.EnemyCharaPos.position;
+                character.transform.rotation = Quaternion.Euler(0, 180, 0);
+            }
+            else
+            {
+                character.transform.position = _fieldSettings.PlayerCharaPos[index].position;
+                index++;
+            }
+
+            /*
             //各キャラクターの情報を取得し、まとめる
             var state = character.GetComponent<CharacterState>();
             state.ChangeCharacterState(CharacterStateType.Idle);
@@ -182,23 +195,24 @@ public class TurnManager : MonoBehaviour
             };
             CharacterInfos.Add(character, info);
             info.status.GetCharacterStatus().onDeath += DeceasedCharacterSetUp;
+            */
         }
-        //現在のターンのキャラのステートを選択中にしておく
-        var currentChara = CharacterInfos[CurrentTurnCharacter].state;
+        // 現在のターンのキャラのステートを選択中にしておく
+        var currentChara = Characters[CurrentTurnCharacter].StateMachine;
         currentChara.ChangeCharacterState(CharacterStateType.InAction);
         var battle = _battleCameraAngleManager;
-        //現在のターンがEnemyか判定を行う
+        // 現在のターンがEnemyか判定を行う
         if (!PlayableCharacterJudgment(CurrentTurnCharacter))
         {
             battle.BattleCameraAngleChange(BattleCameraActiveType.EAction, battle.EActionPosF, battle.EActionPosL);
             PlayerCharacterStateChanged(CharacterStateType.BeforeAttack);
             onEnemyTurnStart?.Invoke();
         }
-        else //現在のターンがプレイヤーキャラクターの場合、操作が出来る状態にする
+        else // 現在のターンがプレイヤーキャラクターの場合、操作が出来る状態にする
         {
             battle.ResetCameraAngle();
-            var cameraSet = CharacterInfos[CurrentTurnCharacter].cameraSettings;
-            battle.BattleCameraAngleChange(BattleCameraActiveType.DefaultPlayer, 
+            var cameraSet = Characters[CurrentTurnCharacter].CameraSettings;
+            battle.BattleCameraAngleChange(BattleCameraActiveType.DefaultPlayer,
                 cameraSet.DefaultCamPosF, cameraSet.DefaultCamPosL);
             TurnCharacterCommandUI(CurrentTurnCharacter, true);
             onCommandInputPossible?.Invoke(true);
@@ -222,7 +236,7 @@ public class TurnManager : MonoBehaviour
             //生成したアイコンをキャラクターをKeyにして保存しておく
             GameObject icon = Instantiate(characterIconObj, iconParent);
             //アイコンをキャラクターデータのアイコンに設定する
-            icon.GetComponent<TurnCharacterIcon>().SetCharacterIcon(character.GetComponent<Status>().GetData());
+            icon.GetComponent<TurnCharacterIcon>().SetCharacterIcon(character.GetComponent<Status>().GetCharacter().BaseData);
                 
             if (!characterIcons.ContainsKey(character)) //まだ、キャラクターをKeyに登録してない場合
             {
@@ -284,7 +298,7 @@ public class TurnManager : MonoBehaviour
         icons.Add(icon);
         
         //キャラクターアイコンを設定する
-        icon.GetComponent<TurnCharacterIcon>().SetCharacterIcon(nextTurnCharacter.GetComponent<Status>().GetData());
+        icon.GetComponent<TurnCharacterIcon>().SetCharacterIcon(nextTurnCharacter.GetComponent<Status>().GetCharacter().BaseData);
     }
 
     /// <summary>
@@ -298,7 +312,7 @@ public class TurnManager : MonoBehaviour
         //アイコンを生成し、アイコンの設定を行う
         var icon = Instantiate(characterIconObj, iconParent);
         icons.Add(icon);
-        var data = CharacterInfos[character].status.GetData();
+        var data = Characters[character].BaseData;
         icon.GetComponent<TurnCharacterIcon>().SetCharacterIcon(data);
         icon.transform.SetSiblingIndex(0);
     }
@@ -331,11 +345,12 @@ public class TurnManager : MonoBehaviour
         AllCharacterStateChanged(CharacterStateType.Idle);
         CtCharaNumbness();
         
-        //現在のターンのキャラのステートを変更する
-        var currentCharacter = CharacterInfos[CurrentTurnCharacter];
-        currentCharacter.state.ChangeCharacterState(CharacterStateType.InAction);
+        // 現在のターンのキャラのステートを変更する
+        var currentCharacter = Characters[CurrentTurnCharacter];
+        currentCharacter.StateMachine.ChangeCharacterState(CharacterStateType.InAction);
         TurnCharacterCommandUI(CurrentTurnCharacter, true);
-        var status = currentCharacter.status.GetCharacterStatus();
+        var status = currentCharacter.BaseStatus;
+        var effect = currentCharacter.StatusEffectSystem;
         var battle = _battleCameraAngleManager;
         if (!PlayableCharacterJudgment(CurrentTurnCharacter))
         {
@@ -349,14 +364,14 @@ public class TurnManager : MonoBehaviour
         {
             status.AddMp(1);
             battle.ResetCameraAngle();
-            var cameraSet = CharacterInfos[CurrentTurnCharacter].cameraSettings;
+            var cameraSet = Characters[CurrentTurnCharacter].CameraSettings;
             battle.BattleCameraAngleChange(BattleCameraActiveType.DefaultPlayer, 
                 cameraSet.DefaultCamPosF, cameraSet.DefaultCamPosL);
         }
         
-        if (status.IsUnderAbnormalStatus())
+        if (effect.IsUnderAbnormalStatus())
         {
-            status.StatusEffectStart();
+            effect.StatusEffectStart();
             Debug.Log("状態異常があるため、効果を実行");
         }
     }
@@ -369,15 +384,16 @@ public class TurnManager : MonoBehaviour
         AllCharacterStateChanged(CharacterStateType.Idle);
         CtCharaNumbness();
         
-        //現在のターンのキャラのステートを変更する
-        var currentCharacter = CharacterInfos[CurrentTurnCharacter];
-        currentCharacter.state.ChangeCharacterState(CharacterStateType.InAction);
+        // 現在のターンのキャラのステートを変更する
+        var currentCharacter = Characters[CurrentTurnCharacter];
+        currentCharacter.StateMachine.ChangeCharacterState(CharacterStateType.InAction);
         TurnCharacterCommandUI(CurrentTurnCharacter, true);
-        var status = currentCharacter.status.GetCharacterStatus();
+        var status = currentCharacter.BaseStatus;
+        var effect = currentCharacter.StatusEffectSystem;
         var battle = _battleCameraAngleManager;
         if (!PlayableCharacterJudgment(CurrentTurnCharacter))
         {
-            //パリィが出来る状態にする
+            // パリィが出来る状態にする
             battle.BattleCameraAngleChange(BattleCameraActiveType.EAction, battle.EActionPosF, battle.EActionPosL);
             PlayerCharacterStateChanged(CharacterStateType.BeforeAttack);
             BattleOperatingInstructionsUI.Instance.DefenseActionUI(true);
@@ -387,14 +403,14 @@ public class TurnManager : MonoBehaviour
         {
             status.AddMp(1);
             battle.ResetCameraAngle();
-            var cameraSet = CharacterInfos[CurrentTurnCharacter].cameraSettings;
+            var cameraSet = Characters[CurrentTurnCharacter].CameraSettings;
             battle.BattleCameraAngleChange(BattleCameraActiveType.DefaultPlayer, 
                 cameraSet.DefaultCamPosF, cameraSet.DefaultCamPosL);
         }
         
-        if (status.IsUnderAbnormalStatus())
+        if (effect.IsUnderAbnormalStatus())
         {
-            status.StatusEffectStart();
+            effect.StatusEffectStart();
             Debug.Log("状態異常があるため、効果を実行");
         }
     }
@@ -406,10 +422,10 @@ public class TurnManager : MonoBehaviour
     /// <returns>true：変更なし　false：変更あり</returns>
     private bool CheckSpeedCharacters()
     {
-        //現在のターン順リストとターン順を計算したリストの中身と順番が一致しているか判定する
+        // 現在のターン順リストとターン順を計算したリストの中身と順番が一致しているか判定する
         List<GameObject> characters = new List<GameObject>(fieldCharacter);
         characters = characters.OrderByDescending(i =>
-            CharacterInfos[i].status.GetData().Speed).ToList();
+            Characters[i].BaseData.Speed).ToList();
         return fieldCharacter.SequenceEqual(characters);
     }
 
@@ -420,7 +436,7 @@ public class TurnManager : MonoBehaviour
     {
         oldFieldCharacter = fieldCharacter; //最新のターン順になる前に元状態のものを保持
         fieldCharacter = fieldCharacter.OrderByDescending(i => 
-            i.GetComponent<Status>().GetData().Speed).ToList();
+            i.GetComponent<Status>().GetCharacter().BaseData.Speed).ToList();
         speedCharacterTurnQueue = new Queue<GameObject>(fieldCharacter);
         //最後のターンキャラの設定
         var index = fieldCharacter.Count - 1;
@@ -451,9 +467,9 @@ public class TurnManager : MonoBehaviour
                     //アイコンが残っていることにし、キャラのアイコンを取り出す
                     iconsRemaining = true;
                     var icon = iconQueues[chara].Dequeue();
-                    var charaData = CharacterInfos[chara].status;
+                    var charaData = Characters[chara].BaseData;
                     //アイコン更新
-                    icon.GetComponent<TurnCharacterIcon>().SetCharacterIcon(charaData.GetData());
+                    icon.GetComponent<TurnCharacterIcon>().SetCharacterIcon(charaData);
                     //UI上の順番を更新
                     icon.transform.SetSiblingIndex(siblingIndex);
                     siblingIndex++;
@@ -477,11 +493,11 @@ public class TurnManager : MonoBehaviour
         AllCharacterStateChanged(CharacterStateType.Idle);
         CurrentTurnCharacter = character;
         //現在のターンのキャラのステートを変更する
-        var currentCharacter = CharacterInfos[CurrentTurnCharacter];
-        currentCharacter.state.ChangeCharacterState(CharacterStateType.InAction);
+        var currentCharacter = Characters[CurrentTurnCharacter];
+        currentCharacter.StateMachine.ChangeCharacterState(CharacterStateType.InAction);
         
         //カメラを設定する
-        var cameraSet = CharacterInfos[CurrentTurnCharacter].cameraSettings;
+        var cameraSet = Characters[CurrentTurnCharacter].CameraSettings;
         if (!PlayableCharacterJudgment(CurrentTurnCharacter)) //プレイヤーかEnemyかの判定を行う
         {
             _battleCameraAngleManager.BattleCameraAngleChange(BattleCameraActiveType.EAction, 
@@ -513,7 +529,7 @@ public class TurnManager : MonoBehaviour
                     flag = true;
                     //割り込み前のキャラが麻痺状態でない場合、そのまま割り込み前のキャラが現在ターンキャラになる
                     var character = beforeInterruptionChara;
-                    var status = CharacterInfos[character].status.GetCharacterStatus();
+                    var status = Characters[character].StatusEffectSystem;
                     if (!status.IsParalysisStatus())
                     {
                         CurrentTurnCharacter = character;
@@ -537,7 +553,7 @@ public class TurnManager : MonoBehaviour
                     speedCharacterTurnQueue.Enqueue(character);
                     //現在のターンのキャラが麻痺状態でなければ、ターンを確定する
                     var cChara = speedCharacterTurnQueue.Peek();
-                    var status = CharacterInfos[cChara].status.GetCharacterStatus();
+                    var status = Characters[cChara].StatusEffectSystem;
                     if (!status.IsParalysisStatus())
                     {
                         CurrentTurnCharacter = cChara;
@@ -563,7 +579,7 @@ public class TurnManager : MonoBehaviour
                 speedCharacterTurnQueue.Enqueue(character);
                 //現在のターンのキャラが麻痺状態でなければ、ターンを確定する
                 var cChara = speedCharacterTurnQueue.Peek();
-                var status = CharacterInfos[cChara].status.GetCharacterStatus();
+                var status = Characters[cChara].StatusEffectSystem;
                 if (!status.IsParalysisStatus())
                 {
                     CurrentTurnCharacter = cChara;
@@ -580,30 +596,6 @@ public class TurnManager : MonoBehaviour
                 }
                 index--;
             }
-            /*
-            //終了したターンのキャラを取得
-            var character = speedCharacterTurnQueue.Dequeue();
-            //終了したターンのキャラを末尾に追加する
-            speedCharacterTurnQueue.Enqueue(character);
-            //現在のターンのキャラが麻痺状態でなければ、ターンを確定する
-            var cChara = speedCharacterTurnQueue.Peek();
-            var status = CharacterInfos[cChara].status.GetCharacterStatus();
-            if (!status.IsParalysisStatus())
-            {
-                CurrentTurnCharacter = cChara;
-                break;
-            }
-
-            //ターンアイコンもターンスキップに連動させる
-            CharacterIconDestroy(cChara);
-            CharacterIconSetUp();
-            //麻痺でターンがスキップされても状態異常があれば処理を行う
-            if (status.IsUnderAbnormalStatus())
-            {
-                status.StatusEffectStart();
-            }
-            index--;
-            */
         }
 
         if (index <= 0)
@@ -620,24 +612,25 @@ public class TurnManager : MonoBehaviour
     /// <param name="character">死亡したキャラクター</param>>
     private void DeceasedCharacterSetUp(GameObject character)
     {
-        //死亡しているキャラクターが存在している場合、処理を行う
-        if (CharacterInfos.TryGetValue(character, out var info))
+        // 死亡しているキャラクターが存在している場合、処理を行う
+        if (Characters.TryGetValue(character, out var info))
         {
-            info.state.ChangeCharacterState(CharacterStateType.Dead);
-            //死亡したキャラクターのアイコンを取得し、全て削除する
+            info.StateMachine.ChangeCharacterState(CharacterStateType.Dead);
+            // 死亡したキャラクターのアイコンを取得し、全て削除する
             if(!characterIcons.TryGetValue(character, out List<GameObject> icons)) return;
             foreach (var icon in icons)
             {
+                Debug.Log("死亡" + info.CharacterObject.name);
                 Destroy(icon);
             }
             
             speedCharacterTurnQueue.Clear();
             List<GameObject> characters = new List<GameObject>();
-            //死亡していないキャラクターのみ追加
+            // 死亡していないキャラクターのみ追加
             foreach (var chara in fieldCharacter)
             {
-                if(!CharacterInfos.ContainsKey(chara)) continue;
-                if (CharacterInfos[chara].state.characterState != CharacterStateType.Dead)
+                if(!Characters.ContainsKey(chara)) continue;
+                if (Characters[chara].StateMachine.CharacterState != CharacterStateType.Dead)
                 {
                     characters.Add(chara);
                     Debug.Log(chara.name);
@@ -646,9 +639,9 @@ public class TurnManager : MonoBehaviour
             speedCharacterTurnQueue = new Queue<GameObject>(characters);
             CurrentTurnCharacter = speedCharacterTurnQueue.Peek();
             
-            //状態異常の解除を行ってから、死亡したキャラ情報の削除を行う
-            CharacterInfos[character].status.GetCharacterStatus().StatusAilmentsClear();
-            CharacterInfos.Remove(character);
+            // 状態異常の解除を行ってから、死亡したキャラ情報の削除を行う
+            Characters[character].StatusEffectSystem.StatusAilmentsClear();
+            Characters.Remove(character);
         }
     }
 
@@ -662,7 +655,7 @@ public class TurnManager : MonoBehaviour
     {
         if (PlayableCharacterJudgment(character))
         {
-            CharacterInfos[character].command.ShowCommandUI(flag);
+            Characters[character].CommandsSystem.ShowCommandUI(flag);
         }
     }
 
@@ -673,7 +666,7 @@ public class TurnManager : MonoBehaviour
     /// <returns>true：操作キャラ（Player）　false：操作キャラじゃない（Enemy）</returns>
     public bool PlayableCharacterJudgment(GameObject character)
     {
-        if (CharacterInfos[character].characterName == "Player") return true;
+        if(Characters[character].IsPlayer) return true;
         return false;
     }
 
@@ -683,9 +676,9 @@ public class TurnManager : MonoBehaviour
     /// <param name="state">変更したいステート</param>
     private void AllCharacterStateChanged(CharacterStateType state)
     {
-        foreach (var chara in CharacterInfos)
-        { 
-            chara.Value.state.ChangeCharacterState(state);
+        foreach (var character in Characters.Values)
+        {
+            character.StateMachine.ChangeCharacterState(state);
         }
     }
 
@@ -695,11 +688,10 @@ public class TurnManager : MonoBehaviour
     /// <param name="state">変更したいステート</param>
     private void PlayerCharacterStateChanged(CharacterStateType state)
     {
-        foreach (var info in CharacterInfos)
+        foreach (var character in Characters.Values)
         {
-            if(info.Value.characterName == "Enemy") continue;
-            
-            info.Value.state.ChangeCharacterState(state);
+            if(!character.IsPlayer) continue;
+            character.StateMachine.ChangeCharacterState(state);
         }
     }
     
@@ -727,8 +719,8 @@ public class TurnManager : MonoBehaviour
     /// <param name="state">入力されたコマンド</param>
     public void CharacterCommandStateChanged(CommandState state)
     {
-        if(CharacterInfos[CurrentTurnCharacter].characterName != "Player") return;
-        CharacterInfos[CurrentTurnCharacter].command.SetCommand(state);
+        if(!Characters[CurrentTurnCharacter].IsPlayer) return;
+        Characters[CurrentTurnCharacter].CommandsSystem.ChangeCommandState(state);
     }
 
     /// <summary>
@@ -748,43 +740,4 @@ public class TurnManager : MonoBehaviour
             }
         }
     }
-}
-
-/// <summary>
-/// キャラクターの情報
-/// </summary>
-public class CharacterInfo
-{
-    /// <summary>
-    /// キャラクターのステート
-    /// </summary>
-    public CharacterState state;
-    /// <summary>
-    /// ステータスの取得
-    /// </summary>
-    public Status status;
-    /// <summary>
-    /// Player：操作キャラ
-    /// Enemy：操作キャラじゃない
-    /// </summary>
-    public string characterName;
-    /// <summary>
-    /// プレイヤーのコマンド
-    /// Playerのみ
-    /// </summary>
-    public ICommand command;
-    /// <summary>
-    /// Enemyの情報
-    /// Enemyのみ
-    /// </summary>
-    public EnemyBase enemyBase;
-    /// <summary>
-    /// キャラクターをアニメーション管理
-    /// </summary>
-    public IAnimationCharacter animationCharacter;
-    /// <summary>
-    /// カメラアングル設定
-    /// プレイヤーキャラクターのみ
-    /// </summary>
-    public CharacterCameraSettings cameraSettings;
 }

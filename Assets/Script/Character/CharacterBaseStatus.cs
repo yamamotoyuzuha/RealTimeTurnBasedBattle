@@ -14,82 +14,8 @@ public class CharacterBaseStatus
     public float Defense { get; private set; }
     public int Speed { get; private set; }
     public int SpecialMove { get; private set; }
-  
-    //TODO：これ引数にCharacterBaseStatusを置いてるけど、要らない気がする
-    /// <summary>
-    /// HPが変動した時に呼ぶAction
-    /// （HPが変動したキャラ、現在のHP、最大HP）
-    /// </summary>
-    public Action<CharacterBaseStatus, float, float> onHpChanged;
-    /// <summary>
-    /// MPが増えた時に呼ぶAction
-    /// （MPが増えたキャラ、増加後のMP、増減後のMP）
-    /// </summary>
-    public Action<CharacterBaseStatus, int, int> onMpAdd;
-    /// <summary>
-    /// MPが減った時に呼ぶAction
-    /// （MPが減ったキャラ、増減後のMP、増減前の）
-    /// </summary>
-    public Action<CharacterBaseStatus, int, int> onMpReduce;
-    /// <summary>
-    /// 体幹ゲージの変動
-    /// （現在の体幹ゲージ量、最大体幹ゲージ量）
-    /// </summary>
-    public Action<float, float> onCoreGaugeChanged;
-    /// <summary>
-    /// 必殺技ゲージ量の変動
-    /// （現在の必殺技ゲージ量、最大必殺技ゲージ量）
-    /// </summary>
-    public Action<int, int> onSpecialMoveChanged;
-    /// <summary>
-    /// 死亡
-    /// </summary>
-    public Action<GameObject> onDeath;
-    /// <summary>
-    /// パリィが成功した時に呼ぶAction
-    /// （増えるMP量）
-    /// </summary>
-    public Action<int> onParrySuccess;
-    public Action onJustGuardSuccess;
-    /// <summary>
-    /// プレイヤー操作キャラクターのみ
-    /// ステータスUIの表示、非表示を行う
-    /// </summary>
-    public Action<CharacterBaseStatus, bool> onStatusDisplay;
-    /// <summary>
-    /// 攻撃を受けた時の演出
-    /// </summary>
-    public Action onHitEffect;
-    /// <summary>
-    /// 死亡した時の演出
-    /// </summary>
-    public Action onDeathEffect;
-
-    #region 状態異常関連のAction
-    /// <summary>
-    /// 状態異常が発生
-    /// </summary>
-    public Action<StatusAbnormalityInfo, CharacterBaseStatus> onStatusAbnormalityOccurrence;
-    /// <summary>
-    /// 状態異常が経過
-    /// </summary>
-    public Action<CharacterBaseStatus, StatusAbnormalityType> onStatusAbnormalityProgress;
-    /// <summary>
-    /// 状態異常が終了
-    /// </summary>
-    public Action<CharacterBaseStatus, StatusAbnormalityType> onStatusAbnormalityEnd;
-    #endregion
-
-    /// <summary>
-    /// 被ダメージの倍率計算
-    /// </summary>
-    public DamageTakenCalculation DamageTakenCalculation { get; } = new DamageTakenCalculation();
-    /// <summary>
-    /// 現在の状態異常
-    /// </summary>
-    private List<StatusAilment> statusAilments = new List<StatusAilment>();
         
-    //バフ、デバフ前のステータスを保持しておく
+    // バフ、デバフ前のステータスを保持しておく
     private float originalHp;
     private int originalMp;
     private float originalAttack;
@@ -98,57 +24,21 @@ public class CharacterBaseStatus
     
     //キャラクター
     private GameObject charaObject;
+    public GameObject CharaObject => charaObject;
 
     #region Enemyのみが使用するもの
+    
+
     /// <summary>
-    /// Enemyの行動データを設定する
+    /// 最大の体幹ゲージ量
     /// </summary>
-    /// <param name="data">行動するデータ</param>
-    public void SetActionData(CharacterCommandActionData data)
-    {
-        CharacterCommandActionData = data;
-    }
-    /// <summary>
-    /// Enemyの行動データ
-    /// </summary>
-    public CharacterCommandActionData CharacterCommandActionData {get; private set;}
-    /// <summary>
-    /// Enemyが受けた防御アクション
-    /// </summary>
-    public DefenseActionType ResultDefenseActionType {get; private set;}
-    /// <summary>
-    /// Enemyが受けた防御アクションの設定
-    /// </summary>
-    /// <param name="defenseActionType">防御アクションの種類</param>
-    public void SetResultDefenseActionType(DefenseActionType defenseActionType)
-    {
-        ResultDefenseActionType = defenseActionType;
-    }
-    /// <summary>
-    /// 受けた防御アクションのリセット
-    /// </summary>
-    public void ResetResultDefenseActionType()
-    {
-        ResultDefenseActionType = DefenseActionType.None;
-    }
+    private float _maxCoreGauge;
     /// <summary>
     /// 現在の体幹ゲージ量
     /// </summary>
-    private float currentCoreGauge;
+    private float _currentCoreGauge;
     #endregion
-
-    #region 防御アクション関連
-    public bool IsParry { get; private set; }
-    public bool IsJustGuard { get; private set; }
-    public bool IsJump { get; private set; }
-    public bool IsEvasion { get; private set; }
-    //各防御アクションのタイマー
-    private float parryTimer;
-    private float justGuardTimer;
-    private float jumpTimer;
-    private float evasionTimer;
-    #endregion
-
+    
     /// <summary>
     /// 初期ステータスを設定する
     /// </summary>
@@ -170,7 +60,8 @@ public class CharacterBaseStatus
         Defense = defense;
         Speed = speed;
         charaObject = obj;
-        currentCoreGauge = core;
+        _maxCoreGauge = core;
+        _currentCoreGauge = core;
         SpecialMove = special;
         OriginalStatusSet();
     }
@@ -195,9 +86,15 @@ public class CharacterBaseStatus
     {
         //最大HPを上回らないようにする
         Hp = Math.Min(Hp + heal, MaxHp);
-        onHpChanged?.Invoke(this, Hp, MaxHp);
+        //onHpChanged?.Invoke(this, Hp, MaxHp);
     }
 
+    public void Dama(float value)
+    {
+        Hp = Mathf.Max(Hp - value, 0);
+    }
+
+    /*
     /// <summary>
     /// キャラクターにダメージを与え、HPを減らす
     /// </summary>
@@ -246,19 +143,7 @@ public class CharacterBaseStatus
         await CharacterDamageUI.Instance.DamageUIShowDisplay(charaObject.transform, rollUpDamage, null);
         DeathDetermination();
     }
-    
-    /// <summary>
-    /// 死亡判定
-    /// </summary>
-    private void DeathDetermination()
-    {
-        if (Hp <= 0)
-        {
-            onDeathEffect?.Invoke();
-            onDeath?.Invoke(charaObject);
-            Debug.LogWarning("死亡した");
-        }
-    }
+    */
 
     /// <summary>
     /// MPを増やす
@@ -268,7 +153,7 @@ public class CharacterBaseStatus
     {
         var beforeMp = Mp;
         Mp = Math.Min(Mp + addMp, MaxMp);
-        onMpAdd?.Invoke(this, Mp, beforeMp);
+        //onMpAdd?.Invoke(this, Mp, beforeMp);
     }
 
     /// <summary>
@@ -279,7 +164,7 @@ public class CharacterBaseStatus
     {
         var beforeMp = Mp;
         Mp = Math.Max(Mp - reduceMp, 0);
-        onMpReduce?.Invoke(this, Mp, beforeMp);
+        //onMpReduce?.Invoke(this, Mp, beforeMp);
     }
 
     /// <summary>
@@ -336,290 +221,14 @@ public class CharacterBaseStatus
         Attack = originalAttack;
     }
 
-    #region 魔法の効果による状態異常の管理
+    #region 必殺技
 
     /// <summary>
-    /// 状態異常中かの判定
+    /// 必殺技の発動
     /// </summary>
-    /// <returns>true：状態異常中　false：状態異常ではない</returns>
-    public bool IsUnderAbnormalStatus()
+    public void SpecialMoveActivated()
     {
-        if (statusAilments.Count > 0) return true;
-        return false;
-    }
-    
-    /// <summary>
-    /// 状態異常開始
-    /// 魔法の効果時に呼ぶ
-    /// </summary>
-    /// <param name="status">魔法の効果</param>>
-    /// <param name="type">状態異常の種類</param>>
-    /// <param name="icon">状態異常のアイコン</param>>
-    /// <param name="duration">状態異常の継続ターン</param>>
-    public void StatusEffectInfliction(StatusAilment status, StatusAbnormalityType type, Sprite icon, int duration)
-    {
-        //状態異常が被っていない場合、状態異常を開始する
-        if (!statusAilments.Any(sa  => sa.StatusAbnormalityType == type))
-        {
-            //状態異常を開始し、このキャラクターの状態異常を追加
-            status.EffectGrant(this);
-            statusAilments.Add(status);
-        }
-
-        //TODO：これifの中に入れていいような気がするんだ
-        var info = new StatusAbnormalityInfo(this, type, icon, duration);
-        onStatusAbnormalityOccurrence?.Invoke(info, this);
-    }
-
-    /// <summary>
-    /// 状態異常中の効果を与える
-    /// ターン開始時に呼ぶ
-    /// </summary>
-    public void StatusEffectStart()
-    {
-        //状態異常がある場合、効果を受ける
-        for (int i = statusAilments.Count - 1; i >= 0; i--)
-        {
-            Debug.Log(statusAilments.Count + "状態異常効果を呼ぶ前");
-            statusAilments[i].EffectActivation(this);
-            Debug.Log(statusAilments.Count + "状態異常効果を呼んだ後");
-            if(statusAilments.Count <= 0) return;
-            onStatusAbnormalityProgress?.Invoke(this, statusAilments[i].StatusAbnormalityType);
-            if (statusAilments[i].IsEnd)
-            {
-                statusAilments[i].EffectEnd(this);
-                onStatusAbnormalityEnd?.Invoke(this, statusAilments[i].StatusAbnormalityType);
-                statusAilments.RemoveAt(i);
-            }
-        }
-    }
-
-    /// <summary>
-    /// 痺れ状態かを判定
-    /// </summary>
-    /// <returns>true：痺れ状態　false：痺れ状態じゃない</returns>
-    public bool IsParalysisStatus()
-    {
-        return statusAilments.Any(sa => sa.StatusAbnormalityType == StatusAbnormalityType.Electrification);
-    }
-    /// <summary>
-    /// 吸水状態かを判定
-    /// ・吸水状態だった場合、ダメージを与えてきたキャラクターのHPを回復
-    /// </summary>
-    /// <param name="damage">ダメージ</param>>
-    /// <param name="status">ダメージを与えてきたキャラクター</param>>
-    public void IsWaterAbsorption(float damage, CharacterBaseStatus status)
-    {
-        //水魔法の状態異常がある場合、HPを回復させる
-        var water = statusAilments.FirstOrDefault(sa =>
-            sa.StatusAbnormalityType == StatusAbnormalityType.Wet);
-        if (water != null)
-        {
-            var heal = damage * water.WaterAbsorption;
-            status.Heal(heal);
-            Debug.Log("回復");
-        }
-        else
-        {
-            Debug.Log("水魔法の状態異常はない");
-        }
-    }
-    
-    /// <summary>
-    /// 状態異常のリストをクリアする
-    /// </summary>
-    public void StatusAilmentsClear()
-    {
-        statusAilments.Clear();
-    }
-    
-    #endregion
-
-    #region 魔法反応
-
-    /// <summary>
-    /// 魔法反応が起きるか判定を行う
-    /// </summary>
-    /// <param name="mData">魔法の情報</param>>
-    public void IsMagicReactionCheck(MagicBaseData mData)
-    {
-        //魔法反応が起きる状態異常かを判定する
-        var msaType = mData.MagicReactionInfo.SaType;
-        if (statusAilments.Any(sa => sa.StatusAbnormalityType == msaType))
-        {
-            var type = mData.MagicReactionInfo.MrType;
-            MagicReactionClassification(type, mData);
-        }
-    }
-
-    /// <summary>
-    /// 魔法反応の種類別で処理
-    /// </summary>
-    /// <param name="type">魔法反応</param>
-    /// <param name="mData">魔法の情報</param>
-    private void MagicReactionClassification(MagicReactionType type, MagicBaseData mData)
-    {
-        switch (type)
-        {
-            case MagicReactionType.Evaporation:
-                var evaporation = new Evaporation(mData.MagicReactionInfo.Damage, mData.StatusEffect);
-                evaporation.MagicReactionAction(this);
-                break;
-            case MagicReactionType.Dissolution:
-                break;
-        }
-    }
-
-    #endregion
-
-    #region パリィなどの防御アクション関連
-    //防御アクションの成否フラグ
-    public bool ParrySuccess { get;private set; }
-    public bool JustGuardSuccess { get; private set; }
-    public bool JumpSuccess { get; private set; }
-    public bool EvasionSuccess { get; private set; }
-    
-    /// <summary>
-    /// パリィの入力を検知する
-    /// </summary>
-    /// <param name="inputPeriod">入力を受け付ける時間</param>>
-    public void ParryInput(float inputPeriod)
-    {
-        IsParry = true;
-        parryTimer = inputPeriod;
-    }
-    /// <summary>
-    /// ジャストガードの入力を検知する
-    /// </summary>
-    /// <param name="inputPeriod">入力を受け付ける時間</param>>
-    public void JustGuardInput(float inputPeriod)
-    {
-        IsJustGuard = true;
-        justGuardTimer = inputPeriod;
-    }
-    /// <summary>
-    /// ジャンプの入力を検知する
-    /// </summary>
-    /// <param name="inputPeriod">入力を受け付ける時間</param>
-    public void JumpInput(float inputPeriod)
-    {
-        IsJump = true;
-        jumpTimer = inputPeriod;
-    }
-    /// <summary>
-    /// 回避の入力を検知する
-    /// </summary>
-    /// <param name="inputPeriod">入力を受け付ける時間</param>
-    public void EvasionInput(float inputPeriod)
-    {
-        IsEvasion = true;
-        evasionTimer = inputPeriod;
-    }
-
-    /// <summary>
-    /// 各防御アクションのタイマーを減らす
-    /// </summary>
-    /// <param name="deltaTime">Time.deltaTimeを渡す</param>>
-    public void UpdateDefenseActionTimer(float deltaTime)
-    {
-        if (IsParry)
-        {
-            parryTimer -= deltaTime;
-            if(parryTimer <= 0) IsParry = false;
-        }
-
-        if (IsJustGuard)
-        {
-            justGuardTimer -= deltaTime;
-            if(justGuardTimer <= 0) IsJustGuard = false;
-        }
-    }
-
-    /// <summary>
-    /// なんらかの防御アクションがすでに入力されているか判定を行う
-    /// </summary>
-    /// <returns>true：入力済み　false：入力未済</returns>
-    public bool IsInputDefenseAction()
-    {
-        return (IsParry || IsJustGuard || IsJump || IsEvasion);
-    }
-    
-    /// <summary>
-    /// 防御アクション入力の判定
-    /// ・Enemyが攻撃をする際に呼ぶ
-    /// </summary>
-    public DefenseActionType DefenseActionJudgment()
-    {
-        if (IsParry)
-        {
-            Debug.Log("パリィ");
-            ParrySuccess = true;
-            return DefenseActionType.Parry;
-        }
-
-        if (IsJustGuard)
-        {
-            Debug.Log("ジャストガード");
-            JustGuardSuccess = true;
-            return DefenseActionType.JustGuard;
-        }
-
-        if (IsJump)
-        {
-            Debug.Log("ジャンプ");
-            JumpSuccess = true;
-            return DefenseActionType.Jump;
-        }
-
-        if (IsEvasion)
-        {
-            Debug.Log("回避");
-            EvasionSuccess = true;
-            return DefenseActionType.Evasion;
-        }
-
-        return DefenseActionType.None;
-    }
-
-    /// <summary>
-    /// 防御アクションの成否判定をリセットする
-    /// </summary>
-    public void DefenseActionSuccessReset()
-    {
-        ParrySuccess = false;
-        JustGuardSuccess = false;
-        JumpSuccess = false;
-        EvasionSuccess = false;
-    }
-
-    /// <summary>
-    /// ジャストガードによる体幹ゲージの減少
-    /// </summary>
-    /// <param name="decrease">減少量</param>>
-    /// <param name="maxCore">最大体幹ゲージ量</param>>
-    public void CoreGaugeDecrease(float decrease, float maxCore)
-    {
-        currentCoreGauge -= decrease;
-        onCoreGaugeChanged?.Invoke(decrease, maxCore);
-    }
-    #endregion
-
-    #region 防御アクション成功処理
-    /// <summary>
-    /// パリィ成功
-    /// </summary>
-    /// <param name="mp">増加するMP量</param>>
-    public void ParrySuccessProcessing(int mp)
-    {
-        AddMp(mp);
-        onParrySuccess?.Invoke(mp);
-    }
-    /// <summary>
-    /// ジャストガード成功
-    /// </summary>
-    public void JustGuardProcessing()
-    {
-        onJustGuardSuccess?.Invoke();
+        SpecialMove = 0;
     }
 
     #endregion
