@@ -1990,8 +1990,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _battleCameraAngleManager: {fileID: 173428753}
   _fieldSettings: {fileID: 55248733}
-  iconParent: {fileID: 1345418947}
-  characterIconObj: {fileID: 2943085724761245974, guid: 77099c44142e40f43bc3e17d2447d479,
+  _iconParent: {fileID: 1345418947}
+  _characterIconObj: {fileID: 2943085724761245974, guid: 77099c44142e40f43bc3e17d2447d479,
     type: 3}
 --- !u!4 &727016209
 Transform:

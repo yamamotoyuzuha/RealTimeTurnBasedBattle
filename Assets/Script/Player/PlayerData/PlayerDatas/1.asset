@@ -34,8 +34,9 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 47f7be5f6f90e224e992d87b65241981, type: 2}
   - {fileID: 11400000, guid: d9e79491b1420d14c8a1719341f72890, type: 2}
   _attributesType: 0
+  _ultimateBaseData: {fileID: 11400000, guid: bce5a9fe9369a604c99985cc2ee0e556, type: 2}
   _ultimate: 100
-  _ultimateCharge: 15
+  _ultimateCharge: 100
   moveSpeed: 3
   jumpAbility: 5
   rayDistance: 0.5
