@@ -38,6 +38,11 @@ public class TurnManager : MonoBehaviour
     /// </summary>
     private bool _isInterruptionsEtc;
     /// <summary>
+    /// 割り込んだタイミング
+    /// true：ターン中　ターン開始前
+    /// </summary>
+    private bool _isTimingCalledInterruptions;
+    /// <summary>
     /// 割り込みなどを行ったキャラクター
     /// </summary>
     private GameObject _interruptionsEtcChara;
@@ -45,12 +50,10 @@ public class TurnManager : MonoBehaviour
     /// 割り込みなどが行われる前に現在のターンだったキャラクター
     /// </summary>
     private GameObject _beforeInterruptionChara;
-
-    // TODO：これをターン開始時に使用する
-    // TODO：これがfasleの場合は、必殺技を即発動
+    
     /// <summary>
-    /// ターン開始
-    /// true：開始中　false：開始してない
+    /// 割り込みの判定
+    /// true：開始中　false：終了
     /// </summary>
     public bool IsTurnStarting {get; private set;}
     
@@ -95,7 +98,7 @@ public class TurnManager : MonoBehaviour
             if (_isInterruptionsEtc)
             {
                 RemoveSpecifiedCharacterIcon(_interruptionsEtcChara);
-                RestoreBeforeInterruptSet();
+                await RestoreBeforeInterruptSet();
                 _isInterruptionsEtc = false;
             }
             else
@@ -262,6 +265,24 @@ public class TurnManager : MonoBehaviour
             _characterIcons[character].Add(icon);
         }
     }
+
+    /// <summary>
+    /// ターン開始フラグを設定
+    /// </summary>
+    /// <param name="flag">true：開始　false：終了</param>
+    public void SetTurnStartingFlag(bool flag)
+    {
+        IsTurnStarting = flag;
+    }
+
+    /// <summary>
+    /// 割り込みがどのタイミングで呼ばれたか設定する
+    /// </summary>
+    /// <param name="flag">true：ターン中　false：ターン開始前</param>
+    public void SetTimingCalled(bool flag)
+    {
+        _isTimingCalledInterruptions = flag;
+    }
     
     /// <summary>
     /// ターンが終了したキャラクターアイコンを消す
@@ -422,8 +443,10 @@ public class TurnManager : MonoBehaviour
     /// <summary>
     /// 割り込みが行われる前のターン状態に戻す
     /// </summary>
-    private void RestoreBeforeInterruptSet()
+    private async UniTask RestoreBeforeInterruptSet()
     {
+        await InterruptCharacterUltAction();
+        
         AllCharacterStateChanged(CharacterStateType.Idle);
         CtCharaNumbness();
         
@@ -549,7 +572,7 @@ public class TurnManager : MonoBehaviour
             BattleOperatingInstructionsUI.Instance.DefenseActionUI(true);
             onEnemyTurnStart?.Invoke();
         }
-        else
+        else // プレイヤーキャラクター
         {
             _battleCameraAngleManager.BattleCameraAngleChange(BattleCameraActiveType.DefaultPlayer,
                 cameraSet.DefaultCamPosF, cameraSet.DefaultCamPosL);
@@ -570,18 +593,49 @@ public class TurnManager : MonoBehaviour
                 if (!flag) //割り込み前のキャラクターの判定を行う
                 {
                     flag = true;
-                    //割り込み前のキャラが麻痺状態でない場合、そのまま割り込み前のキャラが現在ターンキャラになる
+
+                    // 割り込み前のキャラクターを取得
                     var character = _beforeInterruptionChara;
                     var status = Characters[character].StatusEffectSystem;
-                    if (!status.IsParalysisStatus())
+                    // 必殺技が発動されるのは割り込み前のキャラクターがターン終了時のため、割り込み前のキャラクターをずらす
+                    if (_isTimingCalledInterruptions)
                     {
-                        CurrentTurnCharacter = character;
-                        break;
+                        // 割り込み前のキャラクターを取得
+                        var charaIndex = _fieldCharacter.IndexOf(_beforeInterruptionChara);
+                        if (charaIndex == -1)
+                        {
+                            Debug.LogError("キャラが見つからない");
+                            return;
+                        }
+
+                        // 割り込み前のキャラクターの次のキャラクターを取得
+                        var nextIndex = (charaIndex + 1) % _fieldCharacter.Count;
+                        var nextCharacter = _fieldCharacter[nextIndex];
+                        // 次のキャラクターが麻痺の可能性もあるため、character等の更新を行う
+                        character = nextCharacter;
+                        status = Characters[nextCharacter].StatusEffectSystem;
+                        if (!status.IsParalysisStatus())
+                        {
+                            CurrentTurnCharacter = nextCharacter;
+                            Debug.LogWarning(CurrentTurnCharacter + "麻痺判定の処理");
+                            break;
+                        }
+                    }
+                    else // 必殺技の発動がターン開始前の場合
+                    {
+                        // 割り込み前のキャラが麻痺状態でない場合、そのまま割り込み前のキャラが現在ターンキャラになる
+                        if (!status.IsParalysisStatus())
+                        {
+                            CurrentTurnCharacter = character;
+                            Debug.LogWarning(CurrentTurnCharacter + "麻痺判定の処理");
+                            break;
+                        }
                     }
                     
                     //ターンアイコンもターンスキップに連動させる
                     CharacterIconDestroy(character);
                     CharacterIconSetUp();
+                    
                     //麻痺でターンがスキップされても状態異常があれば処理を行う
                     if (status.IsUnderAbnormalStatus())
                     {

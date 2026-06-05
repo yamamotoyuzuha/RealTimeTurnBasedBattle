@@ -154,6 +154,7 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     private async void CharacterStartAction()
     {
+        turnManager.SetTurnStartingFlag(true);
         commandInputManager.SetCommandSelected(false);
         Debug.Log("行動開始");
         
@@ -230,6 +231,7 @@ public class BattleManager : MonoBehaviour
             return;
         }
         
+        turnManager.SetTurnStartingFlag(false);
         commandInputManager.SetCommandSelected(true);
         Debug.Log("行動終了");
         
@@ -600,13 +602,27 @@ public class BattleManager : MonoBehaviour
     /// <param name="baseStatus">必殺技を実行するキャラクターの<c>CharacterBaseStatus</c>></param>
     private async UniTask ExecuteUltimate(UltimateBaseData ult, CharacterBaseStatus baseStatus)
     {
-        //TODO：ここの処理を変更する必要がある
-        //TODO：onChangeTurnCharacter?で割込みを発生させているが、すでに現在のターンキャラクターが
-        //　　  ターンを開始している場合、TurnManagerに必殺技を追加しておくメソッドを呼び出す方法にしないとだめかもしれない
-        //TODO：そして、現在のターンキャラクターが終了したらNextTurnSetUp?で追加した必殺技を順番に発動させていく方針に変更する
-        
-        turnManager.SetInterruptCharacterUlt(async () =>
+        // 現在のターンキャラクターが行動を開始している場合は、必殺技を発動せず終了後に発動
+        if (turnManager.IsTurnStarting)
         {
+            turnManager.SetInterruptCharacterUlt(async () =>
+            {
+                turnManager.SetTimingCalled(true);
+                turnManager.TurnCharacterCommandUI(baseStatus.CharaObject, false);
+                turnManager.onChangeTurnCharacter?.Invoke(baseStatus.CharaObject);
+                await UniTask.Delay(TimeSpan.FromSeconds(2)); // TODO：仮演出であり、2秒待つ
+                await ult.Execute(GetEnemyCharacter().CombatSystem, baseStatus);
+                if (turnManager.onNextTurnSetUp != null)
+                {
+                    await turnManager.onNextTurnSetUp.Invoke();
+                }
+                turnManager.SetTimingCalled(false);
+            });
+        }
+        else // 即発動
+        {
+            turnManager.SetTimingCalled(false);
+            turnManager.TurnCharacterCommandUI(baseStatus.CharaObject, false);
             turnManager.onChangeTurnCharacter?.Invoke(baseStatus.CharaObject);
             await UniTask.Delay(TimeSpan.FromSeconds(2)); // TODO：仮演出であり、2秒待つ
             await ult.Execute(GetEnemyCharacter().CombatSystem, baseStatus);
@@ -614,6 +630,6 @@ public class BattleManager : MonoBehaviour
             {
                 await turnManager.onNextTurnSetUp.Invoke();
             }
-        });
+        }
     }
 }
