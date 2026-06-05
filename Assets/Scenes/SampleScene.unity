@@ -2352,11 +2352,11 @@ RectTransform:
   - {fileID: 1345418947}
   - {fileID: 1064866431}
   - {fileID: 2077230022}
-  - {fileID: 1909526614}
   - {fileID: 1246389120}
   - {fileID: 1710778306}
   - {fileID: 1010716966}
   - {fileID: 2054752676}
+  - {fileID: 1909526614}
   m_Father: {fileID: 0}
   m_RootOrder: 13
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -2591,7 +2591,7 @@ RectTransform:
   - {fileID: 402162540}
   - {fileID: 1633221986}
   m_Father: {fileID: 908746845}
-  m_RootOrder: 6
+  m_RootOrder: 5
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -3431,7 +3431,7 @@ RectTransform:
   m_Children:
   - {fileID: 350088041}
   m_Father: {fileID: 908746845}
-  m_RootOrder: 4
+  m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -3455,6 +3455,7 @@ MonoBehaviour:
   _damageUIParent: {fileID: 350088041}
   _damageUIPrefab: {fileID: 4145476604826767192, guid: 1c8ca28b3bc944f4e8b0f7c2542c050d,
     type: 3}
+  _damageUITargetOffset: {x: 0, y: 1.5}
 --- !u!1 &1297995516
 GameObject:
   m_ObjectHideFlags: 0
@@ -4210,7 +4211,7 @@ RectTransform:
   m_Children:
   - {fileID: 5097444619736068782}
   m_Father: {fileID: 908746845}
-  m_RootOrder: 5
+  m_RootOrder: 4
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -4628,7 +4629,7 @@ RectTransform:
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 908746845}
-  m_RootOrder: 3
+  m_RootOrder: 7
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 1, y: 0}
   m_AnchorMax: {x: 1, y: 0}
@@ -5142,7 +5143,7 @@ RectTransform:
   - {fileID: 1174412827}
   - {fileID: 1038640014}
   m_Father: {fileID: 908746845}
-  m_RootOrder: 7
+  m_RootOrder: 6
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}

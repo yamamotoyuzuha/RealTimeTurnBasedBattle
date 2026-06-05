@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class CharacterBaseData : ScriptableObject
 {
@@ -37,13 +38,13 @@ public class CharacterBaseData : ScriptableObject
     [Header("属性")]
     [SerializeField] private CharacterAttributesType _attributesType;
     public CharacterAttributesType AttributesType => _attributesType;
-
+    
+    [Header("必殺技データ")]
+    [SerializeField] private UltimateBaseData _ultimateBaseData;
     [Header("必殺技（ゲージ量）")]
-    [SerializeField] private int _specialMove;
-    /// <summary>
-    /// 必殺技ゲージ量
-    /// </summary>
-    public int SpecialMove => _specialMove;
+    [SerializeField] private int _ultimate;
+    [Header("必殺技ゲージのチャージ量")]
+    [SerializeField] private int _ultimateCharge;
     
     public float Hp => hp;
     public int Mp => mp;
@@ -51,4 +52,17 @@ public class CharacterBaseData : ScriptableObject
     public float Defense => defense;
     public int Speed => speed;
     
+    /// <summary>
+    /// 必殺技データ
+    /// </summary>
+    public UltimateBaseData UltimateBaseData => _ultimateBaseData;
+    /// <summary>
+    /// 必殺技ゲージ量
+    /// </summary>
+    public int UltimateMaxGauge => _ultimate;
+
+    /// <summary>
+    /// 必殺技ゲージのチャージ量
+    /// </summary>
+    public int UltimateCharge => _ultimateCharge;
 }

@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 
 [CreateAssetMenu(fileName = "Enemy", menuName = "ScriptableObject/EnemyData")]
 public class EnemyData : CharacterBaseData
@@ -21,12 +22,13 @@ public class EnemyData : CharacterBaseData
     [SerializeField] private CharacterAttributesType[] _weaknessType;
     public CharacterAttributesType[] WeaknessTypes => _weaknessType;
 
+    [FormerlySerializedAs("_trunk")]
     [Header("体幹（ゲージの量）")]
-    [SerializeField] private float _trunk;
+    [SerializeField] private float _core;
     /// <summary>
     /// 体幹
     /// </summary>
-    public float Trunk => _trunk;
+    public float Core => _core;
 }
 
 /// <summary>

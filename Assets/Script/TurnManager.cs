@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 public class TurnManager : MonoBehaviour
@@ -28,6 +29,10 @@ public class TurnManager : MonoBehaviour
     private List<GameObject> oldFieldCharacter = new List<GameObject>(); //古いターン順
     private Queue<GameObject> speedCharacterTurnQueue = new Queue<GameObject>();
     /// <summary>
+    /// 割り込みがあったキャラクターの必殺技を保持
+    /// </summary>
+    private Queue<Func<UniTask>> _interruptUltQueue = new Queue<Func<UniTask>>();
+    /// <summary>
     /// 割り込みなどあったか
     /// true：あった　false：なかった
     /// </summary>
@@ -40,6 +45,12 @@ public class TurnManager : MonoBehaviour
     /// 割り込みなどが行われる前に現在のターンだったキャラクター
     /// </summary>
     private GameObject beforeInterruptionChara;
+
+    /// <summary>
+    /// ターン開始
+    /// true：開始中　false：開始してない
+    /// </summary>
+    public bool IsTurnStarting {get; private set;}
     
     /// <summary>
     /// キャラクターの情報を保持
@@ -54,7 +65,7 @@ public class TurnManager : MonoBehaviour
     /// <summary>
     /// 次のターンを設定するイベント
     /// </summary>
-    public Action onNextTurnSetUp;
+    public Func<UniTask> onNextTurnSetUp;
     /// <summary>
     /// Enemyのターンになった時に呼ぶ
     /// </summary>
@@ -77,7 +88,7 @@ public class TurnManager : MonoBehaviour
     private void Start()
     {
         //イベントの登録
-        onNextTurnSetUp = () =>
+        onNextTurnSetUp = async () =>
         {
             if (isInterruptionsEtc)
             {
@@ -89,7 +100,7 @@ public class TurnManager : MonoBehaviour
             {
                 CharacterIconDestroy(CurrentTurnCharacter);
                 CharacterIconSetUp();
-                NextTurnCharacterSet();
+                await NextTurnCharacterSet();
             }
         };
         onTurnIconDisplay += TurnIconDisplay;
@@ -150,18 +161,20 @@ public class TurnManager : MonoBehaviour
             var chara = character.GetComponent<Status>().GetCharacter();
             Characters.Add(character, chara);
             Characters[character].EventsSystem.onDeath += DeceasedCharacterSetUp;
-            if (!Characters[character].IsPlayer)
+            if (!Characters[character].IsPlayer) // Enemyの場合
             {
                 character.transform.position = _fieldSettings.EnemyCharaPos.position;
                 character.transform.rotation = Quaternion.Euler(0, 180, 0);
             }
-            else
+            else // Playerの場合、必殺技ゲージのチャージとキャラの立ち位置を設定する
             {
                 character.transform.position = _fieldSettings.PlayerCharaPos[index].position;
                 index++;
             }
 
-            /*
+            // TODO：ここの下らへん上手くCharacterから参照出来ているかわからない
+            // TODO：多分、StateとCharacterCameraSettings、ICommandあたりは取得できているはず
+            /* 
             //各キャラクターの情報を取得し、まとめる
             var state = character.GetComponent<CharacterState>();
             state.ChangeCharacterState(CharacterStateType.Idle);
@@ -197,9 +210,10 @@ public class TurnManager : MonoBehaviour
             info.status.GetCharacterStatus().onDeath += DeceasedCharacterSetUp;
             */
         }
+        
         // 現在のターンのキャラのステートを選択中にしておく
-        var currentChara = Characters[CurrentTurnCharacter].StateMachine;
-        currentChara.ChangeCharacterState(CharacterStateType.InAction);
+        var currentCharaState = Characters[CurrentTurnCharacter].StateMachine;
+        currentCharaState.ChangeCharacterState(CharacterStateType.InAction);
         var battle = _battleCameraAngleManager;
         // 現在のターンがEnemyか判定を行う
         if (!PlayableCharacterJudgment(CurrentTurnCharacter))
@@ -336,12 +350,38 @@ public class TurnManager : MonoBehaviour
         icons.RemoveAt(index);
         Destroy(icon);
     }
+    
+    /// <summary>
+    /// 割り込みがあったキャラクターの必殺技を追加
+    /// </summary>
+    /// <param name="action"></param>
+    public void SetInterruptCharacterUlt(Func<UniTask> action)
+    {
+        // 必殺技を追加する
+        _interruptUltQueue.Enqueue(action);
+    }
+
+    /// <summary>
+    /// 割り込みがあったキャラクターの必殺技を発動
+    /// </summary>
+    private async UniTask InterruptCharacterUltAction()
+    {
+        // 割り込みしたキャラクターの必殺技を発動
+        while (_interruptUltQueue.Count > 0)
+        {
+            // 必殺技を取得し、発動
+            var interruptUlt =  _interruptUltQueue.Dequeue();
+            await interruptUlt.Invoke();
+        }
+    }
 
     /// <summary>
     /// 次のターンのキャラクターを設定する
     /// </summary>
-    private void NextTurnCharacterSet()
+    private async UniTask NextTurnCharacterSet()
     {
+        await InterruptCharacterUltAction();
+        
         AllCharacterStateChanged(CharacterStateType.Idle);
         CtCharaNumbness();
         
@@ -363,6 +403,7 @@ public class TurnManager : MonoBehaviour
         else
         {
             status.AddMp(1);
+            currentCharacter.UltimateSystem.UltimateCharge();
             battle.ResetCameraAngle();
             var cameraSet = Characters[CurrentTurnCharacter].CameraSettings;
             battle.BattleCameraAngleChange(BattleCameraActiveType.DefaultPlayer, 

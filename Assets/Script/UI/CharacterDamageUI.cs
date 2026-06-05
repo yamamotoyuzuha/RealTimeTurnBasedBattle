@@ -1,10 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Numerics;
 using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using DG.Tweening;
 using UnityEngine.UI;
+using Vector2 = UnityEngine.Vector2;
+using Vector3 = UnityEngine.Vector3;
 
 public class CharacterDamageUI : MonoBehaviour
 {
@@ -18,6 +21,8 @@ public class CharacterDamageUI : MonoBehaviour
     [SerializeField] private Transform _damageUIParent;
     [Header("ダメージUIのPrefab")]
     [SerializeField] private GameObject _damageUIPrefab;
+    [Header("ダメージUIを表示するターゲットの位置のOffset")]
+    [SerializeField] private Vector2 _damageUITargetOffset;
 
     /// <summary>
     /// 生成したDamageUI
@@ -32,6 +37,32 @@ public class CharacterDamageUI : MonoBehaviour
     void Start()
     {
         GenerateDamageUI(5);
+    }
+
+    private void Update()
+    {
+        DamageUIUpdate();
+    }
+
+    /// <summary>
+    /// ダメージUIを表示する位置の更新を行う
+    /// </summary>
+    private void DamageUIUpdate()
+    {
+        // ダメージUIを表示後、表示するUIがあるのであればターゲットに追従するようにする
+        foreach (var damageUI in damageUIs)
+        {
+            // ダメージが非表示、UIを表示するターゲットがいない場合は処理を飛ばす
+            if(!damageUI.DamageUIPrefabInstance.activeSelf) continue;
+            if(damageUI.UITarget == null) continue;
+            
+            Vector3 offset = new Vector3(_damageUITargetOffset.x, _damageUITargetOffset.y, 0);
+            Vector2 screenPos = damageUI.GetScreenLocalPosition(damageUI.UITarget.position + offset, _mainCamera);
+            screenPos += damageUI.UIOffset;
+            
+            Vector2 localPos = damageUI.GetCanvasLocalPosition(screenPos, _canvasTransform);
+            damageUI.DamageUIPrefabInstance.transform.localPosition = localPos;
+        }
     }
 
     /// <summary>
@@ -81,11 +112,15 @@ public class CharacterDamageUI : MonoBehaviour
         }
         else //表示を行う
         {
-            //ランダムで表示位置を決定
-            Vector2 screenPos = damageUI.GetScreenLocalPosition(target.transform.position, _mainCamera);
-            //スクリーン座標をランダムでずらす
-            screenPos.x += UnityEngine.Random.Range(-60f, 60f);
-            screenPos.y += UnityEngine.Random.Range(-60f, 60f);
+            // ランダムで表示位置を決定
+            Vector3 offset = new Vector3(_damageUITargetOffset.x, _damageUITargetOffset.y, 0);
+            Vector2 screenPos = damageUI.GetScreenLocalPosition(target.position + offset, _mainCamera);
+            // スクリーン座標が被らないようにランダムで値を作成
+            Vector2 randomOffset = new Vector2(
+                UnityEngine.Random.Range(-60f, 60f), UnityEngine.Random.Range(-60f, 60f)
+            );
+            screenPos += randomOffset;
+            damageUI.SetTarget(target, randomOffset);
             
             Vector2 localPos = damageUI.GetCanvasLocalPosition(screenPos, _canvasTransform);
             damageUI.DamageUIPrefabInstance.transform.localPosition = localPos;
@@ -98,6 +133,7 @@ public class CharacterDamageUI : MonoBehaviour
     }
 
     //TODO：この処理は後でも構わない
+    // TODO：これなにをやろうとしていたのかわからない
     /// <summary>
     /// 属性攻撃の場合
     /// ダメージUIの表示を更新する
@@ -117,7 +153,18 @@ public class CharacterDamageUI : MonoBehaviour
 /// </summary>
 public class DamageUI
 {
+    /// <summary>
+    /// ダメージUI
+    /// </summary>
     public GameObject DamageUIPrefabInstance{get; private set;}
+    /// <summary>
+    /// ダメージUIを表示するターゲット
+    /// </summary>
+    public Transform UITarget {get; private set;}
+    /// <summary>
+    /// ダメージUIのオフセット
+    /// </summary>
+    public Vector2 UIOffset {get; private set;}
     private TextMeshProUGUI damageUIText;
     private Image imageIcon;
 
@@ -171,6 +218,17 @@ public class DamageUI
     }
 
     /// <summary>
+    /// ダメージUIを表示するターゲットの設定を行う
+    /// </summary>
+    /// <param name="target">ダメージUIを表示するターゲットの<c>Transform</c></param>
+    /// <param name="offset">ダメージUIを表示する位置の<c>Vector2</c></param>
+    public void SetTarget(Transform target, Vector2 offset)
+    {
+        UITarget = target;
+        UIOffset = offset;
+    }
+
+    /// <summary>
     /// ダメージを表示したあと、指定時間後に非表示にする
     /// </summary>
     /// <param name="time">待機時間</param>>
@@ -193,6 +251,10 @@ public class DamageUI
             if (DamageUIPrefabInstance != null) DamageUIPrefabInstance.transform.DOKill();
         });
         await reductionT.AsyncWaitForCompletion();
-        if(DamageUIPrefabInstance != null) DamageUIPrefabInstance.SetActive(false);
+        if (DamageUIPrefabInstance != null)
+        {
+            DamageUIPrefabInstance.SetActive(false);
+            UITarget = null;
+        }
     }
 }

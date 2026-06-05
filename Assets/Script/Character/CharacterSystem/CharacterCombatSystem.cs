@@ -40,7 +40,7 @@ public class CharacterCombatSystem
     {
         var finalDamage = damage * DamageTakenCalculation.DamageRate;
         var rollUpDamage = Mathf.Round(finalDamage);
-        _baseStatus.Dama(rollUpDamage);
+        _baseStatus.Damage(rollUpDamage);
         _eventsSystem.onHpChanged?.Invoke(_baseStatus, _baseStatus.Hp, _baseStatus.MaxHp);
         _eventsSystem.onHitEffect?.Invoke();
         // ダメージUIを表示
@@ -68,11 +68,11 @@ public class CharacterCombatSystem
     /// キャラクターにダメージを与え、HPを減らす
     /// </summary>
     /// <param name="damage">ダメージ</param>
-    private async UniTask TakeDamageAsync(float damage)
+    public async UniTask TakeDamageAsync(float damage)
     {
         var finalDamage = damage * DamageTakenCalculation.DamageRate;
         var rollUpDamage = Mathf.Round(finalDamage);
-        _baseStatus.Dama(rollUpDamage);
+        _baseStatus.Damage(rollUpDamage);
         _eventsSystem.onHpChanged?.Invoke(_baseStatus, _baseStatus.Hp, _baseStatus.MaxHp);
         _eventsSystem.onHitEffect?.Invoke();
         // ダメージUIを表示

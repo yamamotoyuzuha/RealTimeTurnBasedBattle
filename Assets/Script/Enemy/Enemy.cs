@@ -59,7 +59,7 @@ public class Enemy : MonoBehaviour, Status, EnemyBase, IAnimationCharacter
         characterState = GetComponent<CharacterState>().characterState;
         
         // キャラクターの情報を取得
-        _character = new Character(enemyData, this.gameObject, false);
+        _character = new Character(enemyData, this.gameObject, false, null, null, enemyData.Core);
         _character.EventsSystem.onHitEffect += Hit;
         _character.EventsSystem.onDeathEffect += Death;
         

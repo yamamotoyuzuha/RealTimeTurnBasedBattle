@@ -20,14 +20,16 @@ MonoBehaviour:
     type: 3}
   characterPrefab: {fileID: 1881473636205939383, guid: 666989ebfc7673944bea9d2b9a788e5a,
     type: 3}
-  hp: 100
+  hp: 10000
   mp: 0
-  attack: 200
+  attack: 50
   defense: 0
   speed: 20
   magicBaseData: []
   _attributesType: 0
-  _specialMove: 0
+  _ultimateBaseData: {fileID: 0}
+  _ultimate: 0
+  _ultimateCharge: 0
   _enemyType: 0
   _enemyAttackBaseDataN:
   - {fileID: 11400000, guid: f44e4c97014bbd54baa3c1dae82982aa, type: 2}
@@ -36,4 +38,4 @@ MonoBehaviour:
   _enemyAttackBaseDataA: []
   _enemyRace: 0
   _weaknessType: 
-  _trunk: 500
+  _core: 500

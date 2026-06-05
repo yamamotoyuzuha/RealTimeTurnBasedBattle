@@ -1,3 +1,5 @@
+using UnityEngine;
+
 /// <summary>
 /// キャラクターの防御アクションによる処理を管理する
 /// 入力、行動などの処理
@@ -108,7 +110,7 @@ public class CharacterDefenseActionSystem
     /// <param name="mp">増加するMP量</param>>
     public void ParrySuccessProcessing(int mp)
     {
-        //AddMp(mp); 
+        _baseStatus.AddMp(mp); 
         _eventsSystem.onParrySuccess?.Invoke(mp);
     }
     

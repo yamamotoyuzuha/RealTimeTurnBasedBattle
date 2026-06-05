@@ -69,7 +69,7 @@ public class PartyStatusUI : MonoBehaviour
             {
                 mps[j] = Instantiate(_mpPrefab, obj.transform.GetChild(4).transform);
             }
-            
+
             //UIの情報を作成する
             var ui = new PlayerStatusUI(
                 obj,
@@ -77,34 +77,42 @@ public class PartyStatusUI : MonoBehaviour
                 obj.transform.GetChild(2).GetComponent<Image>(),
                 obj.transform.GetChild(5).GetChild(0).GetComponent<TextMeshProUGUI>(),
                 obj.transform.GetChild(5).GetChild(1).GetComponent<TextMeshProUGUI>(),
-                mps
+                mps,
+                obj.transform.GetChild(8).GetComponent<Image>(),
+                obj.transform.GetChild(8).GetComponent<Button>()
             );
             
             var chara = _turnManager.Characters[partyCharas[i]];
             var baseStatus = chara.BaseStatus;
             playerStatusUIs[baseStatus] = ui;
             // HPなどの情報を設定
-            playerStatusUIs[baseStatus].charaIcon.sprite = 
+            playerStatusUIs[baseStatus].CharaIcon.sprite =
                 _turnManager.Characters[partyCharas[i]].BaseData.CharacterStatusIconSprite;
-            playerStatusUIs[baseStatus].maxHpText.text = chara.BaseStatus.MaxMp.ToString();
-            playerStatusUIs[baseStatus].currentHpText.text = chara.BaseStatus.Hp.ToString();
+            playerStatusUIs[baseStatus].MaxHpText.text = chara.BaseStatus.MaxMp.ToString();
+            playerStatusUIs[baseStatus].CurrentHpText.text = chara.BaseStatus.Hp.ToString();
             // Actionの登録
             chara.EventsSystem.onHpChanged += HpIncreaseOrDecrease;
             chara.EventsSystem.onMpAdd += MpAddUI;
             chara.EventsSystem.onMpReduce += MpReduceUI;
             chara.EventsSystem.onStatusDisplay += StatusUIDisplay;
-            ui.uiObj.SetActive(false);
+            chara.EventsSystem.onUltimateGaugeChanged += UltimateIncreaseOrDecrease;
+            ui.UIObj.SetActive(false);
+
+            // 必殺技ゲージの初期チャージを行う
+            chara.UltimateSystem.UltimateCharge();
+            // 必殺技ゲージに動的にクリックイベントを登録
+            playerStatusUIs[baseStatus].UltimateButton.onClick.AddListener(chara.UltimateSystem.UltimateActivation);
         }
         
-        //状態異常UIの生成位置を取得
+        // 状態異常UIの生成位置を取得
         foreach (var info in _turnManager.Characters.Values)
         {
-            //Enemyの場合、処理を飛ばす（Enemy用の状態異常UIが別に存在するため）
+            // Enemyの場合、処理を飛ばす（Enemy用の状態異常UIが別に存在するため）
             if(!info.IsPlayer) continue;
             
             var status = info.EventsSystem;
             var baseStatus = info.BaseStatus;
-            var ui = playerStatusUIs[baseStatus].uiObj.transform.GetChild(6);
+            var ui = playerStatusUIs[baseStatus].UIObj.transform.GetChild(6);
             saGeneratePositions.Add(baseStatus, ui);
             status.onStatusAbnormalityOccurrence += StatusAbnormalityUIGenerate;
             status.onStatusAbnormalityProgress += StatusAbnormalityUIProgress;
@@ -129,7 +137,7 @@ public class PartyStatusUI : MonoBehaviour
     {
         foreach (var ui in playerStatusUIs)
         {
-            ui.Value.uiObj.SetActive(isDisplay);
+            ui.Value.UIObj.SetActive(isDisplay);
         }
     }
     
@@ -140,7 +148,7 @@ public class PartyStatusUI : MonoBehaviour
     /// <param name="isDisplay">true：表示　false：非表示</param>
     private void StatusUIDisplay(CharacterBaseStatus data, bool isDisplay)
     { 
-        var uiObj = playerStatusUIs[data].uiObj;
+        var uiObj = playerStatusUIs[data].UIObj;
         uiObj.SetActive(isDisplay);
     }
     
@@ -154,8 +162,8 @@ public class PartyStatusUI : MonoBehaviour
     {
         //HPが変動したキャラのUIを更新する
         var ui = playerStatusUIs[status];
-        ui.hpBar.fillAmount = currentHp / maxHp;
-        ui.currentHpText.text = status.Hp.ToString();
+        ui.HpBar.fillAmount = currentHp / maxHp;
+        ui.CurrentHpText.text = status.Hp.ToString();
     }
 
     /// <summary>
@@ -170,7 +178,7 @@ public class PartyStatusUI : MonoBehaviour
         var mp = currentMp - beforeMp;
         for (int i = 0; i < mp; i++)
         {
-            var mps = playerStatusUIs[status].mps;
+            var mps = playerStatusUIs[status].Mps;
             mps[i].SetActive(true);
         }
     }
@@ -187,11 +195,16 @@ public class PartyStatusUI : MonoBehaviour
         var mp = beforeMp - currentMp;
         for (int i = 0; i < mp; i++)
         {
-            var mps = playerStatusUIs[status].mps;
+            var mps = playerStatusUIs[status].Mps;
             mps[i].SetActive(false);
         }
     }
 
+    /// <summary>
+    /// 状態異常UIの生成を行う
+    /// </summary>
+    /// <param name="info">状態異常の情報</param>
+    /// <param name="status">状態異常を受けたキャラクターのCharacterBaseStatus</param>
     private void StatusAbnormalityUIGenerate(StatusAbnormalityInfo info, CharacterBaseStatus status)
     {
         //同じ状態異常だったらUIの生成は行わない
@@ -210,6 +223,11 @@ public class PartyStatusUI : MonoBehaviour
         statusAbnormalityInfos.Add(info, uiInfo);
     }
 
+    /// <summary>
+    /// 状態異常UIの更新を行う
+    /// </summary>
+    /// <param name="status">状態異常を受けているキャラクターのCharacterBaseStatus</param>
+    /// <param name="type">状態異常のタイプ</param>
     private void StatusAbnormalityUIProgress(CharacterBaseStatus status, StatusAbnormalityType type)
     {
         //状態異常を受けているキャラと状態異常が一致したら継続ターンの更新を行う
@@ -222,6 +240,11 @@ public class PartyStatusUI : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 状態異常UIの破棄
+    /// </summary>
+    /// <param name="status">状態異常を受けているキャラクターのCharacterBaseStatus</param>
+    /// <param name="type">終了する状態異常のタイプ</param>
     private void StatusAbnormalityUIEnd(CharacterBaseStatus status, StatusAbnormalityType type)
     {
         //終了した状態異常が一致したら、その状態異常を削除する
@@ -232,6 +255,18 @@ public class PartyStatusUI : MonoBehaviour
             Destroy(uiInfo.ui);
         }
     }
+
+    /// <summary>
+    /// 必殺技UIの更新を行う
+    /// </summary>
+    /// <param name="status">更新があったキャラクターのCharacterBaseStatus</param>>
+    /// <param name="ultCurrent">現在の必殺技ゲージ量</param>>
+    /// <param name="ultMax">最大必殺技ゲージ量</param>>
+    private void UltimateIncreaseOrDecrease(CharacterBaseStatus status, float ultCurrent, float ultMax)
+    {
+        var ui = playerStatusUIs[status];
+        ui.UltimateImage.fillAmount = ultCurrent / ultMax;
+    }
 }
 
 /// <summary>
@@ -239,27 +274,54 @@ public class PartyStatusUI : MonoBehaviour
 /// </summary>
 public class PlayerStatusUI
 {
-    //生成したUI
-    public GameObject uiObj;
+    /// <summary>
+    /// 生成したUI
+    /// </summary>
+    public GameObject UIObj { get; private set; }
     
-    //キャラクターアイコン
-    public Image charaIcon;
+    /// <summary>
+    /// キャラクターアイコン
+    /// </summary>
+    public Image CharaIcon {get; private set;}
     
-    //HP関連
-    public Image hpBar;
-    public TextMeshProUGUI maxHpText;
-    public TextMeshProUGUI currentHpText;
+    /// <summary>
+    /// HPバー
+    /// </summary>
+    public Image HpBar  { get; private set; }
+    /// <summary>
+    /// 最大HP量のテキスト
+    /// </summary>
+    public TextMeshProUGUI MaxHpText {get; private set;}
+    /// <summary>
+    /// 現在のHP量のテキスト
+    /// </summary>
+    public TextMeshProUGUI CurrentHpText  { get; private set; }
     
-    //MP関連
-    public GameObject[] mps;
+    /// <summary>
+    /// MP
+    /// </summary>
+    public GameObject[] Mps {get; private set;}
+    
+    /// <summary>
+    /// 必殺技のイメージ
+    /// </summary>
+    public Image UltimateImage {get; private set;}
+    /// <summary>
+    /// 必殺技のボタン
+    /// </summary>
+    public Button UltimateButton {get; private set;}
+    
 
-    public PlayerStatusUI(GameObject uiObj, Image icon, Image hpBar, TextMeshProUGUI maxHpText, TextMeshProUGUI currentHpText, GameObject[] mps)
+    public PlayerStatusUI(GameObject uiObj, Image icon, Image hpBar, 
+        TextMeshProUGUI maxHpText, TextMeshProUGUI currentHpText, GameObject[] mps, Image ultimateImage, Button ultimateButton)
     {
-        this.uiObj = uiObj;
-        this.charaIcon = icon;
-        this.hpBar = hpBar;
-        this.maxHpText = maxHpText;
-        this.currentHpText = currentHpText;
-        this.mps = mps;
+        UIObj = uiObj;
+        CharaIcon = icon;
+        HpBar = hpBar;
+        MaxHpText = maxHpText;
+        CurrentHpText = currentHpText;
+        Mps = mps;
+        UltimateImage = ultimateImage;
+        UltimateButton = ultimateButton;
     }
 }

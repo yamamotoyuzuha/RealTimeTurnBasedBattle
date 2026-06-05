@@ -1,4 +1,5 @@
 using System;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 /// <summary>
@@ -70,6 +71,21 @@ public class CharacterEventsSystem
     /// 状態異常が終了
     /// </summary>
     public Action<CharacterBaseStatus, StatusAbnormalityType> onStatusAbnormalityEnd;
+
+    #endregion
+
+    #region 必殺技
+
+    /// <summary>
+    /// 必殺技ゲージの更新
+    /// （現在の必殺技ゲージ量、最大必殺技ゲージ量）
+    /// </summary>
+    public Action<CharacterBaseStatus, float, float> onUltimateGaugeChanged;
+    
+    /// <summary>
+    /// 必殺技の発動を行う
+    /// </summary>
+    public Func<UltimateBaseData, CharacterBaseStatus, UniTask> onUltimateActivated;
 
     #endregion
 

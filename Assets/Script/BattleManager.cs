@@ -64,6 +64,7 @@ public class BattleManager : MonoBehaviour
     /// <param name="enemy">敵</param>>
     public void ActionOrderCalculation(GameObject player, GameObject buddyMon, GameObject enemy)
     {
+        /*
         //戦闘するキャラクターを格納
         List<GameObject> fieldCharacter = new List<GameObject>();
         fieldCharacter.Add(player);
@@ -77,6 +78,7 @@ public class BattleManager : MonoBehaviour
         var index = fieldCharacter.Count - 1;
         var lastTurnCharacter = fieldCharacter[index];
         turnManager.GetBattleManagerData(fieldCharacter, lastTurnCharacter);
+        */
     }
 
     /// <summary>
@@ -96,6 +98,16 @@ public class BattleManager : MonoBehaviour
         var index = fieldCharacter.Count - 1;
         var lastTurnCharacter = fieldCharacter[index];
         turnManager.GetBattleManagerData(fieldCharacter, lastTurnCharacter);
+        
+        // 必殺技の登録を行う
+        for (int i = 0; i < fieldCharacter.Count; i++)
+        {
+            // TODO：今のところプレイヤーのみに必殺技の登録をしているが、後々Enemyにも追加するかもしれない
+            // プレイヤーのみ
+            if(!turnManager.PlayableCharacterJudgment(fieldCharacter[i])) continue;
+            var chara = fieldCharacter[i].GetComponent<Status>().GetCharacter();
+            chara.EventsSystem.onUltimateActivated += ExecuteUltimate;
+        }
     }
     
     /// <summary>
@@ -435,9 +447,8 @@ public class BattleManager : MonoBehaviour
     /// <param name="enemyStatus">ダメージを与えるEnemyのステータス</param>
     private void AttackDamageTargetCheck(Character playerStatus, Character enemyStatus)
     {
-        // プレイヤーとEnemyの防御アクションシステムを取得する
+        // プレイヤーの防御アクションシステムを取得する
         var pDefense = playerStatus.DefenseActionSystem;
-        var eDefense = enemyStatus.DefenseActionSystem;
         var eOnly = enemyStatus.EnemyOnlySystem;
         // プレイヤーが防御アクションを行っているのか判定
         var dAction = pDefense.DefenseActionJudgment();
@@ -464,7 +475,7 @@ public class BattleManager : MonoBehaviour
                 pDefense.JustGuardProcessing();
                 eOnly.SetResultDefenseActionType(DefenseActionType.JustGuard);
                 // Enemyの体幹ゲージを減らす
-                eDefense.CoreGaugeDecrease(playerStatus.BaseStatus.Attack);
+                eOnly.CoreGaugeDecrease(playerStatus.BaseStatus.Attack);
                 break;
             default:
                 TargetDamage(playerStatus, enemyStatus, aData);
@@ -580,5 +591,29 @@ public class BattleManager : MonoBehaviour
             anim.SetAnimationPlay("Attack");
         }
         await enemyStatus.CombatSystem.DamageUIAsync(damages);
+    }
+
+    /// <summary>
+    /// 必殺技を実行する
+    /// </summary>
+    /// <param name="ult">実行する必殺技</param>
+    /// <param name="baseStatus">必殺技を実行するキャラクターの<c>CharacterBaseStatus</c>></param>
+    private async UniTask ExecuteUltimate(UltimateBaseData ult, CharacterBaseStatus baseStatus)
+    {
+        //TODO：ここの処理を変更する必要がある
+        //TODO：onChangeTurnCharacter?で割込みを発生させているが、すでに現在のターンキャラクターが
+        //　　  ターンを開始している場合、TurnManagerに必殺技を追加しておくメソッドを呼び出す方法にしないとだめかもしれない
+        //TODO：そして、現在のターンキャラクターが終了したらNextTurnSetUp?で追加した必殺技を順番に発動させていく方針に変更する
+        
+        turnManager.SetInterruptCharacterUlt(async () =>
+        {
+            turnManager.onChangeTurnCharacter?.Invoke(baseStatus.CharaObject);
+            await UniTask.Delay(TimeSpan.FromSeconds(2)); // TODO：仮演出であり、2秒待つ
+            await ult.Execute(GetEnemyCharacter().CombatSystem, baseStatus);
+            if (turnManager.onNextTurnSetUp != null)
+            {
+                await turnManager.onNextTurnSetUp.Invoke();
+            }
+        });
     }
 }
