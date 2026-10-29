@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
@@ -8,19 +9,21 @@ public class FormationSlotButton : MonoBehaviour, IPointerClickHandler
 {
     [Header("この編成枠のキャラクターデータ"), SerializeField] private CharacterTitleData _characterTitleData;
     
-    private CharacterFormationDisplay _characterFormationDisplay;
+    /// <summary>
+    /// 編成枠が選択されたときに行われる
+    /// </summary>
+    public event Action<int> OnSlotSelected;
     private int _slotIndex;
     
     /// <summary>
-    /// キャラクターデータを設定
+    /// 初期化
+    /// ・キャラクターのデータ設定等
     /// </summary>
-    /// <param name="characterTitleData">変更後のキャラクターデータ</param>
-    /// <param name="characterFormationDisplay">キャラクターの編成画面の管理</param>
+    /// <param name="characterTitleData">キャラクターデータ</param>
     /// <param name="index">枠の番号</param>
-    public void SetCharacterTitleData(CharacterTitleData characterTitleData, CharacterFormationDisplay characterFormationDisplay, int index)
+    public void Initialize(CharacterTitleData characterTitleData, int index)
     {
         _characterTitleData = characterTitleData;
-        _characterFormationDisplay = characterFormationDisplay;
         _slotIndex = index;
     }
     
@@ -32,10 +35,15 @@ public class FormationSlotButton : MonoBehaviour, IPointerClickHandler
         Debug.LogWarning("FormationButton::OnPointerClick()");
         Debug.LogWarning("この編成枠のキャラクターの名前：" + _characterTitleData.CharacterName);
         
-        // UIの設定と生成を行う
-        //_formationCharacterListDisplay.SetUpUI();
-        //_formationCharacterListDisplay.GenerationFormationCharacterListUIIcon();
-        
-        _characterFormationDisplay.OnFormationSlotSelected();
+        OnSlotSelected?.Invoke(_slotIndex);
+    }
+
+    /// <summary>
+    /// この編成枠のキャラクターデータの設定
+    /// </summary>
+    /// <param name="characterTitleData">編成枠に設定するキャラクターデータ</param>
+    public void SetCharacterTitleData(CharacterTitleData characterTitleData)
+    {
+        _characterTitleData = characterTitleData;
     }
 }

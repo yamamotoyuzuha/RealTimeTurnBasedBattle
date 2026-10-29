@@ -7,10 +7,9 @@ using UnityEngine;
 /// </summary>
 public class FormationCharacterListDisplay : MonoBehaviour
 {
-    [Header("キャラクターデータ一覧"), SerializeField]
-    private List<CharacterTitleData> _formationData;
-
-    [Header("UI")] [SerializeField] private GameObject _formationCharacterListUI; // 編成可能なキャラクターアイコンの一覧UI
+    [Header("キャラクターデータ一覧"), SerializeField] private List<CharacterTitleData> _formationData;
+    [Header("UI")]
+    [SerializeField] private GameObject _formationCharacterListUI; // 編成可能なキャラクターアイコンの一覧UI
     [SerializeField] private GameObject _characterSelectButtonPrefab; // キャラクターアイコンのPrefab
     [SerializeField] private Transform _parentUIPosition; // キャラクターアイコンの生成場所
 
@@ -19,6 +18,8 @@ public class FormationCharacterListDisplay : MonoBehaviour
     // TODO：編成可能なキャラクターアイコンUIの生成をし、初期化を行う
     // TODO：生成したUIはスクロールバーの子オブジェクトにする
     // TODO：この編成可能とかいらないかも、全部表示でいいのではないのだろうか
+    
+    // TODO：毎回毎回生成するのは無駄だから、スタート時に生成でいいと思う
 
 
     private void Awake()
@@ -30,26 +31,13 @@ public class FormationCharacterListDisplay : MonoBehaviour
     {
 
     }
-    
-    /// <summary>
-    /// キャラクターアイコンの削除
-    /// </summary>
-    private void ClearCharacterIconListUI()
-    {
-        foreach (Transform parent in _parentUIPosition.transform)
-        {
-            Destroy(parent.gameObject);
-        }
-    }
 
     /// <summary>
-    /// UIの表示を行う
-    /// ・キャラクターアイコンの生成
+    /// キャラクターアイコンの生成
     /// </summary>
-    public void Show(CharacterFormationDisplay characterFormationDisplay)
+    /// <param name="characterFormationDisplay"></param>
+    public void GenerationCharacterIconListUI(CharacterFormationDisplay characterFormationDisplay)
     {
-        ClearCharacterIconListUI();
-
         // UIの生成
         foreach (var character in _formationData)
         {
@@ -61,15 +49,14 @@ public class FormationCharacterListDisplay : MonoBehaviour
             info.Initialize(character);
             selectButton.Initialize(character, characterFormationDisplay);
         }
-
-        _formationCharacterListUI.SetActive(true);
     }
 
     /// <summary>
-    /// UIの非表示を行う
+    /// UIの表示切替
     /// </summary>
-    public void Hide()
+    /// <param name="isShow">true：表示　false：非表示</param>
+    public void DisplaySwitch(bool isShow)
     {
-        _formationCharacterListUI.SetActive(false);
+        _formationCharacterListUI.SetActive(isShow);
     }
 }
