@@ -13,15 +13,6 @@ public class FormationCharacterListDisplay : MonoBehaviour
     [SerializeField] private GameObject _characterSelectButtonPrefab; // キャラクターアイコンのPrefab
     [SerializeField] private Transform _parentUIPosition; // キャラクターアイコンの生成場所
 
-
-    // TODO：これは毎回UIを生成する必要がある
-    // TODO：編成可能なキャラクターアイコンUIの生成をし、初期化を行う
-    // TODO：生成したUIはスクロールバーの子オブジェクトにする
-    // TODO：この編成可能とかいらないかも、全部表示でいいのではないのだろうか
-    
-    // TODO：毎回毎回生成するのは無駄だから、スタート時に生成でいいと思う
-
-
     private void Awake()
     {
 
