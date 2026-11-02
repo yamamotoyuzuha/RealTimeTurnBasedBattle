@@ -6,37 +6,44 @@ using UnityEngine;
 /// </summary>
 public class CharacterModelManager : MonoBehaviour
 {
-    private class ModelInfo
-    {
-        public GameObject CharacterModel { get; private set; }
-        public Transform ModelTransform { get; private set; }
-
-        public ModelInfo(GameObject obj, Transform transform)
-        {
-            CharacterModel = obj;
-            ModelTransform = transform;
-        }
-    }
-    
-    private readonly Dictionary<CharacterTitleData, ModelInfo> _characterModel = new();  // 生成済みのモデル
+    /// <summary>
+    /// 生成済みのモデルを管理
+    /// </summary>
+    private readonly Dictionary<Transform, Dictionary<CharacterTitleData, GameObject>> _models = new();
 
     public GameObject GetOrCreateCharacterModel(CharacterTitleData characterTitleData, Transform parent)
     {
-        var model = GetCharacterModel(characterTitleData);
-        return model == null ? GenerateCharacterModel(characterTitleData, parent) : model;
-    }
-    
-    private GameObject GetCharacterModel(CharacterTitleData characterTitleData)
-    {
-        return _characterModel.TryGetValue(characterTitleData, out var model) ? model.CharacterModel : null;
-    }
+        // 表示場所の辞書を取得
+        if (!_models.TryGetValue(parent, out var models))
+        {
+            models = new Dictionary<CharacterTitleData, GameObject>();
+            _models.Add(parent, models);
+        }
 
-    private GameObject GenerateCharacterModel(CharacterTitleData characterTitleData, Transform parent)
-    {
-        var prefab = characterTitleData.CharacterPrefab;
-        var model = Instantiate(prefab, parent);
-        _characterModel.Add(characterTitleData, new ModelInfo(model, parent));
-        
+        // すでに生成されている場合は再利用
+        if (models.TryGetValue(characterTitleData, out var model))
+        {
+            if (model != null) return model;
+
+            models.Remove(characterTitleData);
+        }
+
+        // まだ生成されていない場合は生成
+        model = Instantiate(characterTitleData.CharacterPrefab, parent);
+        model.transform.localPosition = Vector3.zero;
+        model.transform.localRotation = Quaternion.identity;
+        model.SetActive(false);
+
+        models.Add(characterTitleData, model);
+
         return model;
+    } 
+    
+    public GameObject GetCharacterModel(CharacterTitleData characterTitleData, Transform parent)
+    {
+        if (_models.TryGetValue(parent, out var models) 
+            && models.TryGetValue(characterTitleData, out var model)) return model;
+
+        return null;
     }
 }
