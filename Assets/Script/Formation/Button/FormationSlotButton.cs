@@ -13,7 +13,7 @@ public class FormationSlotButton : MonoBehaviour, IPointerClickHandler
     /// 編成枠が選択されたときに行われる
     /// </summary>
     public event Action<int> OnSlotSelected;
-    private int _slotIndex;
+    private int _slotIndex; // 枠のインデックス
     
     /// <summary>
     /// 初期化
@@ -29,12 +29,7 @@ public class FormationSlotButton : MonoBehaviour, IPointerClickHandler
     
     public void OnPointerClick(PointerEventData eventData)
     {
-        // TODO：クリックした編成枠にいるキャラクターの詳細を表示する
-        // TODO：ここで編成可能なキャラクターを一覧で表示する
-        
-        Debug.LogWarning("FormationButton::OnPointerClick()");
         Debug.LogWarning("この編成枠のキャラクターの名前：" + _characterTitleData.CharacterName);
-        
         OnSlotSelected?.Invoke(_slotIndex);
     }
 

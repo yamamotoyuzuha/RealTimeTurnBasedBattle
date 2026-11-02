@@ -9,6 +9,7 @@ using UnityEngine;
 public class CharacterFormationDisplay : MonoBehaviour
 {
     [SerializeField] private FormationCharacterModelDisplay _formationCharacterModelDisplay;
+    [SerializeField] private SelectCharacterModelDisplay _selectedCharacterModelDisplay;
     [SerializeField] private FormationCharacterListDisplay _formationCharacterListDisplay;
     [Header("最大編成メンバー数"), SerializeField] private int _maximumFormation;
     [Header("現在の編成"), SerializeField] private List<CharacterTitleData> _currentFormationData;
@@ -18,15 +19,11 @@ public class CharacterFormationDisplay : MonoBehaviour
     private FormationSlotButton[] _formationSlotButtons; // 編成スロットUIの保持
     private int _currentSelectIndex = -1; // 現在、選択している編成枠
     
-    // TODO：これをやる
-    // TODO：編成しているキャラクターが生成されていることを確認した
-    // TODO：そしたら、選択画面にいったら、編成画面のキャラクターは非表示にする
-    // TODO：選択画面で入れ替えたら、キャラクターモデルが切り替わることを確認する
     
-
+    
     // TODO：ドラッグ＆ドロップについて
     //       実装の感じを考えておく。編成枠でクリックの長押しが確認されたら、その長押しされたところにあったデータを保持する
-    
+    // TODO：ドラッグ＆ドロップの実装を行う
     
     
     
@@ -44,7 +41,12 @@ public class CharacterFormationDisplay : MonoBehaviour
 
     private void Update()
     {
-        
+        // TODO：これは仮のデバッグです
+        // TODO：おわったら消す
+        if (Input.GetKeyDown(KeyCode.A))
+        {
+            ConfirmCharacterSelection();
+        }
     }
     
     /// <summary>
@@ -56,34 +58,57 @@ public class CharacterFormationDisplay : MonoBehaviour
         _formationButtonUI.SetActive(false);
         _currentSelectIndex = selectIndex;
         
-        // TODO：ここで選択されたキャラクターを生成し、表示を行う（別のスクリプトから呼び出し）
-        
+        // 選択画面に現在の編成キャラクターを表示
+        _selectedCharacterModelDisplay.DisplaySelectCharacterModel(_currentFormationData[selectIndex]);
+        _formationCharacterModelDisplay.DisplaySwitch(false);
+        _selectedCharacterModelDisplay.DisplaySwitch(true);
+    }
+    
+    /// <summary>
+    /// 選択画面のモデルを変更する
+    /// </summary>
+    /// <param name="selectedCharacterTitleData">選択したキャラクター</param>
+    public void OnCharacterSelected(CharacterTitleData selectedCharacterTitleData)
+    {
+        // 選択画面のプレビューモデルだけを変更
+        _selectedCharacterModelDisplay.DisplaySelectCharacterModel(selectedCharacterTitleData);
     }
 
     /// <summary>
-    /// キャラクター選択が選択されたとき
+    /// キャラクター選択を終了する
     /// </summary>
-    public void OnCharacterSelectButtonSelected()
+    public void ConfirmCharacterSelection()
     {
+        if (_currentSelectIndex < 0) return;
+        
+        UpdateFormationCharacterData();
+        ReturnFormationDisplay();
+        _currentSelectIndex = -1;
+    }
+
+    /// <summary>
+    /// 編成キャラクターのデータを更新する
+    /// </summary>
+    private void UpdateFormationCharacterData()
+    {
+        var selectedData = _selectedCharacterModelDisplay.CurrentSelectModel;
+        if(selectedData == null) return;
+        
+        _currentFormationData[_currentSelectIndex] = selectedData;
+        _formationSlotButtons[_currentSelectIndex].SetCharacterTitleData(selectedData);
+        _formationCharacterModelDisplay.DisplayFormationCharacterModel(selectedData, _currentSelectIndex);
+    }
+    
+    /// <summary>
+    /// 編成画面に戻る際に行う処理
+    /// </summary>
+    private void ReturnFormationDisplay()
+    {
+        // 選択画面を非表示にし、編成画面に戻す
         _formationCharacterListDisplay.DisplaySwitch(false);
         _formationButtonUI.SetActive(true);
-        
-        // TODO：ここも
-    }
-
-    /// <summary>
-    /// 選択したキャラクターを現在の編成へと設定する
-    /// </summary>
-    public void SelectCharacterFormationSettings(CharacterTitleData selectedCharacterTitleData)
-    {
-        // 選択している編成枠がない場合、処理を行わない
-        if(_currentSelectIndex < 0) return;
-        
-        // 選択している編成枠に選択したキャラクターを設定する
-        _currentFormationData[_currentSelectIndex] = selectedCharacterTitleData;
-        _formationSlotButtons[_currentSelectIndex].SetCharacterTitleData(selectedCharacterTitleData);
-        
-        // 現在の表示しているモデルを切り替える
+        _formationCharacterModelDisplay.DisplaySwitch(true);
+        _selectedCharacterModelDisplay.DisplaySwitch(false);
     }
 
     /// <summary>
