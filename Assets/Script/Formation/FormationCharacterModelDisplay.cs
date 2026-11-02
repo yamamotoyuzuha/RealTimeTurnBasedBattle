@@ -1,22 +1,16 @@
 using UnityEngine;
 
 /// <summary>
-/// 編成・選択画面でのキャラクターモデルの表示を管理
+/// 編成画面でのキャラクターモデルの表示・非表示を管理
 /// </summary>
 public class FormationCharacterModelDisplay : MonoBehaviour
 {
     [SerializeField] private CharacterModelManager _characterModelManager;
-    [Header("生成場所（編成画面）"), SerializeField] private Transform[] _generateFormationPositions;
-    [Header("生成場所（選択画面）"), SerializeField] private Transform _generateSelectPoint;
+    [Header("生成場所のルート"), SerializeField] private GameObject _generateRoot;
+    [Header("生成場所"), SerializeField] private Transform[] _generateFormationPositions;
     
-    private CharacterTitleData[] _currentDisplayFormationModels;        // 現在、編成画面で表示中のモデル
-    private CharacterTitleData _currentDisplaySelectModel;              // 現在、選択画面で表示中のモデル
-    
-    // TODO：編成画面と選択画面で処理を分ける
-    // TODO：途中の処理は同じだと思うからそこは分けて考えた方がいいかもしれない
-    // TODO：いっそのことクラスごとわけてもいいかもしれない（生成と表示を分ける）
-
-
+    private CharacterTitleData[] _currentDisplayFormationModels;        // 編成画面で表示中のモデル
+   
     private void Awake()
     {
         _currentDisplayFormationModels = new CharacterTitleData[_generateFormationPositions.Length];
@@ -25,41 +19,36 @@ public class FormationCharacterModelDisplay : MonoBehaviour
     /// <summary>
     /// 編成画面でのキャラクターモデルの表示・非表示
     /// </summary>
-    /// <param name="characterTitleData"></param>
-    /// <param name="slotIndex"></param>
+    /// <param name="characterTitleData">編成画面で選択したキャラクター</param>
+    /// <param name="slotIndex">枠のインデックス</param>
     public void DisplayFormationCharacterModel(CharacterTitleData characterTitleData, int slotIndex)
     {
-        // 現在、表示しているモデルを取得
-        GameObject currentModel = null;
+        var parent = _generateFormationPositions[slotIndex];
         var currentData = _currentDisplayFormationModels[slotIndex];
-        currentModel = currentData == null ? 
-            _characterModelManager.GetOrCreateCharacterModel(characterTitleData, _generateFormationPositions[slotIndex]) 
-            : _characterModelManager.GetOrCreateCharacterModel(currentData, null);
-        // 表示するモデルを取得
-        var pos = _generateFormationPositions[slotIndex];
-        var nextModel = _characterModelManager.GetOrCreateCharacterModel(characterTitleData, pos);
-        
-        // 現在、表示中のモデルデータを更新
-        _currentDisplayFormationModels[slotIndex] = characterTitleData;
-        
-        currentModel.SetActive(false);
+        // 現在表示しているモデルを非表示にする
+        if (currentData != null)
+        {
+            var currentModel = _characterModelManager.GetCharacterModel(currentData, parent);
+            if (currentModel != null) currentModel.SetActive(false);
+        }
+
+        // 新しいモデルを取得
+        var nextModel = _characterModelManager.GetOrCreateCharacterModel(characterTitleData, parent);
+        if (nextModel == null) return;
+
+        nextModel.transform.localPosition = Vector3.zero;
+        nextModel.transform.localRotation = Quaternion.identity;
         nextModel.SetActive(true);
+
+        _currentDisplayFormationModels[slotIndex] = characterTitleData;
     }
 
     /// <summary>
-    /// 選択画面でのキャラクターモデルの表示・非表示
+    /// モデルの表示切り替え
     /// </summary>
-    /// <param name="characterTitleData"></param>
-    public void DisplaySelectCharacterModel(CharacterTitleData characterTitleData)
+    /// <param name="flag">true：表示　false：非表示</param>
+    public void DisplaySwitch(bool flag)
     {
-        // モデルの取得
-        var currentModel =
-            _characterModelManager.GetOrCreateCharacterModel(_currentDisplaySelectModel, _generateSelectPoint);
-        var nextModel = _characterModelManager.GetOrCreateCharacterModel(characterTitleData, _generateSelectPoint);
-        
-        _currentDisplaySelectModel = characterTitleData;
-        
-        currentModel.SetActive(false);
-        nextModel.SetActive(true);
+        _generateRoot.SetActive(flag);
     }
 }
