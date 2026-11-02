@@ -38,7 +38,8 @@ public class FormationCharacterListDisplay : MonoBehaviour
             var info = obj.GetComponent<FormationCharacterIconInfo>();
             var selectButton = obj.GetComponent<CharacterSelectButton>();
             info.Initialize(character);
-            selectButton.Initialize(character, characterFormationDisplay);
+            selectButton.Initialize(character);
+            selectButton.OnCharacterSelected += characterFormationDisplay.OnCharacterSelected;
         }
     }
 
