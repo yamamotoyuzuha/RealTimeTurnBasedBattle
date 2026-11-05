@@ -5,7 +5,7 @@ using UnityEngine.EventSystems;
 /// <summary>
 /// 編成画面の編成枠のボタン
 /// </summary>
-public class FormationSlotButton : MonoBehaviour, IPointerClickHandler
+public class FormationSlotButton : MonoBehaviour, IPointerClickHandler, IDragHandler, IBeginDragHandler, IEndDragHandler, IDropHandler
 {
     [Header("この編成枠のキャラクターデータ"), SerializeField] private CharacterTitleData _characterTitleData;
     
@@ -13,6 +13,11 @@ public class FormationSlotButton : MonoBehaviour, IPointerClickHandler
     /// 編成枠が選択されたときに行われる
     /// </summary>
     public event Action<int> OnSlotSelected;
+
+    public event Action OnSlotDragging;
+    public event Action<int> OnSlotSwapBegin;
+    public event Action OnSlotSwapEnd;
+    public event Action<int> OnSlotDrop;
     private int _slotIndex; // 枠のインデックス
     
     /// <summary>
@@ -29,8 +34,27 @@ public class FormationSlotButton : MonoBehaviour, IPointerClickHandler
     
     public void OnPointerClick(PointerEventData eventData)
     {
-        Debug.LogWarning("この編成枠のキャラクターの名前：" + _characterTitleData.CharacterName);
         OnSlotSelected?.Invoke(_slotIndex);
+    }
+
+    public void OnDrag(PointerEventData eventData)      // ドラッグ中
+    {
+        OnSlotDragging?.Invoke();
+    }
+
+    public void OnBeginDrag(PointerEventData eventData) // ドラッグ開始
+    {
+        OnSlotSwapBegin?.Invoke(_slotIndex);
+    }
+
+    public void OnEndDrag(PointerEventData eventData)   // ドラッグ終了
+    {
+        OnSlotSwapEnd?.Invoke();
+    }
+
+    public void OnDrop(PointerEventData eventData)      // ドロップ
+    {
+        OnSlotDrop?.Invoke(_slotIndex);
     }
 
     /// <summary>

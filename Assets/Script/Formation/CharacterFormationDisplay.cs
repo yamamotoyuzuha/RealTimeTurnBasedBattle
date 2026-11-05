@@ -11,6 +11,7 @@ public class CharacterFormationDisplay : MonoBehaviour
     [SerializeField] private FormationCharacterModelDisplay _formationCharacterModelDisplay;
     [SerializeField] private SelectCharacterModelDisplay _selectedCharacterModelDisplay;
     [SerializeField] private FormationCharacterListDisplay _formationCharacterListDisplay;
+    [SerializeField] private FormationSlotDragController _formationSlotDragController;
     [Header("最大編成メンバー数"), SerializeField] private int _maximumFormation;
     [Header("現在の編成"), SerializeField] private List<CharacterTitleData> _currentFormationData;
     [Header("UI")]
@@ -34,6 +35,7 @@ public class CharacterFormationDisplay : MonoBehaviour
 
     private void Start()
     {
+        Initialize();
         GenerationFormationModel();
         GenerationFormationSlotUI();
         _formationCharacterListDisplay.GenerationCharacterIconListUI(this);
@@ -47,6 +49,12 @@ public class CharacterFormationDisplay : MonoBehaviour
         {
             ConfirmCharacterSelection();
         }
+    }
+
+    private void Initialize()
+    {
+        _formationSlotDragController.OnFormationSlotSwapRequested +=
+            SwapFormation;
     }
     
     /// <summary>
@@ -112,6 +120,27 @@ public class CharacterFormationDisplay : MonoBehaviour
     }
 
     /// <summary>
+    /// 編成枠のキャラクターを入れ替える
+    /// ・入れ替えが行われたことによる変更を行う
+    /// </summary>
+    /// <param name="dragIndex">ドラッグした編成枠のインデックス</param>
+    /// <param name="dropIndex">ドロップした編成枠のインデックス</param>
+    private void SwapFormation(int dragIndex, int dropIndex)
+    {
+        // 編成データの入れ替え
+        (_currentFormationData[dragIndex], _currentFormationData[dropIndex]) 
+            = (_currentFormationData[dropIndex], _currentFormationData[dragIndex]);
+        
+        // 編成枠のデータの入れ替え
+        _formationSlotButtons[dragIndex].SetCharacterTitleData(_currentFormationData[dragIndex]);
+        _formationSlotButtons[dropIndex].SetCharacterTitleData(_currentFormationData[dropIndex]);
+        
+        // キャラクターモデルの更新
+        _formationCharacterModelDisplay.DisplayFormationCharacterModel(_currentFormationData[dragIndex], dragIndex);
+        _formationCharacterModelDisplay.DisplayFormationCharacterModel(_currentFormationData[dropIndex], dropIndex);
+    }
+
+    /// <summary>
     /// モデルの生成
     /// </summary>
     private void GenerationFormationModel()
@@ -139,8 +168,21 @@ public class CharacterFormationDisplay : MonoBehaviour
             // 編成枠の設定
             var slotButton = obj.GetComponent<FormationSlotButton>();
             slotButton.Initialize(data, i);
-            slotButton.OnSlotSelected += OnFormationSlotSelected;
             _formationSlotButtons[i] = slotButton;
+            
+            ActionRegister(slotButton);
         }
+    }
+
+    private void ActionRegister(FormationSlotButton slotButton)
+    {
+        // 編成枠の選択
+        slotButton.OnSlotSelected += OnFormationSlotSelected;
+        // 編成枠のドラッグ&ドロップ
+        var dc = _formationSlotDragController;
+        slotButton.OnSlotDragging += dc.Dragging;
+        slotButton.OnSlotSwapBegin += dc.BeginDrag;
+        slotButton.OnSlotSwapEnd += dc.EndDrag;
+        slotButton.OnSlotDrop += dc.Drop;
     }
 }
