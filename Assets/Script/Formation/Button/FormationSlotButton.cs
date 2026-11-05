@@ -13,10 +13,21 @@ public class FormationSlotButton : MonoBehaviour, IPointerClickHandler, IDragHan
     /// 編成枠が選択されたときに行われる
     /// </summary>
     public event Action<int> OnSlotSelected;
-
+    /// <summary>
+    /// ドラッグ中の処理
+    /// </summary>
     public event Action OnSlotDragging;
+    /// <summary>
+    /// ドラッグ開始時の処理
+    /// </summary>
     public event Action<int> OnSlotSwapBegin;
+    /// <summary>
+    /// ドラッグ終了時の処理
+    /// </summary>
     public event Action OnSlotSwapEnd;
+    /// <summary>
+    /// ドロップ時の処理
+    /// </summary>
     public event Action<int> OnSlotDrop;
     private int _slotIndex; // 枠のインデックス
     

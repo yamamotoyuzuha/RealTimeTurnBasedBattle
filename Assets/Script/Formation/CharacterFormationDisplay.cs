@@ -51,6 +51,9 @@ public class CharacterFormationDisplay : MonoBehaviour
         }
     }
 
+    /// <summary>
+    /// 初期化
+    /// </summary>
     private void Initialize()
     {
         _formationSlotDragController.OnFormationSlotSwapRequested +=
