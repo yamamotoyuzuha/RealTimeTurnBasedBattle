@@ -95,6 +95,15 @@ public class CharacterFormationDisplay : MonoBehaviour
         UpdateFormationCharacterData();
         ReturnFormationDisplay();
         _currentSelectIndex = -1;
+        
+        // 現在の編成を保存する
+        // TODO：ここを毎回newする必要性はあるのだろうか
+        var party = new List<CharacterBaseData>();
+        foreach (var data in _currentFormationData)
+        {
+            party.Add(data.CharacterBaseData);
+        }
+        CombatInformationManager.Instance.AddCombatInfoCharacter(party);
     }
 
     /// <summary>

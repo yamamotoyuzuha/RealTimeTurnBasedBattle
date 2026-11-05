@@ -9,8 +9,10 @@ public class CharacterTitleData : ScriptableObject
     [Header("キャラクターの名前"), SerializeField] private string _characterName;
     [Header("キャラクターPrefab"), SerializeField] private GameObject _characterPrefab;
     [Header("キャラクターアイコン"), SerializeField] private Sprite _characterIconSprite;
+    [Header("キャラクターデータ"), SerializeField] private CharacterBaseData _characterBaseData;
 
     public string CharacterName => _characterName;
     public GameObject CharacterPrefab => _characterPrefab;
     public Sprite CharacterIconSprite => _characterIconSprite;
+    public CharacterBaseData CharacterBaseData => _characterBaseData;
 }

@@ -13,8 +13,11 @@ public class CombatInformationManager : MonoBehaviour
     /// <summary>
     /// 戦闘を行うプレイヤーキャラクターの情報
     /// </summary>
-    public List<CharacterBaseData> CombatInfoPlayerCharacter {get; private set;} = new List<CharacterBaseData>();
-    public CharacterBaseData CombatInfoEnemyCharacter{get; private set;}
+    public List<CharacterBaseData> CombatInfoPlayerCharacter {　get;　} = new();
+    /// <summary>
+    /// 戦闘を行うエネミーキャラクターの情報
+    /// </summary>
+    public CharacterBaseData CombatInfoEnemyCharacter{　get; private set;　}
 
     void Awake()
     {
