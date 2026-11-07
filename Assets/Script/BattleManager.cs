@@ -25,12 +25,15 @@ public class BattleManager : MonoBehaviour
     [SerializeField] private VictoryOrDefeatUI _victoryOrDefeatUI;
     [Header("FieldSettings")]
     [SerializeField] private FieldSettings _fieldSettings;
+    [Header("戦闘関連")]
     [SerializeField] private BattleDamage _battleDamage;
+    [SerializeField] private BattleCharacterSetUp _battleCharacterSetUp;
     
     // 戦闘関連のクラス
     private BattleCharacter _battleCharacter;
     private BattleAction _battleAction;
     private BattleResult _battleResult;
+    private BattleUltimateManager _battleUltimateManager;
 
     void Awake()
     {
@@ -41,7 +44,8 @@ public class BattleManager : MonoBehaviour
         commandInputManager.onCommandInputComplete += CharacterStartAction;
         //Enemyのターンが開始したときのイベントを登録
         turnManager.onEnemyTurnStart += CharacterStartAction;
-        SetCombatInformation();
+        //SetCombatInformation();
+        InitializeBattle();
     }
 
     private void Start()
@@ -61,13 +65,26 @@ public class BattleManager : MonoBehaviour
             Debug.LogWarning("ターン順の再計算を行った");
         }
     }
+
+    /// <summary>
+    /// 戦闘の初期化
+    /// </summary>
+    private void InitializeBattle()
+    {
+        _battleCharacterSetUp.BattleInitialize();
+    }
     
+    /// <summary>
+    /// 戦闘関連クラスのインスタンス化と設定
+    /// </summary>
     private void InitializeBattleSettings()
     {
         _battleCharacter = new BattleCharacter();
         _battleAction = new BattleAction();
         _battleResult = new BattleResult(_battleCharacter);
-        _battleDamage.GetBattleCharacter(_battleCharacter);
+        _battleUltimateManager = new BattleUltimateManager(turnManager, _battleCharacter);
+        _battleDamage.GetBattleSystem(_battleCharacter);
+        _battleCharacterSetUp.GetBattleSystem(_battleCharacter, _battleUltimateManager);
     }
     
     /// <summary>
@@ -104,69 +121,6 @@ public class BattleManager : MonoBehaviour
         var lastTurnCharacter = fieldCharacter[index];
         turnManager.GetBattleManagerData(fieldCharacter, lastTurnCharacter);
         */
-    }
-
-    /// <summary>
-    /// Titleの戦闘情報を元に必要な処理を行う
-    /// ・戦闘を行うキャラクターの生成
-    /// ・速度順にソート
-    /// </summary>
-    private void SetCombatInformation()
-    {
-        // 戦闘キャラクターを生成
-        _battleCharacter.ClearCharacters();
-        // 戦闘を行うキャラクターを格納する
-        List<GameObject> fieldCharacter = new List<GameObject>();
-        fieldCharacter.AddRange(CombatInformationCharacterGenerate());
-
-        // 速度順にソート
-        fieldCharacter = fieldCharacter.OrderByDescending(i =>
-                i.GetComponent<Status>().GetCharacter().BaseStatus.Speed).ToList();
-
-        // TurnManagerにデータを渡す
-        var maxIndex = fieldCharacter.Count - 1;
-        var lastTurnCharacter = fieldCharacter[maxIndex];
-        turnManager.GetBattleManagerData(fieldCharacter, lastTurnCharacter);
-
-        // 必殺技の登録
-        foreach (var character in _battleCharacter.GetPlayerCharacters())
-        {
-            character.EventsSystem.onUltimateActivated += ExecuteUltimate;
-        }
-    }
-    
-    /// <summary>
-    /// 戦闘情報にあるキャラクターを生成する
-    /// </summary>
-    /// <returns>戦闘を行うキャラクターのリストを返す</returns>
-    private List<GameObject> CombatInformationCharacterGenerate()
-    {
-        // 戦闘を行うプレイヤー、エネミーを取得する
-        var infoP = CombatInformationManager.Instance.CombatInfoPlayerCharacter;
-        var infoE = CombatInformationManager.Instance.CombatInfoEnemyCharacter;
-
-        List<GameObject> infoObj = new List<GameObject>();
-        foreach (var info in infoP)
-        {
-            var objP = Instantiate(info.CharacterPrefab);
-            infoObj.Add(objP);
-
-            // BattleCharacterに登録
-            var character = objP.GetComponent<Status>().GetCharacter();
-            _battleCharacter.RegisterCharacter(character);
-
-            // パーティーステータスUIに登録
-            _partyStatusUI.SetPartyCharacter(objP);
-        }
-
-        var objE = Instantiate(infoE.CharacterPrefab);
-        infoObj.Add(objE);
-
-        // Enemyも登録
-        var enemyCharacter = objE.GetComponent<Status>().GetCharacter();
-        _battleCharacter.RegisterCharacter(enemyCharacter);
-
-        return infoObj;
     }
 
     /// <summary>
@@ -487,43 +441,5 @@ public class BattleManager : MonoBehaviour
 
         // ダメージUIに反映
         await enemyStatus.CombatSystem.DamageUIAsync(damages);
-    }
-
-    /// <summary>
-    /// 必殺技を実行する
-    /// </summary>
-    /// <param name="ult">実行する必殺技</param>
-    /// <param name="baseStatus">必殺技を実行するキャラクターの<c>CharacterBaseStatus</c>></param>
-    private async UniTask ExecuteUltimate(UltimateBaseData ult, CharacterBaseStatus baseStatus)
-    {
-        // 現在のターンキャラクターが行動を開始している場合は、必殺技を発動せず終了後に発動
-        if (turnManager.IsTurnStarting)
-        {
-            turnManager.SetInterruptCharacterUlt(async () =>
-            {
-                turnManager.SetTimingCalled(true);
-                turnManager.TurnCharacterCommandUI(baseStatus.CharaObject, false);
-                turnManager.onChangeTurnCharacter?.Invoke(baseStatus.CharaObject);
-                await UniTask.Delay(TimeSpan.FromSeconds(2)); // TODO：仮演出であり、2秒待つ
-                await ult.Execute(GetEnemyCharacter().CombatSystem, baseStatus);
-                if (turnManager.onNextTurnSetUp != null)
-                {
-                    await turnManager.onNextTurnSetUp.Invoke();
-                }
-                turnManager.SetTimingCalled(false);
-            });
-        }
-        else // 即発動
-        {
-            turnManager.SetTimingCalled(false);
-            turnManager.TurnCharacterCommandUI(baseStatus.CharaObject, false);
-            turnManager.onChangeTurnCharacter?.Invoke(baseStatus.CharaObject);
-            await UniTask.Delay(TimeSpan.FromSeconds(2)); // TODO：仮演出であり、2秒待つ
-            await ult.Execute(GetEnemyCharacter().CombatSystem, baseStatus);
-            if (turnManager.onNextTurnSetUp != null)
-            {
-                await turnManager.onNextTurnSetUp.Invoke();
-            }
-        }
     }
 }

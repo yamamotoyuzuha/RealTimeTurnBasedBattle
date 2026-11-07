@@ -8,7 +8,7 @@ public class BattleDamage : MonoBehaviour
     [SerializeField] private FieldSettings _fieldSettings;
     private BattleCharacter _battleCharacter;
 
-    public void GetBattleCharacter(BattleCharacter battleCharacter)
+    public void GetBattleSystem(BattleCharacter battleCharacter)
     {
         _battleCharacter = battleCharacter;
     }
