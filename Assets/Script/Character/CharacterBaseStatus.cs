@@ -10,6 +10,11 @@ public class CharacterBaseStatus
     public float Attack { get; private set; }
     public float Defense { get; private set; }
     public int Speed { get; private set; }
+    /// <summary>
+    /// 死亡フラグ
+    /// true：生存　false：死亡
+    /// </summary>
+    public bool IsAlive => Hp > 0;
     
     private readonly CharacterEventsSystem _eventsSystem;
         

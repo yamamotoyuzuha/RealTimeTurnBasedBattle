@@ -25,11 +25,18 @@ public class BattleManager : MonoBehaviour
     [SerializeField] private VictoryOrDefeatUI _victoryOrDefeatUI;
     [Header("FieldSettings")]
     [SerializeField] private FieldSettings _fieldSettings;
-
-    private int index;
+    [SerializeField] private BattleDamage _battleDamage;
+    
+    // 戦闘関連のクラス
+    private BattleCharacter _battleCharacter;
+    private BattleAction _battleAction;
+    private BattleResult _battleResult;
 
     void Awake()
     {
+        InitializeBattleSettings();
+        InitializeBattleAction();
+        
         //コマンドの選択が完了したときのイベントを登録
         commandInputManager.onCommandInputComplete += CharacterStartAction;
         //Enemyのターンが開始したときのイベントを登録
@@ -53,6 +60,24 @@ public class BattleManager : MonoBehaviour
             turnManager.onUpdateTurnOrder?.Invoke();
             Debug.LogWarning("ターン順の再計算を行った");
         }
+    }
+    
+    private void InitializeBattleSettings()
+    {
+        _battleCharacter = new BattleCharacter();
+        _battleAction = new BattleAction();
+        _battleResult = new BattleResult(_battleCharacter);
+        _battleDamage.GetBattleCharacter(_battleCharacter);
+    }
+    
+    /// <summary>
+    /// コマンドアクションを登録する
+    /// </summary>
+    private void InitializeBattleAction()
+    {
+        _battleAction.RegisterCommand(CommandState.Magic, ExecuteMagic);
+        _battleAction.RegisterCommand(CommandState.Attack, ExecuteAttack);
+        _battleAction.RegisterCommand(CommandState.Item, ExecuteItem);
     }
 
     //TODO：これはエンカウント用のため使わないから削除する
@@ -88,25 +113,25 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     private void SetCombatInformation()
     {
-        //戦闘を行うキャラクターを格納する
+        // 戦闘キャラクターを生成
+        _battleCharacter.ClearCharacters();
+        // 戦闘を行うキャラクターを格納する
         List<GameObject> fieldCharacter = new List<GameObject>();
         fieldCharacter.AddRange(CombatInformationCharacterGenerate());
-        
-        //速度順にソート
-        fieldCharacter = fieldCharacter.OrderByDescending(i => i.GetComponent<Status>().GetCharacter().BaseStatus.Speed).ToList();
-        //TurnManagerにデータを渡す
-        var index = fieldCharacter.Count - 1;
-        var lastTurnCharacter = fieldCharacter[index];
+
+        // 速度順にソート
+        fieldCharacter = fieldCharacter.OrderByDescending(i =>
+                i.GetComponent<Status>().GetCharacter().BaseStatus.Speed).ToList();
+
+        // TurnManagerにデータを渡す
+        var maxIndex = fieldCharacter.Count - 1;
+        var lastTurnCharacter = fieldCharacter[maxIndex];
         turnManager.GetBattleManagerData(fieldCharacter, lastTurnCharacter);
-        
-        // 必殺技の登録を行う
-        for (int i = 0; i < fieldCharacter.Count; i++)
+
+        // 必殺技の登録
+        foreach (var character in _battleCharacter.GetPlayerCharacters())
         {
-            // TODO：今のところプレイヤーのみに必殺技の登録をしているが、後々Enemyにも追加するかもしれない
-            // プレイヤーのみ
-            if(!turnManager.PlayableCharacterJudgment(fieldCharacter[i])) continue;
-            var chara = fieldCharacter[i].GetComponent<Status>().GetCharacter();
-            chara.EventsSystem.onUltimateActivated += ExecuteUltimate;
+            character.EventsSystem.onUltimateActivated += ExecuteUltimate;
         }
     }
     
@@ -116,21 +141,31 @@ public class BattleManager : MonoBehaviour
     /// <returns>戦闘を行うキャラクターのリストを返す</returns>
     private List<GameObject> CombatInformationCharacterGenerate()
     {
-        //情報の取得
-        var infoC = CombatInformationManager.Instance.CombatInfoPlayerCharacter;
+        // 戦闘を行うプレイヤー、エネミーを取得する
+        var infoP = CombatInformationManager.Instance.CombatInfoPlayerCharacter;
         var infoE = CombatInformationManager.Instance.CombatInfoEnemyCharacter;
-        
-        List<GameObject> infoObj =  new List<GameObject>();
-        foreach (var info in infoC)
+
+        List<GameObject> infoObj = new List<GameObject>();
+        foreach (var info in infoP)
         {
-            var objC = Instantiate(info.CharacterPrefab);
-            infoObj.Add(objC);
-            
-            //パーティーステータスUIにパーティーキャラクターのオブジェクトを渡す
-            _partyStatusUI.SetPartyCharacter(objC);
+            var objP = Instantiate(info.CharacterPrefab);
+            infoObj.Add(objP);
+
+            // BattleCharacterに登録
+            var character = objP.GetComponent<Status>().GetCharacter();
+            _battleCharacter.RegisterCharacter(character);
+
+            // パーティーステータスUIに登録
+            _partyStatusUI.SetPartyCharacter(objP);
         }
+
         var objE = Instantiate(infoE.CharacterPrefab);
         infoObj.Add(objE);
+
+        // Enemyも登録
+        var enemyCharacter = objE.GetComponent<Status>().GetCharacter();
+        _battleCharacter.RegisterCharacter(enemyCharacter);
+
         return infoObj;
     }
 
@@ -162,29 +197,15 @@ public class BattleManager : MonoBehaviour
         //キャラクターがプレイヤーの操作キャラクターの場合、マジックパネルを表示する
         if (CurrentCharacterPlayerJudgment())
         {
-            //ターンキャラクターを取得
-            var character = turnManager.CurrentTurnCharacter;
-            
-            //コマンドを取得し、キャラクターが何のコマンドを選択したのか判定する
-            var command = turnManager.Characters[character].CommandsSystem.CurrentCommandState;
-            Debug.Log(command);
-            switch (command)
-            {
-                case CommandState.Magic: 
-                    await MagicAction(character); //魔法行動が終わるまで待機
-                    CharacterEndAction();
-                    break;
-                
-                case CommandState.Attack:
-                    await AttackAction(character);
-                    CharacterEndAction();
-                    break;
-                
-                case CommandState.Item:
-                    ItemAction();
-                    CharacterEndAction();
-                    break;
-            }
+            // 現在行動するキャラクターを取得
+            var characterObject = turnManager.CurrentTurnCharacter;
+            var character = turnManager.Characters[characterObject];
+
+            // 登録されているコマンド処理を実行
+            await _battleAction.ExecuteCommand(character);
+
+            // 行動終了
+            CharacterEndAction();
         }
         else //敵の行動
         {
@@ -214,31 +235,64 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     private void CharacterEndAction()
     {
-        if (PlayerCheckingIfAlive())
+        // 戦闘結果を取得
+        var result = _battleResult.CheckBattleResult();
+        if (result != ResultType.None)
         {
             Time.timeScale = 0;
             BattleUIHidden();
-            _victoryOrDefeatUI.OnDefeatUIDisplay?.Invoke();
-            Debug.Log("プレイヤーキャラクターが全員死亡");
+
+            switch (result)
+            {
+                case ResultType.Victory:
+                    _victoryOrDefeatUI.OnVictoryUIDisplay?.Invoke();
+                    Debug.Log("Enemyの死亡");
+                    break;
+
+                case ResultType.Defeat:
+                    _victoryOrDefeatUI.OnDefeatUIDisplay?.Invoke();
+                    Debug.Log("プレイヤーキャラクターが全員死亡");
+                    break;
+            }
+
             return;
         }
-        if (EnemyCheckingIfAlive())
-        {
-            Time.timeScale = 0;
-            BattleUIHidden();
-            _victoryOrDefeatUI.OnVictoryUIDisplay?.Invoke();
-            Debug.Log("Enemyの死亡");
-            return;
-        }
-        
+
         turnManager.SetTurnStartingFlag(false);
         commandInputManager.SetCommandSelected(true);
+
         Debug.Log("行動終了");
-        
+
         turnManager.onNextTurnSetUp?.Invoke();
-        
-        //状態異常等の処理で死亡した場合用の判定をもう一度取る
+
+        // ターン終了時の状態異常などによる死亡を再判定
         IsDeathCheck();
+    }
+    
+    /// <summary>
+    /// 魔法コマンドを実行
+    /// </summary>
+    /// <param name="character">コマンドを行うキャラクター</param>
+    /// <returns>魔法コマンド</returns>
+    private UniTask ExecuteMagic(Character character)
+    {
+        return MagicAction(character.BaseStatus.CharaObject);
+    }
+
+    /// <summary>
+    /// 通常攻撃コマンドを実行
+    /// </summary>
+    /// <param name="character">コマンドを行うキャラクター</param>
+    /// <returns>通常攻撃コマンド</returns>
+    private UniTask ExecuteAttack(Character character)
+    {
+        return AttackAction(character.BaseStatus.CharaObject);
+    }
+
+    private UniTask ExecuteItem(Character character)
+    {
+        ItemAction();
+        return UniTask.CompletedTask;
     }
 
     /// <summary>
@@ -246,52 +300,25 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     private void IsDeathCheck()
     {
-        if (PlayerCheckingIfAlive())
+        // 戦闘結果を取得
+        var result = _battleResult.CheckBattleResult();
+        if (result == ResultType.None) return;
+
+        Time.timeScale = 0;
+        BattleUIHidden();
+
+        switch (result)
         {
-            Time.timeScale = 0;
-            BattleUIHidden();
-            _victoryOrDefeatUI.OnDefeatUIDisplay?.Invoke();
-            Debug.Log("プレイヤーキャラクターが全員死亡");
-            return;
+            case ResultType.Victory:
+                _victoryOrDefeatUI.OnVictoryUIDisplay?.Invoke();
+                Debug.Log("Enemyの死亡");
+                break;
+
+            case ResultType.Defeat:
+                _victoryOrDefeatUI.OnDefeatUIDisplay?.Invoke();
+                Debug.Log("プレイヤーキャラクターが全員死亡");
+                break;
         }
-        if (EnemyCheckingIfAlive())
-        {
-            Time.timeScale = 0;
-            BattleUIHidden();
-            _victoryOrDefeatUI.OnVictoryUIDisplay?.Invoke();
-            Debug.Log("Enemyの死亡");
-            return;
-        }
-    }
-    
-    /// <summary>
-    /// プレイヤーキャラクターが生存しているか判定
-    /// </summary>
-    /// <returns>true：死亡　false：生存</returns>
-    private bool PlayerCheckingIfAlive()
-    {
-        // プレイヤーかEnemyかを判定したのち、リストに追加して要素数で判定
-        var players = turnManager.Characters
-            .Where(kv => kv.Value.IsPlayer)
-            .Select(kv => kv.Value);
-        var list = players.ToList();
-        return list.Count == 0 ? true : false;
-    }
-    
-    /// <summary>
-    /// Enemyが生存しているか判定
-    /// </summary>
-    /// <returns>true：死亡　false：生存</returns>
-    private bool EnemyCheckingIfAlive()
-    {
-        GameObject enemy = null;
-        foreach (var chara in turnManager.Characters)
-        {
-            // Enemyのみを取得する
-            if(chara.Value.IsPlayer) continue;
-            enemy = chara.Key;
-        }
-        return enemy == null ? true : false;
     }
     
     /// <summary>
@@ -391,15 +418,7 @@ public class BattleManager : MonoBehaviour
     /// <returns>EnemyのCharacter</returns>
     private Character GetEnemyCharacter()
     {
-        foreach (var chara in turnManager.Characters.Values)
-        {
-            if (!chara.IsPlayer)
-            {
-                return chara;
-            }
-        }
-
-        return null;
+        return _battleCharacter.GetEnemyCharacters().FirstOrDefault();
     }
     
     /// <summary>
@@ -409,117 +428,7 @@ public class BattleManager : MonoBehaviour
     /// <param name="enemyStatus">行動するEnemyのStatus</param>
     private void EnemyAttackDamageCalculation(EnemyBase enemyBase, Character enemyStatus)
     {
-        index = 0;
-        if (enemyBase.IsIndividualOrWhole())
-        {
-            // プレイヤーキャラクターだけを残して、ステータスを取得する（これだと敵が複数いる場合、敵にもダメージをあたえてしまう）
-            var players = turnManager.Characters
-                .Where(kv => kv.Key != turnManager.CurrentTurnCharacter)
-                .Select(kv => kv.Value);
-            var targetList = players.ToList();
-            // プレイヤーキャラクターが生存しているときのみ、処理を通す
-            if(targetList.Count == 0) return;
-            index = UnityEngine.Random.Range(0, targetList.Count);
-            AttackDamageTargetCheck(targetList[index], enemyStatus);
-        }
-        else
-        {
-            //TODO：全体攻撃の場合、リターンをしてしまうと処理がそれでおわってしまうのかもしれない
-            //TODO：なぜかUIが片方しか表示されないときがある
-            //TODO：どうするか考えておく
-            
-            // プレイヤーキャラクターが生存しているときのみ、処理を通す
-            if(turnManager.Characters.Count == 0) return;
-            // フィールドにいるプレイヤーキャラクターにダメージを与える
-            var status = turnManager.Characters;
-            foreach (var charaStatus in status)
-            {
-                // Enemyの場合、処理を飛ばす
-                if(charaStatus.Key == turnManager.CurrentTurnCharacter) continue;
-                AttackDamageTargetCheck(charaStatus.Value, enemyStatus);
-                index++;
-            }
-        }
-    }
-    
-    /// <summary>
-    /// プレイヤーにダメージを与えられるか判定を行う
-    /// </summary>
-    /// <param name="playerStatus">ダメージを与えられるPlayerのステータス</param>
-    /// <param name="enemyStatus">ダメージを与えるEnemyのステータス</param>
-    private void AttackDamageTargetCheck(Character playerStatus, Character enemyStatus)
-    {
-        // プレイヤーの防御アクションシステムを取得する
-        var pDefense = playerStatus.DefenseActionSystem;
-        var eOnly = enemyStatus.EnemyOnlySystem;
-        // プレイヤーが防御アクションを行っているのか判定
-        var dAction = pDefense.DefenseActionJudgment();
-        var aData = eOnly.CharacterCommandActionData;
-        switch (dAction)
-        {
-            case DefenseActionType.Parry:
-                if (!DefenseActionCheck(dAction, aData)) // パリィが成功しなかった場合、プレイヤーにダメージを与える
-                {
-                    TargetDamage(playerStatus, enemyStatus, aData);
-                    return;
-                }
-                // パリィが成功した場合、成功処理を行う
-                pDefense.ParrySuccessProcessing(1);
-                eOnly.SetResultDefenseActionType(DefenseActionType.Parry);
-                break;
-            case DefenseActionType.JustGuard:
-                if (!DefenseActionCheck(dAction, aData))
-                {
-                    TargetDamage(playerStatus, enemyStatus, aData);
-                    return;
-                }
-                // ジャストガードが成功した場合、成功処理を行う
-                pDefense.JustGuardProcessing();
-                eOnly.SetResultDefenseActionType(DefenseActionType.JustGuard);
-                // Enemyの体幹ゲージを減らす
-                eOnly.CoreGaugeDecrease(playerStatus.BaseStatus.Attack);
-                break;
-            default:
-                TargetDamage(playerStatus, enemyStatus, aData);
-                break;
-        }
-    }
-
-    /// <summary>
-    /// 防御アクションが可能かどうかの判定
-    /// </summary>
-    /// <param name="type">防御アクションの種類</param>
-    /// <param name="data">発動する魔法</param>
-    /// <returns>true：可能　false：不可能</returns>
-    private bool DefenseActionCheck(DefenseActionType type, CharacterCommandActionData data)
-    {
-        var magic = data.GetMagicBaseData();
-        return magic.IsDefenceActionPossible(type);
-    }
-    
-    /// <summary>
-    /// ターゲット（プレイヤー）にダメージを与える
-    /// </summary>
-    /// <param name="targetStatus">Playerのステータス</param>
-    /// <param name="enemyStatus">Enemyのステータス</param>
-    /// <param name="data">コマンドの内容</param>
-    private void TargetDamage(Character targetStatus, Character enemyStatus, CharacterCommandActionData data)
-    {
-        // 攻撃力を取得し、ターゲットにダメージを与える
-        var enemyAttack = enemyStatus.BaseStatus.Attack;
-
-        switch (data.GetCommandType())
-        {
-            case CharacterCommandActionType.Magic:
-                var magic = data.GetMagicBaseData();
-                targetStatus.CombatSystem.TakeDamage(enemyAttack, magic.StatusEffect);
-                magic.MagicAction(targetStatus.StatusEffectSystem);
-                // エフェクトの生成
-                var effect = Instantiate(magic.ParticleObj, 
-                    _fieldSettings.PlayerCharaPos[index].position, Quaternion.identity);
-                Destroy(effect, 1);
-                break;
-        }
+        _battleDamage.EnemyAttackDamageCalculation(enemyBase, enemyStatus);
     }
     
     /// <summary>
@@ -549,49 +458,34 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     private async UniTask AllCharacterAttack()
     {
-        // Enemyとプレイヤーキャラクターのステータスを取得して、Enemyにダメージを与える
-        Character enemyStatus = null;
-        List<CharacterBaseStatus> status = new List<CharacterBaseStatus>();
-        List<IAnimationCharacter> animations = new List<IAnimationCharacter>();
-        /*
-        foreach (var chara in turnManager.CharacterInfos)
+        // TODO：アニメーション処理を入れる（全体攻撃用のやつ）
+        // TODO：アニメーション再生インターフェイスをリストで持っておいて再生みたいな感じにする
+        
+        var enemyStatus = GetEnemyCharacter();
+        var status = new List<CharacterBaseStatus>();
+        // 生存しているプレイヤーを取得
+        foreach (var character in _battleCharacter.GetPlayerCharacters())
         {
-            if (chara.Value.command == null)
-            {
-                enemyStatus = chara.Value.status.GetCharacterStatus();
-                continue;
-            }
-            status.Add(chara.Value.status.GetCharacterStatus());
-            //TODO：アニメーションだから、後で考える
-            animations.Add(chara.Value.animationCharacter);
-        }
-        */
-        foreach (var character in turnManager.Characters.Values)
-        {
-            if (!character.IsPlayer)
-            {
-                enemyStatus = character;
-                continue;
-            }
             status.Add(character.BaseStatus);
         }
-        
+
+        if (enemyStatus == null || status.Count == 0) return;
+
+        // カメラアングルの切り替え
         _battleCameraAngleManager.BattleCameraAngleChange(BattleCameraActiveType.DAction,
-            _battleCameraAngleManager.DActionPosF, _battleCameraAngleManager.DActionPosL);
-        await UniTask.Delay(TimeSpan.FromSeconds(2)); //TODO：アニメーション時間
-        //対象がいなかった場合、処理は行わない
-        if(enemyStatus == null && status.Count == 0) return;
-        //プレイヤーキャラクターのダメージリストを作成し、ダメージUIに反映を行う
+            _battleCameraAngleManager.DActionPosF,
+            _battleCameraAngleManager.DActionPosL);
+
+        await UniTask.Delay(TimeSpan.FromSeconds(2));
+
+        // ダメージリストを作成
         List<float> damages = new List<float>();
-        foreach (var playerChara in status)
+        foreach (var playerStatus in status)
         {
-            damages.Add(playerChara.Attack);
+            damages.Add(playerStatus.Attack);
         }
-        //プレイヤーキャラクターを一斉にアニメーションさせる
-        foreach (var anim in animations)
-        {
-            anim.SetAnimationPlay("Attack");
-        }
+
+        // ダメージUIに反映
         await enemyStatus.CombatSystem.DamageUIAsync(damages);
     }
 
