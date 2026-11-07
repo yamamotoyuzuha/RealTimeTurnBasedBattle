@@ -17,3 +17,4 @@ MonoBehaviour:
     type: 3}
   _characterIconSprite: {fileID: 21300000, guid: e624ef34c3fe214409df061b1d53f531,
     type: 3}
+  _characterBaseData: {fileID: 11400000, guid: 0d4423cf0fce1a940b42ec702c7011ca, type: 2}
