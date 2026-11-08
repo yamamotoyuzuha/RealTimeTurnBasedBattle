@@ -25,6 +25,7 @@ public class BattleManager : MonoBehaviour
     private BattleCharacter _battleCharacter;
     private BattleAction _battleAction;
     private BattleResult _battleResult;
+    private BattleCommandExecutor _battleCommandExecutor;
     private BattleUltimateManager _battleUltimateManager;
 
     #endregion
@@ -79,7 +80,10 @@ public class BattleManager : MonoBehaviour
         _battleCharacter = new BattleCharacter();
         _battleAction = new BattleAction();
         _battleResult = new BattleResult(_battleCharacter);
+        _battleCommandExecutor = new BattleCommandExecutor(_turnManager, _commandInputManager,
+            _battleCameraAngleManager, _fieldSettings, _battleCharacter);
         _battleUltimateManager = new BattleUltimateManager(_turnManager, _battleCharacter);
+        
         _battleDamage.GetBattleSystem(_battleCharacter);
         _battleCharacterSetUp.GetBattleSystem(_battleCharacter, _battleUltimateManager);
     }
@@ -89,9 +93,8 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     private void InitializeBattleAction()
     {
-        _battleAction.RegisterCommand(CommandState.Magic, ExecuteMagic);
-        _battleAction.RegisterCommand(CommandState.Attack, ExecuteAttack);
-        _battleAction.RegisterCommand(CommandState.Item, ExecuteItem);
+        _battleAction.RegisterCommand(CommandState.Magic, _battleCommandExecutor.ExecuteMagic);
+        _battleAction.RegisterCommand(CommandState.Attack, _battleCommandExecutor.ExecuteAttack);
     }
 
     //TODO：これはエンカウント用のため使わないから削除する
@@ -246,32 +249,6 @@ public class BattleManager : MonoBehaviour
     }
     
     /// <summary>
-    /// 魔法コマンドを実行
-    /// </summary>
-    /// <param name="character">コマンドを行うキャラクター</param>
-    /// <returns>魔法コマンド</returns>
-    private UniTask ExecuteMagic(Character character)
-    {
-        return MagicAction(character.BaseStatus.CharaObject);
-    }
-
-    /// <summary>
-    /// 通常攻撃コマンドを実行
-    /// </summary>
-    /// <param name="character">コマンドを行うキャラクター</param>
-    /// <returns>通常攻撃コマンド</returns>
-    private UniTask ExecuteAttack(Character character)
-    {
-        return AttackAction(character.BaseStatus.CharaObject);
-    }
-
-    private UniTask ExecuteItem(Character character)
-    {
-        ItemAction();
-        return UniTask.CompletedTask;
-    }
-    
-    /// <summary>
     /// 戦闘に関係のあるUIの非表示を行う
     /// </summary>
     private void BattleUIHidden()
@@ -282,84 +259,6 @@ public class BattleManager : MonoBehaviour
         _enemyStatusUI.onStatusAbnormalityDisplay?.Invoke(false);
         _battleCommandUI.OnConfirmedCommandUIDisplay?.Invoke(false);
         _behaviorDisplayUI.OnActionUIDisplay?.Invoke("", false);
-    }
-    
-    /// <summary>
-    /// 魔法攻撃の処理
-    /// </summary>
-    private async UniTask MagicAction(GameObject character)
-    {
-        //MPを減らす
-        var status = _turnManager.Characters[character].BaseStatus;
-        status.ReduceMp(_commandInputManager.CurrentMagic.ConsumptionMp);
-        
-        //キャラクターの魔法パネルを取得し、表示する
-        var magicPanel = character.GetComponent<MagicPanel>();
-        magicPanel.MagicPanelToggle();
-        
-        //魔法パネルの表示待機時間を取得
-        var magic = _commandInputManager.CurrentMagic;
-        var disPlayTime = magic.MagicPanelDisplayTime;
-        //魔法パネルの表示時間経過かクリアされるのどちらか早い方を待つ
-        await UniTask.WhenAny(UniTask.Delay(TimeSpan.FromSeconds(disPlayTime)),
-            magicPanel.MagicPanelCompleted());
-        //表示時間以内に魔法パネルをクリア出来ていなかったら非表示にする
-        if (!magicPanel.IsMagicPanelClear) magicPanel.MagicPanelToggle();
-        
-        //カメラアングルの切り替え
-        var cameraSet = _turnManager.Characters[character].CameraSettings;
-        _battleCameraAngleManager.BattleCameraAngleChange(BattleCameraActiveType.StartAction,
-            cameraSet.StartActionCamPosF, cameraSet.StartActionCamPosL);
-        
-        //アニメーション関連 TODO：アニメーション周り
-        //var animChara = turnManager.CharacterInfos[character].animationCharacter;
-        //animChara.SetAnimationPlay(magic.CommandAnimationData._animationTriggerName);
-        await UniTask.Delay(TimeSpan.FromSeconds(magic.AnimationTime));
-        //エフェクトを生成
-        var effect = Instantiate(magic.ParticleObj, _fieldSettings.EnemyCharaPos.position, Quaternion.identity);
-        Destroy(effect, 1);
-        //キャラの攻撃力を取得して、ダメージを与える
-        var damage = status.Attack;
-        var enemyStatus = GetEnemyCharacter();
-        enemyStatus.CombatSystem.TakeDamage(damage, magic.StatusEffect);
-        enemyStatus.StatusEffectSystem.IsWaterAbsorption(damage, status);
-        //魔法パネルでバフがかかっていたのを元に戻す
-        status.UndoAttackStatus();
-        //魔法特有の効果を相手に付与する
-        magic.GetMagicBaseData().MagicAction(enemyStatus.StatusEffectSystem);
-        await UniTask.Delay(TimeSpan.FromSeconds(1));
-    }
-
-    /// <summary>
-    /// 通常攻撃の処理
-    /// </summary>
-    private async UniTask AttackAction(GameObject character)
-    {
-        //通常攻撃のため、MPを増やす
-        var playerStatus = _turnManager.Characters[character].BaseStatus;
-        playerStatus.AddMp(1);
-        
-        //カメラアングルの切り替え
-        var cameraSet = _turnManager.Characters[character].CameraSettings;
-        _battleCameraAngleManager.BattleCameraAngleChange(BattleCameraActiveType.StartAction,
-            cameraSet.StartActionCamPosF, cameraSet.StartActionCamPosL);
-        var enemyStatus = GetEnemyCharacter();
-        //アニメーション関連 TODO：ここも
-        //var animChara = turnManager.CharacterInfos[character].animationCharacter;
-        //animChara.SetAnimationPlay("Attack");
-        await UniTask.Delay(TimeSpan.FromSeconds(2)); //アニメーション時間分待機
-        enemyStatus.CombatSystem.TakeDamage(playerStatus.Attack, null);
-        enemyStatus.StatusEffectSystem.IsWaterAbsorption(playerStatus.Attack, playerStatus);
-        
-        await UniTask.Delay(TimeSpan.FromSeconds(1));
-    }
-
-    /// <summary>
-    /// アイテムの処理
-    /// </summary>
-    private void ItemAction()
-    {
-        
     }
 
     /// <summary>
