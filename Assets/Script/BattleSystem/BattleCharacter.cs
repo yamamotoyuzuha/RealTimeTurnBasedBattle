@@ -1,12 +1,13 @@
 using System.Collections.Generic;
 using System.Linq;
+using UnityEngine;
 
 /// <summary>
 /// 戦闘を行うキャラクターの管理
 /// </summary>
 public class BattleCharacter
 {
-    public List<Character> Characters { get; private set; } = new();
+    public List<Character> Characters { get; } = new();
 
     /// <summary>
     /// キャラクターの登録
@@ -44,6 +45,16 @@ public class BattleCharacter
     public List<Character> GetEnemyCharacters()
     {
         return Characters.Where(character => !character.IsPlayer && character.BaseStatus.IsAlive).ToList();
+    }
+
+    /// <summary>
+    /// Characterを取得する
+    /// </summary>
+    /// <param name="character">Characterを取得したいキャラクターオブジェクト</param>
+    /// <returns>指定キャラクターオブジェクトのCharacter</returns>
+    public Character GetCharacter(GameObject character)
+    {
+        return Characters.Find(c => c.CharacterObject == character);
     }
 
     /// <summary>

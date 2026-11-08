@@ -7,33 +7,30 @@ using Cysharp.Threading.Tasks;
 public class BattleManager : MonoBehaviour
 {
     [Header("参照")]
-    [Header("TurnManager")]
-    [SerializeField] private TurnManager turnManager;
-    [Header("CommandInputManager")]
-    [SerializeField] private CommandInputManager commandInputManager;
-    [Header("PartyStatusUI")]
+    [SerializeField] private TurnManager _turnManager;
+    [SerializeField] private CommandInputManager _commandInputManager;
     [SerializeField] private PartyStatusUI _partyStatusUI;
-    [Header("EnemyStatusUI")]
     [SerializeField] private EnemyStatusUI _enemyStatusUI;
-    [Header("BattleCommandUI")]
     [SerializeField] private BattleCommandUI _battleCommandUI;
-    [Header("BattleCameraAngleManager")]
     [SerializeField] private BattleCameraAngleManager _battleCameraAngleManager;
-    [Header("BehaviorDisplayUI")]
     [SerializeField] private BehaviorDisplayUI _behaviorDisplayUI;
-    [Header("VictoryOrDefeatUI")]
     [SerializeField] private VictoryOrDefeatUI _victoryOrDefeatUI;
-    [Header("FieldSettings")]
     [SerializeField] private FieldSettings _fieldSettings;
     [Header("戦闘関連")]
     [SerializeField] private BattleDamage _battleDamage;
     [SerializeField] private BattleCharacterSetUp _battleCharacterSetUp;
-    
-    // 戦闘関連のクラス
+
+    #region 戦闘関連のクラス
+
     private BattleCharacter _battleCharacter;
     private BattleAction _battleAction;
     private BattleResult _battleResult;
     private BattleUltimateManager _battleUltimateManager;
+
+    #endregion
+    // 敵関連
+    private EnemyBase _registeredEnemy;
+    
 
     void Awake()
     {
@@ -41,10 +38,10 @@ public class BattleManager : MonoBehaviour
         InitializeBattleAction();
         
         //コマンドの選択が完了したときのイベントを登録
-        commandInputManager.onCommandInputComplete += CharacterStartAction;
+        _commandInputManager.onCommandInputComplete += CharacterStartAction;
         //Enemyのターンが開始したときのイベントを登録
-        turnManager.onEnemyTurnStart += CharacterStartAction;
-        //SetCombatInformation();
+        _turnManager.onEnemyTurnStart += CharacterStartAction;
+        
         InitializeBattle();
     }
 
@@ -61,7 +58,7 @@ public class BattleManager : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.Y))
         {
-            turnManager.onUpdateTurnOrder?.Invoke();
+            _turnManager.onUpdateTurnOrder?.Invoke();
             Debug.LogWarning("ターン順の再計算を行った");
         }
     }
@@ -82,7 +79,7 @@ public class BattleManager : MonoBehaviour
         _battleCharacter = new BattleCharacter();
         _battleAction = new BattleAction();
         _battleResult = new BattleResult(_battleCharacter);
-        _battleUltimateManager = new BattleUltimateManager(turnManager, _battleCharacter);
+        _battleUltimateManager = new BattleUltimateManager(_turnManager, _battleCharacter);
         _battleDamage.GetBattleSystem(_battleCharacter);
         _battleCharacterSetUp.GetBattleSystem(_battleCharacter, _battleUltimateManager);
     }
@@ -130,10 +127,10 @@ public class BattleManager : MonoBehaviour
     private bool CurrentCharacterPlayerJudgment()
     {
         //現在のターンのキャラクターを取得する
-        var character = turnManager.CurrentTurnCharacter;
+        var character = _turnManager.CurrentTurnCharacter;
 
         //キャラクターが操作キャラクターなのかを判定する
-        if (turnManager.PlayableCharacterJudgment(character)) return true;
+        if (_turnManager.PlayableCharacterJudgment(character)) return true;
 
         return false;
     }
@@ -143,18 +140,18 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     private async void CharacterStartAction()
     {
-        turnManager.SetTurnStartingFlag(true);
-        commandInputManager.SetCommandSelected(false);
+        _turnManager.SetTurnStartingFlag(true);
+        _commandInputManager.SetCommandSelected(false);
         Debug.Log("行動開始");
         
-        //キャラクターの行動
-        //キャラクターがプレイヤーの操作キャラクターの場合、マジックパネルを表示する
+        // 現在行動するキャラクターを取得
+        var characterObject = _turnManager.CurrentTurnCharacter;
+        var character = _battleCharacter.GetCharacter(characterObject);
+        
+        // キャラクターの行動
+        // キャラクターがプレイヤーの操作キャラクターの場合、マジックパネルを表示する
         if (CurrentCharacterPlayerJudgment())
         {
-            // 現在行動するキャラクターを取得
-            var characterObject = turnManager.CurrentTurnCharacter;
-            var character = turnManager.Characters[characterObject];
-
             // 登録されているコマンド処理を実行
             await _battleAction.ExecuteCommand(character);
 
@@ -163,23 +160,15 @@ public class BattleManager : MonoBehaviour
         }
         else //敵の行動
         {
-            //少し待機してから、敵の行動を開始させる
+            // TODO：ここ、マジックナンバーになっているから修正する
+            // 少し待機してから、敵の行動を開始
             await UniTask.Delay(TimeSpan.FromSeconds(1));
-            
-            var enemy = turnManager.CurrentTurnCharacter.GetComponent<EnemyBase>();
-            var enemyChara = turnManager.Characters[turnManager.CurrentTurnCharacter];
-            enemyChara.EnemyOnlySystem.ResetResultDefenseActionType();
-            //登録を行う前に登録解除し、Actionを登録する
+
+            var enemy = characterObject.GetComponent<EnemyBase>();
             if(enemy == null) return;
-            enemy.OnEnemyTurnEnd -= CharacterEndAction;
-            enemy.UnsubscribeActioAttackDamage(() => EnemyAttackDamageCalculation(enemy, enemyChara));
-            enemy.OnEnemyTurnEnd += CharacterEndAction;
-            enemy.RegisterActionAttackDamage(() => EnemyAttackDamageCalculation(enemy, enemyChara));
-            enemy.OnDefenseAction -= DefenseActionAdditionalAction;
-            enemy.OnDefenseAction += DefenseActionAdditionalAction;
-            enemy.OnEnemyAction -= _behaviorDisplayUI.SetActionUI;
-            enemy.OnEnemyAction += _behaviorDisplayUI.SetActionUI;
-            
+
+            character.EnemyOnlySystem.ResetResultDefenseActionType();
+            RegisterEnemyEvents(enemy, character);
             enemy.OnEnemyTurnAction?.Invoke();
         }
     }
@@ -189,38 +178,71 @@ public class BattleManager : MonoBehaviour
     /// </summary>
     private void CharacterEndAction()
     {
-        // 戦闘結果を取得
-        var result = _battleResult.CheckBattleResult();
-        if (result != ResultType.None)
-        {
-            Time.timeScale = 0;
-            BattleUIHidden();
+        if(IsCheckBattleEndCondition()) return;
 
-            switch (result)
-            {
-                case ResultType.Victory:
-                    _victoryOrDefeatUI.OnVictoryUIDisplay?.Invoke();
-                    Debug.Log("Enemyの死亡");
-                    break;
-
-                case ResultType.Defeat:
-                    _victoryOrDefeatUI.OnDefeatUIDisplay?.Invoke();
-                    Debug.Log("プレイヤーキャラクターが全員死亡");
-                    break;
-            }
-
-            return;
-        }
-
-        turnManager.SetTurnStartingFlag(false);
-        commandInputManager.SetCommandSelected(true);
+        _turnManager.SetTurnStartingFlag(false);
+        _commandInputManager.SetCommandSelected(true);
 
         Debug.Log("行動終了");
 
-        turnManager.onNextTurnSetUp?.Invoke();
+        _turnManager.onNextTurnSetUp?.Invoke();
 
         // ターン終了時の状態異常などによる死亡を再判定
-        IsDeathCheck();
+        IsCheckBattleEndCondition();
+    }
+
+    /// <summary>
+    /// 戦闘終了判定と終了処理を行う
+    /// </summary>
+    /// <returns>true：戦闘終了　false：戦闘中</returns>
+    private bool IsCheckBattleEndCondition()
+    {
+        // 戦闘結果を取得
+        var result = _battleResult.CheckBattleResult();
+        if (result == ResultType.None) return false;
+        
+        Time.timeScale = 0;
+        BattleUIHidden();
+
+        switch (result)
+        {
+            case ResultType.Victory:
+                _victoryOrDefeatUI.OnVictoryUIDisplay?.Invoke();
+                Debug.Log("Enemyの死亡");
+                break;
+
+            case ResultType.Defeat:
+                _victoryOrDefeatUI.OnDefeatUIDisplay?.Invoke();
+                Debug.Log("プレイヤーキャラクターが全員死亡");
+                break;
+        }
+
+        return true;
+    }
+
+    /// <summary>
+    /// 敵のイベントを登録する
+    /// ・イベント登録を行う敵を引数に指定する
+    /// </summary>
+    private void RegisterEnemyEvents(EnemyBase enemyBase, Character enemyCharacter)
+    {
+        // 前回登録したイベントを解除
+        if (_registeredEnemy != null)
+        {
+            _registeredEnemy.OnEnemyTurnEnd -= CharacterEndAction;
+            _registeredEnemy.OnDefenseAction -= DefenseActionAdditionalAction;
+            _registeredEnemy.OnEnemyAction -= _behaviorDisplayUI.SetActionUI;
+            _registeredEnemy.UnsubscribeActioAttackDamage(() => EnemyAttackDamageCalculation(enemyBase, enemyCharacter));
+        }
+
+        _registeredEnemy = enemyBase;
+        _registeredEnemy.OnEnemyTurnEnd += CharacterEndAction;
+        // 敵の攻撃ダメージ処理
+        _registeredEnemy.RegisterActionAttackDamage(() => EnemyAttackDamageCalculation(enemyBase, enemyCharacter));
+        // 防御成功時の追加行動
+        _registeredEnemy.OnDefenseAction += DefenseActionAdditionalAction;
+        // 敵の行動表示
+        _registeredEnemy.OnEnemyAction += _behaviorDisplayUI.SetActionUI;
     }
     
     /// <summary>
@@ -248,39 +270,13 @@ public class BattleManager : MonoBehaviour
         ItemAction();
         return UniTask.CompletedTask;
     }
-
-    /// <summary>
-    /// 死亡したかの判定を行う
-    /// </summary>
-    private void IsDeathCheck()
-    {
-        // 戦闘結果を取得
-        var result = _battleResult.CheckBattleResult();
-        if (result == ResultType.None) return;
-
-        Time.timeScale = 0;
-        BattleUIHidden();
-
-        switch (result)
-        {
-            case ResultType.Victory:
-                _victoryOrDefeatUI.OnVictoryUIDisplay?.Invoke();
-                Debug.Log("Enemyの死亡");
-                break;
-
-            case ResultType.Defeat:
-                _victoryOrDefeatUI.OnDefeatUIDisplay?.Invoke();
-                Debug.Log("プレイヤーキャラクターが全員死亡");
-                break;
-        }
-    }
     
     /// <summary>
     /// 戦闘に関係のあるUIの非表示を行う
     /// </summary>
     private void BattleUIHidden()
     {
-        turnManager.onTurnIconDisplay?.Invoke(false);
+        _turnManager.onTurnIconDisplay?.Invoke(false);
         _partyStatusUI.onPartyStatusDisplay?.Invoke(false);
         _enemyStatusUI.onEnemyStatusDisplay?.Invoke(false);
         _enemyStatusUI.onStatusAbnormalityDisplay?.Invoke(false);
@@ -294,15 +290,15 @@ public class BattleManager : MonoBehaviour
     private async UniTask MagicAction(GameObject character)
     {
         //MPを減らす
-        var status = turnManager.Characters[character].BaseStatus;
-        status.ReduceMp(commandInputManager.CurrentMagic.ConsumptionMp);
+        var status = _turnManager.Characters[character].BaseStatus;
+        status.ReduceMp(_commandInputManager.CurrentMagic.ConsumptionMp);
         
         //キャラクターの魔法パネルを取得し、表示する
         var magicPanel = character.GetComponent<MagicPanel>();
         magicPanel.MagicPanelToggle();
         
         //魔法パネルの表示待機時間を取得
-        var magic = commandInputManager.CurrentMagic;
+        var magic = _commandInputManager.CurrentMagic;
         var disPlayTime = magic.MagicPanelDisplayTime;
         //魔法パネルの表示時間経過かクリアされるのどちらか早い方を待つ
         await UniTask.WhenAny(UniTask.Delay(TimeSpan.FromSeconds(disPlayTime)),
@@ -311,7 +307,7 @@ public class BattleManager : MonoBehaviour
         if (!magicPanel.IsMagicPanelClear) magicPanel.MagicPanelToggle();
         
         //カメラアングルの切り替え
-        var cameraSet = turnManager.Characters[character].CameraSettings;
+        var cameraSet = _turnManager.Characters[character].CameraSettings;
         _battleCameraAngleManager.BattleCameraAngleChange(BattleCameraActiveType.StartAction,
             cameraSet.StartActionCamPosF, cameraSet.StartActionCamPosL);
         
@@ -340,11 +336,11 @@ public class BattleManager : MonoBehaviour
     private async UniTask AttackAction(GameObject character)
     {
         //通常攻撃のため、MPを増やす
-        var playerStatus = turnManager.Characters[character].BaseStatus;
+        var playerStatus = _turnManager.Characters[character].BaseStatus;
         playerStatus.AddMp(1);
         
         //カメラアングルの切り替え
-        var cameraSet = turnManager.Characters[character].CameraSettings;
+        var cameraSet = _turnManager.Characters[character].CameraSettings;
         _battleCameraAngleManager.BattleCameraAngleChange(BattleCameraActiveType.StartAction,
             cameraSet.StartActionCamPosF, cameraSet.StartActionCamPosL);
         var enemyStatus = GetEnemyCharacter();

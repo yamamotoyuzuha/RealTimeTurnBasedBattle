@@ -4849,8 +4849,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ea14fff404a505b408d52cb45b61426e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  turnManager: {fileID: 727016208}
-  commandInputManager: {fileID: 1462539147}
+  _turnManager: {fileID: 727016208}
+  _commandInputManager: {fileID: 1462539147}
   _partyStatusUI: {fileID: 1909526616}
   _enemyStatusUI: {fileID: 2077230023}
   _battleCommandUI: {fileID: 1064866432}
