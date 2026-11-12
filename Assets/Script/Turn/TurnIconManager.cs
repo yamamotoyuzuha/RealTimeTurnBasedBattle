@@ -145,6 +145,11 @@ public class TurnIconManager : MonoBehaviour
         }
     }
     
+    /// <summary>
+    /// キャラクターアイコンを取得
+    /// </summary>
+    /// <param name="character">取得したいキャラクターのアイコン</param>
+    /// <returns>キャラクターアイコン</returns>
     public List<GameObject> GetCharacterIcons(GameObject character)
     {
         return _characterIcons[character];
