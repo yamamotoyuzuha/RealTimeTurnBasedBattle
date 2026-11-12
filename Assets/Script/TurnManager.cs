@@ -10,12 +10,6 @@ public class TurnManager : MonoBehaviour
     [SerializeField] private BattleCameraAngleManager _battleCameraAngleManager;
     [Header("FieldSettings")]
     [SerializeField] private FieldSettings _fieldSettings;
-    [Header("キャラクターアイコン生成場所")]
-    [SerializeField] private Transform _iconParent;
-    [Header("キャラクターアイコンPrefab")]
-    [SerializeField] private GameObject _characterIconObj;
-    //生成したキャラクターアイコンを保持
-    private Dictionary<GameObject, List<GameObject>> _characterIcons = new Dictionary<GameObject, List<GameObject>>(); 
     //現在のターンのキャラクターを保持
     public GameObject CurrentTurnCharacter { get; private set; }
     //敵のキャラクターを保持　追加
@@ -90,6 +84,9 @@ public class TurnManager : MonoBehaviour
     /// </summary>
     public Action<GameObject> onChangeTurnCharacter;
     
+
+    // Turn関連クラス
+    [SerializeField] private TurnIconManager _turnIconManager;
     private void Start()
     {
         //イベントの登録
@@ -97,18 +94,18 @@ public class TurnManager : MonoBehaviour
         {
             if (_isInterruptionsEtc)
             {
-                RemoveSpecifiedCharacterIcon(_interruptionsEtcChara);
+                _turnIconManager.RemoveSpecifiedCharacterIcon(_interruptionsEtcChara);
                 await RestoreBeforeInterruptSet();
                 _isInterruptionsEtc = false;
             }
             else
             {
-                CharacterIconDestroy(CurrentTurnCharacter);
+                _turnIconManager.DestroyCharacterIcon(CurrentTurnCharacter);
                 CharacterIconSetUp();
                 await NextTurnCharacterSet();
             }
         };
-        onTurnIconDisplay += TurnIconDisplay;
+        onTurnIconDisplay += _turnIconManager.DisplayCharacterIcon;
         onUpdateTurnOrder = () =>
         {
             RecalculatingTurnOrder();
@@ -117,7 +114,7 @@ public class TurnManager : MonoBehaviour
         onChangeTurnCharacter = (chara) =>
         {
             ChangeCurrentTurnCharacter(chara);
-            GenerateSpecifiedCharacterIcon(chara);
+            _turnIconManager.GenerateSpecifiedCharacterIcon(chara);
         };
         
         //現在のターンがEnemy場合、防御アクションUIを表示する
@@ -138,7 +135,7 @@ public class TurnManager : MonoBehaviour
         {
             //TODO：デバッグのため、適当に指定しているが本番ではちゃんと合ってるキャラクターを指定する
             ChangeCurrentTurnCharacter(_fieldCharacter[0]);
-            GenerateSpecifiedCharacterIcon(_fieldCharacter[0]);
+            _turnIconManager.GenerateSpecifiedCharacterIcon(_fieldCharacter[0]);
         }
     }
 
@@ -151,11 +148,13 @@ public class TurnManager : MonoBehaviour
     {
         _fieldCharacter = characters;
         this._lastTurnCharacter = lastTurnCharacter;
+        _lastTurnCharacter = lastTurnCharacter;
         
         //速度順にソートしたキャラクターをキューに格納する
         _speedCharacterTurnQueue = new Queue<GameObject>(_fieldCharacter);
         //現在のターンのキャラを設定する
         CurrentTurnCharacter = _speedCharacterTurnQueue.Peek();
+        _turnIconManager.GenerateIcons(characters);
         
         //アイコンの生成
         BattleStartCharacterIconGeneration();
@@ -237,34 +236,6 @@ public class TurnManager : MonoBehaviour
             onCommandInputPossible?.Invoke(true);
         }
     }
-    
-    /// <summary>
-    /// バトル開始時に呼ぶ
-    /// バトル開始時に、ターン順のキャラクターアイコンを一式生成する
-    /// </summary>
-    private void BattleStartCharacterIconGeneration()
-    {
-        //生成するキャラクターアイコンの数、生成する
-        int fieldCharacterCount = _fieldCharacter.Count;
-        int count = fieldCharacterCount * 2;
-        for (int i = 0; i < count; i++)
-        {
-            int index = i % fieldCharacterCount; //人数を超えたら０に戻る
-            GameObject character = _fieldCharacter[index];
-            
-            //生成したアイコンをキャラクターをKeyにして保存しておく
-            GameObject icon = Instantiate(_characterIconObj, _iconParent);
-            //アイコンをキャラクターデータのアイコンに設定する
-            icon.GetComponent<TurnCharacterIcon>().SetCharacterIcon(character.GetComponent<Status>().GetCharacter().BaseData);
-                
-            if (!_characterIcons.ContainsKey(character)) //まだ、キャラクターをKeyに登録してない場合
-            {
-                //リストを生成する
-                _characterIcons[character] = new List<GameObject>();
-            }
-            _characterIcons[character].Add(icon);
-        }
-    }
 
     /// <summary>
     /// ターン開始フラグを設定
@@ -285,22 +256,6 @@ public class TurnManager : MonoBehaviour
     }
     
     /// <summary>
-    /// ターンが終了したキャラクターアイコンを消す
-    /// </summary>
-    /// <param name="character">ターンを終えたキャラクター</param>
-    private void CharacterIconDestroy(GameObject character)
-    {
-        //キャラクターが存在しない場合は、処理を行わない
-        if (!_characterIcons.TryGetValue(character, out List<GameObject> icons)) return;
-        if (icons.Count == 0) return;
-        
-        //最初に追加されたアイコンを消す
-        var icon = icons[0];
-        icons.RemoveAt(0);
-        Destroy(icon);
-    }
-    
-    /// <summary>
     /// １ターン終了ごとにターン順のキャラクターを取得する
     /// </summary>
     private void CharacterIconSetUp()
@@ -317,61 +272,10 @@ public class TurnManager : MonoBehaviour
         {
             _nextTurnCharacter = _fieldCharacter[0];
         }
-        CharacterIconGenerate();
+        _turnIconManager.GenerateCharacterIcon(_nextTurnCharacter);
         
         //最後に生成したキャラクターの更新
         _lastTurnCharacter = _nextTurnCharacter;
-    }
-    
-    /// <summary>
-    /// キャラクターアイコンの生成
-    /// </summary>
-    private void CharacterIconGenerate()
-    {
-        //次のターンキャラが存在しない場合、処理を行わない
-        if (!_characterIcons.TryGetValue(_nextTurnCharacter, out List<GameObject> icons)) return;
-        
-        var icon = Instantiate(_characterIconObj, _iconParent);
-        icons.Add(icon);
-        
-        //キャラクターアイコンを設定する
-        icon.GetComponent<TurnCharacterIcon>().SetCharacterIcon(_nextTurnCharacter.GetComponent<Status>().GetCharacter().BaseData);
-    }
-
-    /// <summary>
-    /// 指定したキャラクターのアイコンを生成する
-    /// </summary>
-    /// <param name="character">指定したキャラクター</param>
-    private void GenerateSpecifiedCharacterIcon(GameObject character)
-    {
-        //指定したキャラクターが存在しない場合、処理を行わない
-        if(!_characterIcons.TryGetValue(character, out List<GameObject> icons)) return;
-        //アイコンを生成し、アイコンの設定を行う
-        var icon = Instantiate(_characterIconObj, _iconParent);
-        icons.Add(icon);
-        var data = Characters[character].BaseData;
-        icon.GetComponent<TurnCharacterIcon>().SetCharacterIcon(data);
-        icon.transform.SetSiblingIndex(0);
-    }
-
-    /// <summary>
-    /// 必殺技や割り込みなどによる場合でのアイコン生成に伴うアイコン削除
-    /// </summary>
-    /// <param name="character">必殺技や割り込みを行ったキャラクター</param>
-    private void RemoveSpecifiedCharacterIcon(GameObject character)
-    {
-        //キャラクターが存在しない場合は、処理を行わない
-        if (!_characterIcons.TryGetValue(character, out List<GameObject> icons)) return;
-        if (icons.Count == 0) return;
-        //UI上の一番上にあるものを削除する
-        var icon = _iconParent.GetChild(0).gameObject;
-        var index = 0;
-        for (int i = 0; i < icons.Count; i++)
-        {
-            if (icons[i] == icon) index = i;
-        }
-        icons.RemoveAt(index);
-        Destroy(icon);
     }
     
     /// <summary>
@@ -517,7 +421,7 @@ public class TurnManager : MonoBehaviour
         Dictionary<GameObject, Queue<GameObject>> iconQueues = new Dictionary<GameObject, Queue<GameObject>>();
         foreach (var chara in _fieldCharacter) //新しいターン順
         {
-            iconQueues[chara] = new Queue<GameObject>(_characterIcons[chara]);
+            iconQueues[chara] = new Queue<GameObject>(_turnIconManager.GetCharacterIcons(chara));
         }
 
         int siblingIndex = 0; //UIの順番を保持
@@ -633,7 +537,7 @@ public class TurnManager : MonoBehaviour
                     }
                     
                     //ターンアイコンもターンスキップに連動させる
-                    CharacterIconDestroy(character);
+                    _turnIconManager.DestroyCharacterIcon(character);
                     CharacterIconSetUp();
                     
                     //麻痺でターンがスキップされても状態異常があれば処理を行う
@@ -658,7 +562,7 @@ public class TurnManager : MonoBehaviour
                     }
 
                     //ターンアイコンもターンスキップに連動させる
-                    CharacterIconDestroy(cChara);
+                    _turnIconManager.DestroyCharacterIcon(cChara);
                     CharacterIconSetUp();
                     //麻痺でターンがスキップされても状態異常があれば処理を行う
                     if (status.IsUnderAbnormalStatus())
@@ -684,7 +588,7 @@ public class TurnManager : MonoBehaviour
                 }
 
                 //ターンアイコンもターンスキップに連動させる
-                CharacterIconDestroy(cChara);
+                _turnIconManager.DestroyCharacterIcon(cChara);
                 CharacterIconSetUp();
                 //麻痺でターンがスキップされても状態異常があれば処理を行う
                 if (status.IsUnderAbnormalStatus())
@@ -709,37 +613,19 @@ public class TurnManager : MonoBehaviour
     /// <param name="character">死亡したキャラクター</param>>
     private void DeceasedCharacterSetUp(GameObject character)
     {
-        // 死亡しているキャラクターが存在している場合、処理を行う
-        if (Characters.TryGetValue(character, out var info))
-        {
-            info.StateMachine.ChangeCharacterState(CharacterStateType.Dead);
-            // 死亡したキャラクターのアイコンを取得し、全て削除する
-            if(!_characterIcons.TryGetValue(character, out List<GameObject> icons)) return;
-            foreach (var icon in icons)
-            {
-                Debug.Log("死亡" + info.CharacterObject.name);
-                Destroy(icon);
-            }
-            
-            _speedCharacterTurnQueue.Clear();
-            List<GameObject> characters = new List<GameObject>();
-            // 死亡していないキャラクターのみ追加
-            foreach (var chara in _fieldCharacter)
-            {
-                if(!Characters.ContainsKey(chara)) continue;
-                if (Characters[chara].StateMachine.CharacterState != CharacterStateType.Dead)
-                {
-                    characters.Add(chara);
-                    Debug.Log(chara.name);
-                }
-            }
-            _speedCharacterTurnQueue = new Queue<GameObject>(characters);
-            CurrentTurnCharacter = _speedCharacterTurnQueue.Peek();
-            
-            // 状態異常の解除を行ってから、死亡したキャラ情報の削除を行う
-            Characters[character].StatusEffectSystem.StatusAilmentsClear();
-            Characters.Remove(character);
-        }
+        if(!Characters.TryGetValue(character, out var info)) return;
+        
+        // キャラクターを死亡扱い
+        info.StateMachine.ChangeCharacterState(CharacterStateType.Dead);
+        // アイコンとキャラクターの削除
+        _turnIconManager.DeathCharacterIconDestroy(character);
+        _turnOrderManager.RemoveCharacter(character);
+        // 生存しているキャラクターのみでターン順を再構築
+        _fieldCharacter = _turnOrderManager.TurnOrder.ToList();
+        CurrentTurnCharacter = _turnOrderManager.CurrentTurnCharacter;
+        // 状態異常の解除を行ってから、死亡したキャラ情報の削除を行う
+        info.StatusEffectSystem.StatusAilmentsClear();
+        
     }
 
     /// <summary>
@@ -818,23 +704,5 @@ public class TurnManager : MonoBehaviour
     {
         if(!Characters[CurrentTurnCharacter].IsPlayer) return;
         Characters[CurrentTurnCharacter].CommandsSystem.ChangeCommandState(state);
-    }
-
-    /// <summary>
-    /// ターンアイコンの表示、非表示
-    /// </summary>
-    /// <param name="flag">true：表示　false：非表示</param>
-    private void TurnIconDisplay(bool flag)
-    {
-        //全てのターンアイコンの表示切り替えを行う
-        foreach (var iconsValue in _characterIcons.Values)
-        {
-            if(iconsValue == null) continue;
-            foreach (var icon in iconsValue)
-            {
-                if(icon != null)
-                    icon.SetActive(false);
-            }
-        }
     }
 }
