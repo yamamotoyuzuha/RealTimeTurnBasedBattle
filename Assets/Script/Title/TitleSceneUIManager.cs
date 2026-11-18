@@ -12,14 +12,11 @@ public class TitleSceneUIManager : MonoBehaviour
     {
         Home,
         Formation,
-        Selection
     }
     
-    [SerializeField] private TitleInputManager _titleInputManager;
     [SerializeField] private CharacterFormationDisplay _characterFormationDisplay;
     [Header("タイトルの操作UI")] [SerializeField] private GameObject _titleUIObj;
     [Header("編成画面の操作UI")] [SerializeField] private GameObject _formationUIObj;
-    [Header("選択画面の操作UI")] [SerializeField] private GameObject _selectionUIObj;
 
     /// <summary>
     /// 現在のタイトル画面の遷移状態
@@ -32,32 +29,24 @@ public class TitleSceneUIManager : MonoBehaviour
         _currentTitleSceneState = TitleSceneState.Home;
     }
 
-    private void Update()
-    {
-        ToggleDisplay();
-    }
-
     /// <summary>
     /// タイトル画面の表示切り替え
     /// </summary>
-    private void ToggleDisplay()
+    public void ToggleDisplay()
     {
-        if (_titleInputManager.TitleInput.Player.FormationDisplay.triggered)
+        switch (_currentTitleSceneState)
         {
-            switch (_currentTitleSceneState)
-            {
-                case TitleSceneState.Home:
-                    _titleUIObj.SetActive(false);
-                    _characterFormationDisplay.DisplayFormation(true);
-                    _currentTitleSceneState = TitleSceneState.Formation;
-                    break;
+            case TitleSceneState.Home:
+                _titleUIObj.SetActive(false);
+                _characterFormationDisplay.DisplayFormation(true);
+                _currentTitleSceneState = TitleSceneState.Formation;
+                break;
             
-                case TitleSceneState.Formation:
-                    _titleUIObj.SetActive(true);
-                    _characterFormationDisplay.DisplayFormation(false);
-                    _currentTitleSceneState = TitleSceneState.Home;
-                    break;
-            }
+            case TitleSceneState.Formation:
+                _titleUIObj.SetActive(true);
+                _characterFormationDisplay.DisplayFormation(false);
+                _currentTitleSceneState = TitleSceneState.Home;
+                break;
         }
     }
 }
