@@ -11,7 +11,8 @@ public class TitleSceneUIManager : MonoBehaviour
     enum TitleSceneState
     {
         Home,
-        Formation
+        Formation,
+        Selection
     }
     
     [SerializeField] private TitleInputManager _titleInputManager;
