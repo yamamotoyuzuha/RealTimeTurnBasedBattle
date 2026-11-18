@@ -5,15 +5,6 @@ using UnityEngine;
 /// </summary>
 public class TitleSceneUIManager : MonoBehaviour
 {
-    /// <summary>
-    /// タイトル画面の遷移状態
-    /// </summary>
-    enum TitleSceneState
-    {
-        Home,
-        Formation,
-    }
-    
     [SerializeField] private CharacterFormationDisplay _characterFormationDisplay;
     [Header("タイトルのUI")] [SerializeField] private GameObject _titleUIObj;
     [Header("編成画面のUI")] [SerializeField] private GameObject _formationUIObj;

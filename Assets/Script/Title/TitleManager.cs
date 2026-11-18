@@ -21,3 +21,13 @@ public class TitleManager : MonoBehaviour
         SceneManager.LoadScene("SampleScene");
     }
 }
+
+/// <summary>
+/// タイトル画面の遷移状態
+/// </summary>
+public enum TitleSceneState
+{
+    Home,
+    Formation,
+    Selection
+}
