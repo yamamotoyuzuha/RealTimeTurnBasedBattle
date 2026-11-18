@@ -19,19 +19,6 @@ public class CharacterFormationDisplay : MonoBehaviour
     [SerializeField] private GameObject _formationSlotButtonPrefab;  // スロットのPrefab
     private FormationSlotButton[] _formationSlotButtons; // 編成スロットUIの保持
     private int _currentSelectIndex = -1; // 現在、選択している編成枠
-    
-    
-    
-    // TODO：ドラッグ＆ドロップについて
-    //       実装の感じを考えておく。編成枠でクリックの長押しが確認されたら、その長押しされたところにあったデータを保持する
-    // TODO：ドラッグ＆ドロップの実装を行う
-    
-    
-    
-    private void Awake()
-    {
-        
-    }
 
     private void Start()
     {
