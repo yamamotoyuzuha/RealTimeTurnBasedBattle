@@ -16,7 +16,9 @@ public class TitleSceneUIManager : MonoBehaviour
     
     [SerializeField] private TitleInputManager _titleInputManager;
     [SerializeField] private CharacterFormationDisplay _characterFormationDisplay;
-    [Header("タイトルUI")] [SerializeField] private GameObject _titleUIObj;
+    [Header("タイトルの操作UI")] [SerializeField] private GameObject _titleUIObj;
+    [Header("編成画面の操作UI")] [SerializeField] private GameObject _formationUIObj;
+    [Header("選択画面の操作UI")] [SerializeField] private GameObject _selectionUIObj;
 
     /// <summary>
     /// 現在のタイトル画面の遷移状態
@@ -27,11 +29,6 @@ public class TitleSceneUIManager : MonoBehaviour
     {
         _characterFormationDisplay.DisplayFormation(false);
         _currentTitleSceneState = TitleSceneState.Home;
-    }
-
-    private void Start()
-    {
-        
     }
 
     private void Update()
