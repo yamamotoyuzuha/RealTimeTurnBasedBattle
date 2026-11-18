@@ -56,8 +56,7 @@ public class CharacterFormationDisplay : MonoBehaviour
     /// </summary>
     private void Initialize()
     {
-        _formationSlotDragController.OnFormationSlotSwapRequested +=
-            SwapFormation;
+        _formationSlotDragController.OnFormationSlotSwapRequested += SwapFormation;
     }
     
     /// <summary>
@@ -104,6 +103,16 @@ public class CharacterFormationDisplay : MonoBehaviour
             party.Add(data.CharacterBaseData);
         }
         CombatInformationManager.Instance.AddCombatInfoCharacter(party);
+    }
+
+    /// <summary>
+    /// 編成画面の表示切り替え
+    /// </summary>
+    /// <param name="flag">true：表示　false：非表示</param>
+    public void DisplayFormation(bool flag)
+    {
+        _formationButtonUI.SetActive(flag);
+        _formationCharacterModelDisplay.DisplaySwitch(flag);
     }
 
     /// <summary>
