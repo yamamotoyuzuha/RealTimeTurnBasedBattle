@@ -72,6 +72,8 @@ public class CharacterFormationDisplay : MonoBehaviour
         _selectedCharacterModelDisplay.DisplaySelectCharacterModel(_currentFormationData[selectIndex]);
         _formationCharacterModelDisplay.DisplaySwitch(false);
         _selectedCharacterModelDisplay.DisplaySwitch(true);
+        
+        TitleCameraAngleControl.Instance.ChangeCameraAngle(TitleSceneState.Selection);
     }
     
     /// <summary>
@@ -103,6 +105,7 @@ public class CharacterFormationDisplay : MonoBehaviour
             party.Add(data.CharacterBaseData);
         }
         CombatInformationManager.Instance.AddCombatInfoCharacter(party);
+        TitleCameraAngleControl.Instance.ChangeCameraAngle(TitleSceneState.Formation);
     }
 
     /// <summary>

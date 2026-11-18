@@ -14,10 +14,11 @@ public class TitleSceneUIManager : MonoBehaviour
     /// </summary>
     private TitleSceneState _currentTitleSceneState;
 
-    private void Awake()
+    private void Start()
     {
         _characterFormationDisplay.DisplayFormation(false);
         _currentTitleSceneState = TitleSceneState.Home;
+        TitleCameraAngleControl.Instance.ChangeCameraAngle(_currentTitleSceneState);
     }
 
     /// <summary>
@@ -32,6 +33,7 @@ public class TitleSceneUIManager : MonoBehaviour
                 _formationUIObj.SetActive(true);
                 _characterFormationDisplay.DisplayFormation(true);
                 _currentTitleSceneState = TitleSceneState.Formation;
+                TitleCameraAngleControl.Instance.ChangeCameraAngle(_currentTitleSceneState);
                 break;
             
             case TitleSceneState.Formation:
@@ -39,6 +41,7 @@ public class TitleSceneUIManager : MonoBehaviour
                 _formationUIObj.SetActive(false);
                 _characterFormationDisplay.DisplayFormation(false);
                 _currentTitleSceneState = TitleSceneState.Home;
+                TitleCameraAngleControl.Instance.ChangeCameraAngle(_currentTitleSceneState);
                 break;
         }
     }
