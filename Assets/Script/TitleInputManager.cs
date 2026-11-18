@@ -19,14 +19,15 @@ public class TitleInputManager : MonoBehaviour
         TitleInput.Enable();
     }
 
-    void Update()
+    /// <summary>
+    /// ゲーム開始
+    /// </summary>
+    public void GameStart()
     {
         if(!isStartGame) return;
-        //これはデバッグ用　いずれはゲーム進行用のステートマシンを作成する
-        if (TitleInput.Player.Decision.triggered)
-        {
-            SceneManager.LoadScene("SampleScene");
-        }
+        
+        // TODO：ここゲームシーンに名前を変更する
+        SceneManager.LoadScene("SampleScene");
     }
 
     /// <summary>
