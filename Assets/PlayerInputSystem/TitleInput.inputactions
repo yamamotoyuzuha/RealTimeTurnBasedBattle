@@ -76,6 +76,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "FormationDisplay",
+                    "type": "Button",
+                    "id": "2f68078f-788a-45fa-bec1-bcb215682bcd",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -164,6 +173,17 @@
                     "processors": "",
                     "groups": "Keyboard&Mouse",
                     "action": "MagicFormationDisplay",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "87b9311b-be6f-4d92-9fed-6610c762f6db",
+                    "path": "<Keyboard>/f",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "FormationDisplay",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

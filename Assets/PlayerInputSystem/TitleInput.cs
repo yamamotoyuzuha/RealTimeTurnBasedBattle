@@ -98,6 +98,15 @@ public partial class @TitleInput: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""interactions"": """",
                     ""initialStateCheck"": false
+                },
+                {
+                    ""name"": ""FormationDisplay"",
+                    ""type"": ""Button"",
+                    ""id"": ""2f68078f-788a-45fa-bec1-bcb215682bcd"",
+                    ""expectedControlType"": ""Button"",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false
                 }
             ],
             ""bindings"": [
@@ -188,6 +197,17 @@ public partial class @TitleInput: IInputActionCollection2, IDisposable
                     ""action"": ""MagicFormationDisplay"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""87b9311b-be6f-4d92-9fed-6610c762f6db"",
+                    ""path"": ""<Keyboard>/f"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": """",
+                    ""action"": ""FormationDisplay"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
                 }
             ]
         }
@@ -265,6 +285,7 @@ public partial class @TitleInput: IInputActionCollection2, IDisposable
         m_Player_EnemySelectDisplay = m_Player.FindAction("EnemySelectDisplay", throwIfNotFound: true);
         m_Player_MagicFormationDisplay = m_Player.FindAction("MagicFormationDisplay", throwIfNotFound: true);
         m_Player_Decision = m_Player.FindAction("Decision", throwIfNotFound: true);
+        m_Player_FormationDisplay = m_Player.FindAction("FormationDisplay", throwIfNotFound: true);
     }
 
     public void Dispose()
@@ -334,6 +355,7 @@ public partial class @TitleInput: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_EnemySelectDisplay;
     private readonly InputAction m_Player_MagicFormationDisplay;
     private readonly InputAction m_Player_Decision;
+    private readonly InputAction m_Player_FormationDisplay;
     public struct PlayerActions
     {
         private @TitleInput m_Wrapper;
@@ -346,6 +368,7 @@ public partial class @TitleInput: IInputActionCollection2, IDisposable
         public InputAction @EnemySelectDisplay => m_Wrapper.m_Player_EnemySelectDisplay;
         public InputAction @MagicFormationDisplay => m_Wrapper.m_Player_MagicFormationDisplay;
         public InputAction @Decision => m_Wrapper.m_Player_Decision;
+        public InputAction @FormationDisplay => m_Wrapper.m_Player_FormationDisplay;
         public InputActionMap Get() { return m_Wrapper.m_Player; }
         public void Enable() { Get().Enable(); }
         public void Disable() { Get().Disable(); }
@@ -379,6 +402,9 @@ public partial class @TitleInput: IInputActionCollection2, IDisposable
             @Decision.started += instance.OnDecision;
             @Decision.performed += instance.OnDecision;
             @Decision.canceled += instance.OnDecision;
+            @FormationDisplay.started += instance.OnFormationDisplay;
+            @FormationDisplay.performed += instance.OnFormationDisplay;
+            @FormationDisplay.canceled += instance.OnFormationDisplay;
         }
 
         private void UnregisterCallbacks(IPlayerActions instance)
@@ -407,6 +433,9 @@ public partial class @TitleInput: IInputActionCollection2, IDisposable
             @Decision.started -= instance.OnDecision;
             @Decision.performed -= instance.OnDecision;
             @Decision.canceled -= instance.OnDecision;
+            @FormationDisplay.started -= instance.OnFormationDisplay;
+            @FormationDisplay.performed -= instance.OnFormationDisplay;
+            @FormationDisplay.canceled -= instance.OnFormationDisplay;
         }
 
         public void RemoveCallbacks(IPlayerActions instance)
@@ -479,5 +508,6 @@ public partial class @TitleInput: IInputActionCollection2, IDisposable
         void OnEnemySelectDisplay(InputAction.CallbackContext context);
         void OnMagicFormationDisplay(InputAction.CallbackContext context);
         void OnDecision(InputAction.CallbackContext context);
+        void OnFormationDisplay(InputAction.CallbackContext context);
     }
 }
